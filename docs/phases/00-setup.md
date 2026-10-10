@@ -5,6 +5,7 @@
 | Branch | `phase-00-setup` |
 | Tag | `v0.0.1` |
 | Dates | 2026-10-10 |
+| Merge | `phase-00-setup` merged into `main` with a merge commit (no PR: GitHub CLI not installed yet) |
 | Synopsis objective(s) covered | Foundation for all objectives (no user feature yet) |
 
 ## 1. Summary
@@ -204,7 +205,8 @@ Full reasoning is in `docs/decisions/`.
 | `test_health_ok_when_database_ready` | Unit (DB faked) | Passed |
 | `test_health_degraded_when_database_down` | Unit (DB faked) | Passed |
 | `test_cors_allows_frontend_origin` | Unit | Passed |
-| `test_database_connected_with_pgvector` | Integration (real DB) | Skipped locally (Docker not yet installed); runs in CI |
+| `test_database_connected_with_pgvector` | Integration (real DB) | Skipped locally (Docker not yet installed); **passed in CI** after `alembic upgrade head` |
+| GitHub Actions run #1 | CI (both jobs) | Passed – backend 28 s, frontend 15 s |
 | `ruff check` / `ruff format --check` | Lint | Passed |
 | `oxlint` | Lint | Passed |
 | `tsc -b && vite build` | Type check + build | Passed |
