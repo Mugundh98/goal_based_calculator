@@ -1,0 +1,22 @@
+# Local development database: PostgreSQL 16 with the pgvector extension available.
+# Start: docker compose up -d     Stop: docker compose down     Wipe data: docker compose down -v
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: goalwise-db
+    environment:
+      POSTGRES_USER: goalwise
+      POSTGRES_PASSWORD: goalwise
+      POSTGRES_DB: goalwise
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U goalwise -d goalwise"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
