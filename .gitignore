@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# ML artefacts and data caches
+ml/data/
+*.joblib
+*.pkl
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# University forms (kept locally, not in the repo)
+/Project Work-Synopsis Submission.pdf
