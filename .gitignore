@@ -29,3 +29,6 @@ Thumbs.db
 
 # University forms (kept locally, not in the repo)
 /Project Work-Synopsis Submission.pdf
+
+# Local tool settings
+.claude/
