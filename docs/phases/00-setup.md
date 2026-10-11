@@ -205,12 +205,12 @@ Full reasoning is in `docs/decisions/`.
 | `test_health_ok_when_database_ready` | Unit (DB faked) | Passed |
 | `test_health_degraded_when_database_down` | Unit (DB faked) | Passed |
 | `test_cors_allows_frontend_origin` | Unit | Passed |
-| `test_database_connected_with_pgvector` | Integration (real DB) | Skipped locally (Docker not yet installed); **passed in CI** after `alembic upgrade head` |
+| `test_database_connected_with_pgvector` | Integration (real DB) | Passed locally (Docker) and in CI after `alembic upgrade head` |
 | GitHub Actions run #1 | CI (both jobs) | Passed – backend 28 s, frontend 15 s |
 | `ruff check` / `ruff format --check` | Lint | Passed |
 | `oxlint` | Lint | Passed |
 | `tsc -b && vite build` | Type check + build | Passed |
-| Manual: browser at `localhost:5173` | End-to-end | Frontend and backend green; database red "OperationalError" (expected without Docker) |
+| Manual: browser at `localhost:5173` | End-to-end | All four rows green (frontend, backend, database, pgvector) |
 
 How to run:
 
@@ -243,7 +243,7 @@ npm run dev
 
 Open http://localhost:5173 – all four rows should be green.
 
-Screenshot below was taken before Docker was installed, so the database rows are red. Frontend and backend are connected correctly.
+All four layers connected:
 
 ![System status page, Phase 0](../screenshots/phase-00-status-page.jpg) Open http://localhost:8000/docs for the API documentation. Stop the database (`docker compose stop`) and the Database row turns red within a few seconds.
 
@@ -254,6 +254,8 @@ Screenshot below was taken before Docker was installed, so the database rows are
 | `pytest` hung for over 4 minutes | With PostgreSQL not running, the database driver waited on the OS default connection timeout | Added `connect_timeout: 3` to the engine |
 | Browser page blank, Vite log `ECONNREFUSED` | Node resolved `localhost` to IPv6 `::1`, but Uvicorn listens on IPv4 `127.0.0.1` | Proxy target and dev server host set to `127.0.0.1`; database URL also uses `127.0.0.1` |
 | Uvicorn kept restarting | `--reload` was watching `.venv` (library files) | Added `--reload-dir app` |
+| Docker Desktop installs to C:, which had only ~17 GB free | Default install location; images and database data also default to C: | Installed from the command line with custom folders (`--installation-dir`, `--wsl-default-data-root`) under `D:\Softwares\Docker`; C: usage is now ~11 MB, data disk (~2.2 GB) on D: |
+| Running `docker compose` inside an unrelated Python `.venv` | Confusion between environments | Docker is independent of Python environments; backend commands always run through `uv run`, which uses `backend/.venv` |
 | `uv python install 3.12` printed an error | A shortcut link failed on Windows; the interpreter itself installed fine | Used the exact version `3.12.15` |
 
 ## 9. Viva questions and answers

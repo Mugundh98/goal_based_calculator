@@ -24,3 +24,4 @@ PostgreSQL 16 with pgvector, run locally via Docker (`pgvector/pgvector:pg16`), 
 
 - One database for all data; embeddings can be joined with relational data.
 - Docker Desktop is required for local development.
+- The development machine has little space on C:, so Docker Desktop was installed with custom folders under `D:\Softwares\Docker` (program and WSL data disk). A free cloud PostgreSQL with pgvector (e.g. Neon) was the alternative considered; it was rejected for development because it needs internet, has storage caps on the free tier and adds latency. It remains the plan for deployment (Phase 13).
