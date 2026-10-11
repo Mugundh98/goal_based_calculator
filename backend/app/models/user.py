@@ -1,12 +1,17 @@
-from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, CheckConstraint, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models.mixins import TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.profile import FinancialProfile
+    from app.models.risk import RiskAssessment
 
 
-class User(Base):
+class User(TimestampMixin, Base):
     __tablename__ = "users"
     __table_args__ = (CheckConstraint("role IN ('user', 'admin')", name="ck_users_role"),)
 
@@ -16,7 +21,12 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(120))
     role: Mapped[str] = mapped_column(String(20), default="user", server_default="user")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+
+    # One-to-one: each user has at most one financial profile.
+    profile: Mapped["FinancialProfile | None"] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
+    # One-to-many: every questionnaire attempt is kept as history.
+    risk_assessments: Mapped[list["RiskAssessment"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
     )
