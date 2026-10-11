@@ -2,24 +2,38 @@
 
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEV_JWT_SECRET = "dev-only-secret-change-me-in-production-0000"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "GoalWise API"
-    app_version: str = "0.0.1"
+    app_version: str = "0.1.0"
     environment: str = "development"
 
     database_url: str = "postgresql+psycopg://goalwise:goalwise@127.0.0.1:5432/goalwise"
 
     # Comma-separated list of origins allowed to call the API from a browser.
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+
+    # JSON Web Token settings (authentication).
+    jwt_secret_key: str = DEV_JWT_SECRET
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
 
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @model_validator(mode="after")
+    def require_real_secret_in_production(self) -> "Settings":
+        if self.environment == "production" and self.jwt_secret_key == DEV_JWT_SECRET:
+            raise ValueError("JWT_SECRET_KEY must be set in production")
+        return self
 
 
 @lru_cache

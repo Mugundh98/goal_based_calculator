@@ -143,8 +143,8 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
 ### Phase 1 – Authentication  · `phase-01-auth` · `v0.1.0`
 
 - **Database:** `users` (id, email unique, password_hash, full_name, role, created_at). First Alembic migration.
-- **Backend:** `POST /auth/register`, `POST /auth/login` (returns JWT access token), `GET /auth/me`; passwords hashed with bcrypt (passlib); `get_current_user` dependency protecting routes; role field for admin.
-- **Frontend:** Register and login pages, form validation (react-hook-form + zod), token stored in memory + refresh on reload, `ProtectedRoute` component, logout.
+- **Backend:** `POST /auth/register`, `POST /auth/login` (returns JWT access token), `GET /auth/me`; passwords hashed with Argon2id (pwdlib – replaced the original bcrypt/passlib plan, see ADR-004); `get_current_user` dependency protecting routes; role field for admin.
+- **Frontend:** Register and login pages, form validation (react-hook-form + zod), token + expiry in localStorage (survives reload, auto-logout at expiry), `ProtectedRoute` component, logout.
 - **Integration:** axios interceptor attaches `Authorization: Bearer <token>`; 401 → redirect to login.
 - **Tests:** register/login/me happy paths, duplicate email, wrong password, expired token.
 - **Viva focus:** How does JWT work (header.payload.signature)? Why hash, not encrypt, passwords? What is a salt? Where is the token stored and what are XSS/CSRF trade-offs? What is FastAPI dependency injection?

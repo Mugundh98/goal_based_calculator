@@ -12,7 +12,7 @@ function StatusRow({ label, ok, detail }: { label: string; ok: boolean; detail: 
   )
 }
 
-export function HomePage() {
+export function StatusPage() {
   const { data, isPending, isError } = useHealth()
 
   return (
@@ -20,7 +20,7 @@ export function HomePage() {
       <div>
         <h1 className="text-2xl font-semibold">System status</h1>
         <p className="text-slate-600">
-          Phase 0 check: the React app calls the FastAPI backend, which checks PostgreSQL.
+          The React app calls the FastAPI backend, which checks PostgreSQL.
         </p>
       </div>
 
