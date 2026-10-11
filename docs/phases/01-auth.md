@@ -5,6 +5,7 @@
 | Branch | `phase-01-auth` |
 | Tag | `v0.1.0` |
 | Dates | 2026-10-11 |
+| Merge | `phase-01-auth` merged into `main` with a merge commit after CI passed (GitHub CLI not installed, so no PR) |
 | Synopsis objective(s) covered | Objective 1 (secure web application with user accounts) |
 
 ## 1. Summary
@@ -284,7 +285,7 @@ The login endpoint follows the OAuth2 "password" grant: credentials are sent as 
 | `test_auth.py` | 18 | Register success and response has no password; hash stored; duplicate email (case-insensitive) → 409; 4 invalid inputs → 422; login returns bearer token; case-insensitive login; same error for wrong password and unknown email; inactive user blocked; `/me` with token; `/me` without token, with garbage token, with expired token, for deleted user → 401; `require_admin` blocks user, allows admin |
 | `test_health.py` | 3 | (Phase 0) |
 | `test_database.py` | 1 | (Phase 0) |
-| **Total** | **28** | **All passed** (local, 4.1 s) |
+| **Total** | **28** | **All passed** (local, 4.1 s; GitHub Actions run #5: backend 30 s, frontend 17 s) |
 
 **Manual end-to-end test in the browser** (2026-10-11):
 
