@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 1._
+_Living document – updated at the end of every phase. Last updated: Phase 2._
 
 ## Overview
 
@@ -36,6 +36,8 @@ flowchart TB
 | CI pipeline | 0 | Done |
 | Auth: `users` table, Argon2id hashing, JWT login, `get_current_user`, `require_admin` | 1 | Done |
 | Frontend auth: AuthProvider, axios interceptors, route guards, login/register/dashboard | 1 | Done |
+| `finance/risk_profile.py` pure scoring rules; profile and risk services/routes | 2 | Done |
+| Profile form, risk questionnaire, results page, onboarding dashboard | 2 | Done |
 
 ## Authentication flow
 
@@ -64,7 +66,7 @@ flowchart TB
 | Service | `app/services/` | Business logic |
 | Model | `app/models/` | SQLAlchemy ORM tables |
 | Core | `app/core/` | Settings, DB engine/session, security |
-| Pure engines (later) | `app/finance/`, `app/simulation/`, `app/ml/`, `app/chatbot/` | No HTTP code; reusable by routes and the chatbot |
+| Pure logic | `app/finance/` (from Phase 2); later `app/simulation/`, `app/ml/`, `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
 
 ## Environments
 
