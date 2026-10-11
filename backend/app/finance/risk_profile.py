@@ -282,7 +282,7 @@ def capacity_factors(inputs: CapacityInputs) -> list[Factor]:
         Factor(
             "employment",
             "Income stability",
-            inputs.employment_type.replace("_", " "),
+            inputs.employment_type.replace("_", " ").capitalize(),
             EMPLOYMENT_POINTS[inputs.employment_type],
             15,
         ),
@@ -309,14 +309,21 @@ def final_profile(tolerance: int, capacity: int) -> tuple[int, str]:
     return score, category_for(score)
 
 
+def _with_article(word: str) -> str:
+    return f"{'an' if word[0] in 'aeiou' else 'a'} {word}"
+
+
 def explanation(tolerance: int, capacity: int) -> str:
     tol_cat, cap_cat = category_for(tolerance), category_for(capacity)
     if tol_cat == cap_cat:
-        return f"Your willingness and your financial capacity both point to a {tol_cat} profile."
+        return (
+            "Your willingness and your financial capacity both point to "
+            f"{_with_article(tol_cat)} profile."
+        )
     if CATEGORIES.index(tol_cat) > CATEGORIES.index(cap_cat):
         return (
-            f"You are willing to take {tol_cat} risk, but your finances support a {cap_cat} "
-            "profile, so the lower one is used."
+            f"You are willing to take {tol_cat} risk, but your finances support "
+            f"{_with_article(cap_cat)} profile, so the lower one is used."
         )
     return (
         f"Your finances could support {cap_cat} risk, but you prefer {tol_cat} investing, "

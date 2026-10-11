@@ -162,7 +162,7 @@ def test_worked_example():
         "emergency_fund": ("3.5 months", 10),
         "debt_burden": ("21%", 6),
         "dependents": ("2", 6),
-        "employment": ("salaried", 15),
+        "employment": ("Salaried", 15),
     }
     assert rp.capacity_score(rp.capacity_factors(example)) == 72
 
@@ -191,6 +191,7 @@ def test_final_profile_takes_the_lower_score():
 
 
 def test_explanations():
-    assert "both point to a moderate" in rp.explanation(50, 60)
+    assert "both point to a moderate profile" in rp.explanation(50, 60)
+    assert "both point to an aggressive profile" in rp.explanation(80, 75)
     assert "your finances support a moderate" in rp.explanation(85, 45)
     assert "your preference is respected" in rp.explanation(30, 90)
