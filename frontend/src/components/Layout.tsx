@@ -21,6 +21,12 @@ export function Layout() {
                 <NavLink to="/dashboard" className={navLink}>
                   Dashboard
                 </NavLink>
+                <NavLink to="/profile" className={navLink}>
+                  Profile
+                </NavLink>
+                <NavLink to="/risk" end={false} className={navLink}>
+                  Risk
+                </NavLink>
                 <span className="hidden text-sm text-slate-500 sm:inline">{user.full_name}</span>
                 <button
                   type="button"

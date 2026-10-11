@@ -4,7 +4,10 @@ import { Layout } from './components/Layout'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { RegisterPage } from './pages/RegisterPage'
+import { RiskQuestionnairePage } from './pages/RiskQuestionnairePage'
+import { RiskResultPage } from './pages/RiskResultPage'
 import { StatusPage } from './pages/StatusPage'
 
 export const router = createBrowserRouter([
@@ -22,7 +25,12 @@ export const router = createBrowserRouter([
       },
       {
         element: <ProtectedRoute />,
-        children: [{ path: '/dashboard', element: <DashboardPage /> }],
+        children: [
+          { path: '/dashboard', element: <DashboardPage /> },
+          { path: '/profile', element: <ProfilePage /> },
+          { path: '/risk', element: <RiskResultPage /> },
+          { path: '/risk/questionnaire', element: <RiskQuestionnairePage /> },
+        ],
       },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
