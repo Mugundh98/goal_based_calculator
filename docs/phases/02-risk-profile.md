@@ -287,7 +287,7 @@ Retaking with all "d" answers: 3 × 6 + 4 = 22 of 28 → 79; min(79, 72) = 72 �
 | `test_risk_profile.py` | 48 | Questionnaire extremes (0 and 100) and a middle case; max points = 28; missing, unknown and invalid answers rejected; age calculation including birthdays and 29 February; **every boundary** of every capacity factor; zero-income and EMI-without-income edge cases; factor maximums add to 100; best case = 100; the worked example (all six values and points); category thresholds 39/40/69/70; min rule; explanation texts including "an aggressive" |
 | `test_profile_api.py` | 19 | Login required; 404 before creation; create and read with computed age and surplus; PUT updates in place (one row); paise kept exactly; 6 invalid inputs → 422; users isolated; questionnaire hides points; assessment requires profile (409); scored and stored (54/72/54 moderate); incomplete answers → 422; history newest first and latest; snapshot unaffected by later profile change; cascade delete |
 | Earlier phases | 28 | Auth, security, health, database |
-| **Total** | **95** | **All passed** (local, 10.7 s) |
+| **Total** | **95** | **All passed** (local, 10.7 s; GitHub Actions run #8: backend 28 s, frontend 12 s) |
 
 **Manual end-to-end test in the browser** (2026-10-11):
 
