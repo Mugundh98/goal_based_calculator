@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 0._
+_Living document – updated at the end of every phase. Last updated: Phase 1._
 
 ## Overview
 
@@ -34,6 +34,26 @@ flowchart TB
 | FastAPI app, settings, DB session, health endpoint | 0 | Done |
 | PostgreSQL + pgvector, Alembic migrations | 0 | Done |
 | CI pipeline | 0 | Done |
+| Auth: `users` table, Argon2id hashing, JWT login, `get_current_user`, `require_admin` | 1 | Done |
+| Frontend auth: AuthProvider, axios interceptors, route guards, login/register/dashboard | 1 | Done |
+
+## Authentication flow
+
+1. `POST /api/auth/login` (form) → signed JWT (`sub` = user id, `role`, `exp` = +60 min).
+2. The browser keeps the token in `localStorage`; an axios interceptor sends it as `Authorization: Bearer …`.
+3. Every protected route depends on `get_current_user`, which verifies the signature and expiry, then loads the active user from the database.
+4. A `401` response makes the frontend log out. Details: `docs/phases/01-auth.md`, ADR-004.
+
+## Frontend structure
+
+| Folder | Responsibility |
+|---|---|
+| `src/api/` | Typed functions calling the backend; `client.ts` holds the axios instance and interceptors |
+| `src/store/` | Auth context and provider (session state) |
+| `src/components/` | Layout, route guards, form controls |
+| `src/pages/` | One component per route |
+| `src/lib/` | Token storage, validation schemas, error formatting |
+| `src/hooks/` | TanStack Query hooks |
 
 ## Backend layering
 
@@ -59,6 +79,8 @@ flowchart TB
 | Variable | Used by | Example |
 |---|---|---|
 | `DATABASE_URL` | backend | `postgresql+psycopg://goalwise:goalwise@127.0.0.1:5432/goalwise` |
-| `CORS_ORIGINS` | backend | `http://localhost:5173` |
+| `CORS_ORIGINS` | backend | `http://localhost:5173,http://127.0.0.1:5173` (comma-separated) |
 | `ENVIRONMENT` | backend | `development` |
+| `JWT_SECRET_KEY` | backend | random 48+ byte string (required in production) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | backend | `60` |
 | `VITE_API_BASE_URL` | frontend | empty in development |
