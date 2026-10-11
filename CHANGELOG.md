@@ -2,6 +2,18 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.2.0] – 2026-10-11 – Phase 2: Financial profile and risk profiling
+
+### Added
+
+- `financial_profiles` (one per user) and `risk_assessments` (history, JSONB answers and breakdown) tables – migration `0003`.
+- `GET/PUT /api/profile`; `GET /api/risk/questionnaire`; `POST/GET /api/risk/assessments`; `GET /api/risk/assessments/latest`.
+- Pure scoring module `app/finance/risk_profile.py`: 7-question tolerance score, 6-factor capacity score, final = lower of the two.
+- `TimestampMixin` shared by models.
+- Frontend: financial profile form with live surplus preview, step-by-step questionnaire, results page with score bars and capacity breakdown, assessment history, onboarding dashboard.
+- 67 new tests (95 total), including every scoring boundary and a documented worked example.
+- Documentation: Phase 2 document, ADR-005, updated architecture, database and API docs.
+
 ## [0.1.0] – 2026-10-11 – Phase 1: Authentication
 
 ### Added

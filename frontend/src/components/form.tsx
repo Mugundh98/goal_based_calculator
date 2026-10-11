@@ -1,14 +1,32 @@
-import type { InputHTMLAttributes, ReactNode } from 'react'
+import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
 import type { UseFormRegisterReturn } from 'react-hook-form'
+
+const inputClass = (error?: string) =>
+  `block w-full rounded-md border px-3 py-2 text-slate-900 shadow-sm outline-none focus:ring-2 ${
+    error
+      ? 'border-rose-400 focus:ring-rose-200'
+      : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-200'
+  }`
+
+function FieldMessage({ id, error, hint }: { id: string; error?: string; hint?: string }) {
+  if (!error && !hint) return null
+  return (
+    <p id={id} className={`text-sm ${error ? 'text-rose-700' : 'text-slate-500'}`}>
+      {error ?? hint}
+    </p>
+  )
+}
 
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string
   registration: UseFormRegisterReturn
   error?: string
   hint?: string
+  /** Short text shown inside the box before the value, e.g. "₹". */
+  prefix?: string
 }
 
-export function TextField({ label, registration, error, hint, id, ...input }: TextFieldProps) {
+export function TextField({ label, registration, error, hint, prefix, id, ...input }: TextFieldProps) {
   const fieldId = id ?? registration.name
   const messageId = `${fieldId}-message`
   return (
@@ -16,23 +34,58 @@ export function TextField({ label, registration, error, hint, id, ...input }: Te
       <label htmlFor={fieldId} className="block text-sm font-medium text-slate-700">
         {label}
       </label>
-      <input
+      <div className="relative">
+        {prefix && (
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+            {prefix}
+          </span>
+        )}
+        <input
+          id={fieldId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error || hint ? messageId : undefined}
+          className={`${inputClass(error)} ${prefix ? 'pl-7' : ''}`}
+          {...input}
+          {...registration}
+        />
+      </div>
+      <FieldMessage id={messageId} error={error} hint={hint} />
+    </div>
+  )
+}
+
+interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label: string
+  registration: UseFormRegisterReturn
+  options: { value: string; label: string }[]
+  error?: string
+  hint?: string
+}
+
+export function SelectField({ label, registration, options, error, hint, id, ...select }: SelectFieldProps) {
+  const fieldId = id ?? registration.name
+  const messageId = `${fieldId}-message`
+  return (
+    <div className="space-y-1">
+      <label htmlFor={fieldId} className="block text-sm font-medium text-slate-700">
+        {label}
+      </label>
+      <select
         id={fieldId}
         aria-invalid={error ? true : undefined}
         aria-describedby={error || hint ? messageId : undefined}
-        className={`block w-full rounded-md border px-3 py-2 text-slate-900 shadow-sm outline-none focus:ring-2 ${
-          error
-            ? 'border-rose-400 focus:ring-rose-200'
-            : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-200'
-        }`}
-        {...input}
+        className={`${inputClass(error)} bg-white`}
+        {...select}
         {...registration}
-      />
-      {(error || hint) && (
-        <p id={messageId} className={`text-sm ${error ? 'text-rose-700' : 'text-slate-500'}`}>
-          {error ?? hint}
-        </p>
-      )}
+      >
+        <option value="">Select…</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <FieldMessage id={messageId} error={error} hint={hint} />
     </div>
   )
 }
