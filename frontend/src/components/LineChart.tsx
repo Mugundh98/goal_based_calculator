@@ -1,5 +1,7 @@
 import { type KeyboardEvent, type PointerEvent, useLayoutEffect, useState } from 'react'
 
+import { niceTicks } from '../lib/chart'
+
 export interface ChartPoint {
   date: string // ISO date
   value: number
@@ -23,17 +25,6 @@ const MARGIN = { top: 16, right: 12, bottom: 28, left: 60 }
 const DAY = 86_400_000
 
 const time = (iso: string) => new Date(iso).getTime()
-
-/** Round tick values: steps of 1, 2 or 5 x a power of ten, about `count` of them. */
-function niceTicks(min: number, max: number, count = 5): number[] {
-  const span = max - min || Math.abs(max) || 1
-  const rough = span / count
-  const magnitude = 10 ** Math.floor(Math.log10(rough))
-  const step = [1, 2, 5, 10].map((m) => m * magnitude).find((s) => s >= rough) ?? 10 * magnitude
-  const ticks = []
-  for (let t = Math.ceil(min / step) * step; t <= max + step * 1e-9; t += step) ticks.push(Number(t.toFixed(10)))
-  return ticks
-}
 
 /** Year starts for long ranges, month starts for short ones; at most ~6 labels. */
 function timeTicks(start: number, end: number): { at: number; label: string }[] {

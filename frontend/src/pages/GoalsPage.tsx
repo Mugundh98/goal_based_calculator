@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 
 import type { Goal } from '../api/goals'
 import { FormError } from '../components/form'
@@ -152,7 +153,14 @@ function GoalCard({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         </div>
       </dl>
 
-      <div className="mt-auto flex gap-2">
+      <div className="mt-auto flex flex-wrap gap-2">
+        <Link
+          to={`/goals/${goal.id}/simulate`}
+          className={`${buttonClass} bg-emerald-600 text-white hover:bg-emerald-700`}
+          aria-label={`Simulate ${goal.name}`}
+        >
+          Simulate
+        </Link>
         <button type="button" onClick={onEdit} className={`${buttonClass} border border-slate-300 bg-white hover:bg-slate-50`}>
           Edit
         </button>
