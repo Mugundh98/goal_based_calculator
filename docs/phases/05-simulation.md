@@ -450,7 +450,7 @@ Reading it:
 | `test_simulation_models.py` | 17 | Normal: mean 0 and fitted σ; assumed volatility by hand. Bootstrap: draws whole circular blocks of real months, centred, keeps fat tails (kurtosis > 3.5) and month-to-month patterns. GARCH: long-run variance and half-life by hand, clustering of squared shocks (normal model has none), **fit recovers known α, β**. HMM: stationary shares and spells by hand, centred mixture volatility, **fit finds the two regimes** of synthetic data. All four: reproducible with a seed, centred, keep the history's volatility |
 | `test_simulations_api.py` | 26 | Login required; worked example end to end (inputs, implied equity, Phase 3 comparison, bands, history window); all four models; reproducible with a seed; what-if overrides (SIP, year, equity → 8.8%, step-up) do not change the goal; automatic return → 50% equity; preview saves nothing; 9 invalid requests → 422; without market data only normal runs (assumed volatility 15.01%), others 409; due goal 409; comparison = individual runs; save → read returns the identical body, list newest first, delete; other users get 404; goal delete cascades; database CHECKs |
 | Earlier phases | 255 | Unchanged, all passing |
-| **Total** | **325** | **All passed** locally (~70 s); GitHub Actions: see below |
+| **Total** | **325** | **All passed** (local ~60–70 s; GitHub Actions run #17 on the branch: passed in 55 s – backend 49 s, frontend 17 s) |
 
 Every random test uses a fixed seed, so the statistical tests are deterministic (no flaky failures); their tolerances are set from the theory (standard errors) rather than tuned to pass.
 
