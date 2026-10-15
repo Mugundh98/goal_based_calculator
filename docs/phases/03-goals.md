@@ -5,7 +5,7 @@
 | Branch | `phase-03-goals` |
 | Tag | `v0.3.0` |
 | Dates | 2026-10-15 |
-| Merge | Merged into `main` with a merge commit after local checks passed (GitHub CLI not installed, so no PR) |
+| Merge | Merged into `main` with a merge commit after CI passed (GitHub CLI not installed, so no PR) |
 | Synopsis objective(s) covered | Goal-based planning: inflation-adjusted goal targets and the monthly SIP required for each goal |
 
 ## 1. Summary
@@ -301,7 +301,7 @@ These are planning assumptions, roughly debt-heavy, balanced and equity-heavy lo
 | `test_goal_plan.py` | 13 | Full worked example (all 9 outputs); investing the required SIP puts the goal on track; funded % never rounds up to 100; step-up lowers the required SIP; savings already enough; goal due now; past year treated as due; 6 return-assumption cases |
 | `test_goals_api.py` | 29 | Login required; create returns projection (worked example); defaults; automatic return without risk profile (10%, default), after a conservative profile (8%), **and changing after a retake**; short horizon (7%); list order; update; delete; other users get 404 on get/put/delete and see an empty list; paise and fractional percentages kept; `/calculate` saves nothing and needs only the numbers; 14 invalid inputs → 422; database CHECK rejects priority 9; cascade delete |
 | Earlier phases | 95 | Auth, security, health, database, risk profiling, profile API |
-| **Total** | **165** | **All passed** (local, ~27 s) |
+| **Total** | **165** | **All passed** (local, ~20 s; GitHub Actions run #11: passed in 43 s) |
 
 **Manual end-to-end test in the browser** (2026-10-15):
 
