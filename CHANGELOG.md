@@ -2,6 +2,23 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.3.0] – 2026-10-15 – Phase 3: Financial math library and goal manager
+
+### Added
+
+- Pure time-value-of-money module `app/finance/tvm.py`: FV/PV, inflation, real return (Fisher), CAGR, SIP future value (annuity due, effective monthly rate), step-up SIP, required SIP and required step-up SIP.
+- `app/finance/goal_plan.py`: goal projection (inflated target, projected value, shortfall, required SIP rounded up to the rupee, funded %, on-track) and the expected-return assumption table.
+- `goals` table – migration `0004`; `expected_return` NULL means automatic (latest risk category, cautious 7% under 3 years).
+- `GET/POST /api/goals`, `GET/PUT/DELETE /api/goals/{id}`, `POST /api/goals/calculate` (no save).
+- Frontend: goals page with monthly summary and goal cards, create/edit dialog (native `<dialog>`) with a debounced live projection, dashboard goals step, lakh/crore formatting.
+- 70 new tests (165 total), including month-by-month simulation cross-checks and the documented worked example.
+- Documentation: Phase 3 document, ADR-006, updated architecture, database and API docs.
+
+### Fixed
+
+- Dashboard steps no longer flash as "to do" while loading.
+- Header navigation wraps on narrow screens.
+
 ## [0.2.0] – 2026-10-11 – Phase 2: Financial profile and risk profiling
 
 ### Added

@@ -15,7 +15,7 @@ export function Layout() {
           <Link to="/" className="text-lg font-semibold text-emerald-700">
             GoalWise
           </Link>
-          <nav className="flex items-center gap-4">
+          <nav className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2 sm:gap-x-4">
             {user ? (
               <>
                 <NavLink to="/dashboard" className={navLink}>
@@ -26,6 +26,9 @@ export function Layout() {
                 </NavLink>
                 <NavLink to="/risk" end={false} className={navLink}>
                   Risk
+                </NavLink>
+                <NavLink to="/goals" className={navLink}>
+                  Goals
                 </NavLink>
                 <span className="hidden text-sm text-slate-500 sm:inline">{user.full_name}</span>
                 <button

@@ -159,7 +159,7 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
 ### Phase 3 – Financial math library and goal manager  · `phase-03-goals` · `v0.3.0`
 
 - **Backend `finance/`:** pure functions – FV/PV, SIP future value, required SIP for a target, step-up SIP, inflation adjustment, real return, CAGR. **Each tested against hand-calculated examples** (tables of these go straight into the report).
-- **Database:** `goals` (user_id FK, type enum, name, target_today, target_year, inflation_rate, priority, current_savings, monthly_sip).
+- **Database:** `goals` (user_id FK, type enum, name, target_today, target_year, inflation_rate, priority, current_savings, monthly_sip). *As built:* `target_today` is named `target_amount`; added `expected_return` (NULL = automatic from the risk profile) and `step_up_rate`; projections are computed on read (ADR-006).
 - **Backend API:** goals CRUD; each goal response includes inflation-adjusted target and required SIP.
 - **Frontend:** goals dashboard (cards with progress), create/edit dialog, live "required SIP" as the user types.
 - **Viva focus:** Derive the SIP FV formula; annuity due vs ordinary annuity; why separate pure math from services; enum columns vs lookup tables.

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { ButtonLink, Card, CategoryBadge } from '../components/ui'
+import { useGoals } from '../hooks/useGoals'
 import { useProfile } from '../hooks/useProfile'
 import { useLatestAssessment } from '../hooks/useRisk'
 import { formatINR } from '../lib/format'
@@ -38,10 +39,16 @@ function Step({
   )
 }
 
+// Shown while a step's data loads, so a finished step never flashes as "to do".
+function Checking() {
+  return <span className="text-slate-400">Checking…</span>
+}
+
 export function DashboardPage() {
   const { user } = useAuth()
   const profile = useProfile()
   const latest = useLatestAssessment()
+  const goals = useGoals()
   if (!user) return null
 
   const firstName = user.full_name.split(' ')[0]
@@ -57,7 +64,9 @@ export function DashboardPage() {
 
       <div className="space-y-4">
         <Step number={1} title="Financial profile" done={hasProfile}>
-          {profile.data ? (
+          {profile.isPending ? (
+            <Checking />
+          ) : profile.data ? (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>
                 Age {profile.data.age} · {formatINR(profile.data.monthly_surplus)} left to invest each month
@@ -75,7 +84,9 @@ export function DashboardPage() {
         </Step>
 
         <Step number={2} title="Risk profile" done={assessment !== null}>
-          {assessment ? (
+          {latest.isPending ? (
+            <Checking />
+          ) : assessment ? (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="flex items-center gap-2">
                 <CategoryBadge category={assessment.category} /> score {assessment.final_score} / 100
@@ -92,9 +103,27 @@ export function DashboardPage() {
           )}
         </Step>
 
-        <Step number={3} title="Financial goals" done={false}>
-          Add goals such as retirement, a child&apos;s education or a house, and see how likely you
-          are to reach each one. Coming next.
+        <Step number={3} title="Financial goals" done={Boolean(goals.data?.length)}>
+          {goals.isPending ? (
+            <Checking />
+          ) : goals.data?.length ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>
+                {goals.data.length} {goals.data.length === 1 ? 'goal' : 'goals'} ·{' '}
+                {goals.data.filter((g) => g.projection.on_track).length} on track ·{' '}
+                {formatINR(goals.data.reduce((sum, g) => sum + (g.projection.required_sip ?? 0), 0))} a month
+                needed
+              </span>
+              <ButtonLink to="/goals" variant="secondary">
+                View
+              </ButtonLink>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>Add goals such as a child&apos;s education, a house or a car, and see how much to invest for each.</span>
+              <ButtonLink to="/goals">Start</ButtonLink>
+            </div>
+          )}
         </Step>
       </div>
     </section>

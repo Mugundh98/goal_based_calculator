@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 2._
+_Living document – updated at the end of every phase. Last updated: Phase 3._
 
 ## Overview
 
@@ -38,6 +38,8 @@ flowchart TB
 | Frontend auth: AuthProvider, axios interceptors, route guards, login/register/dashboard | 1 | Done |
 | `finance/risk_profile.py` pure scoring rules; profile and risk services/routes | 2 | Done |
 | Profile form, risk questionnaire, results page, onboarding dashboard | 2 | Done |
+| `finance/tvm.py` time-value-of-money formulas, `finance/goal_plan.py` projections; goals service/routes | 3 | Done |
+| Goals page, goal dialog with live projection, dashboard goals step | 3 | Done |
 
 ## Authentication flow
 
@@ -66,7 +68,7 @@ flowchart TB
 | Service | `app/services/` | Business logic |
 | Model | `app/models/` | SQLAlchemy ORM tables |
 | Core | `app/core/` | Settings, DB engine/session, security |
-| Pure logic | `app/finance/` (from Phase 2); later `app/simulation/`, `app/ml/`, `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
+| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3); later `app/simulation/`, `app/ml/`, `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
 
 ## Environments
 
