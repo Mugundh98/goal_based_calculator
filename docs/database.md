@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 4._
+_Living document – updated whenever a migration is added. Last updated: Phase 5._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -11,6 +11,8 @@ erDiagram
     USERS ||--o| FINANCIAL_PROFILES : "has 0..1"
     USERS ||--o{ RISK_ASSESSMENTS : "has 0..*"
     USERS ||--o{ GOALS : "has 0..*"
+    GOALS ||--o{ SIMULATIONS : "has 0..* saved runs"
+    SIMULATIONS ||--|| SIMULATION_RESULTS : "has exactly 1"
     USERS {
         int id PK
         varchar email UK "lower-case"
@@ -62,6 +64,23 @@ erDiagram
         numeric step_up_rate "%"
         timestamptz created_at
         timestamptz updated_at
+    }
+    SIMULATIONS {
+        int id PK
+        int goal_id FK
+        varchar model "normal | bootstrap | garch | hmm"
+        jsonb parameters "inputs, seed, fitted model, data window"
+        timestamptz run_at
+    }
+    SIMULATION_RESULTS {
+        int simulation_id PK,FK
+        float success_probability "%"
+        float median_final
+        float median_shortfall
+        jsonb final_percentiles
+        jsonb required_sip
+        jsonb bands "P10-P90 per year"
+        int elapsed_ms
     }
 ```
 
@@ -132,9 +151,32 @@ erDiagram
     }
 ```
 
-Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`. Market data (Phase 4): time series use a **composite natural primary key** (entity + date) instead of a surrogate id; NAVs are `NUMERIC(18,8)` (AMFI publishes up to 8 decimals); fund metrics are stored as `double precision` because they are derived statistics recomputed nightly (ADR-007).
+Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`. Market data (Phase 4): time series use a **composite natural primary key** (entity + date) instead of a surrogate id; NAVs are `NUMERIC(18,8)` (AMFI publishes up to 8 decimals); fund metrics are stored as `double precision` because they are derived statistics recomputed nightly (ADR-007). Simulations (Phase 5): a saved run is a **snapshot** (random, depends on market data that changes daily), so its output is stored, unlike goal projections; the question (`simulations`) and the bulky answer (`simulation_results`) are split one-to-one (ADR-008).
 
 ## Table dictionary
+
+### `simulations` (Phase 5) – saved Monte Carlo runs of a goal
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `goal_id` | integer | FK `goals.id` ON DELETE CASCADE; index `ix_simulations_goal_id_run_at (goal_id, run_at)` | The goal simulated |
+| `model` | varchar(20) | CHECK (normal, bootstrap, garch, hmm) | Return model |
+| `parameters` | jsonb | NOT NULL | Resolved inputs after what-if overrides, paths, seed, Phase 3 projection, portfolio volatility, fitted model parameters, market data window |
+| `run_at` | timestamptz | default now() | |
+
+### `simulation_results` (Phase 5) – one per simulation (shared primary key)
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `simulation_id` | integer | PK, FK `simulations.id` ON DELETE CASCADE | One-to-one |
+| `success_probability` | double precision | CHECK 0–100 | % of paths that reach the inflated target |
+| `median_final` | double precision | NOT NULL | P50 of the value at the goal date (shown in the run list) |
+| `median_shortfall` | double precision | NULL allowed | Typical gap of the paths that miss; NULL if none miss |
+| `final_percentiles` | jsonb | NOT NULL | P10, P25, P50, P75, P90 and mean at the goal date |
+| `required_sip` | jsonb | NOT NULL | Starting SIP for a 50 / 75 / 90% chance |
+| `bands` | jsonb | NOT NULL | Per year: P10–P90 and the deterministic projection (the fan chart) |
+| `elapsed_ms` | integer | NOT NULL | Fit + simulation time |
 
 ### `funds` (Phase 4) – one row per AMFI scheme code
 
@@ -285,6 +327,7 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `0003` | 2 | Create `financial_profiles` and `risk_assessments` |
 | `0004` | 3 | Create `goals` |
 | `0005` | 4 | Create `funds`, `nav_history`, `fund_metrics`, `index_history`, `inflation_data`, `job_runs` |
+| `0006` | 5 | Create `simulations` and `simulation_results` |
 
 ## Databases
 
