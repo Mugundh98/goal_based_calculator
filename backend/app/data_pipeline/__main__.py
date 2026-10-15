@@ -27,6 +27,11 @@ def main() -> None:
         help="backfill_nav: asset classes to backfill (repeatable; default: all four)",
     )
     parser.add_argument("--limit", type=int, help="backfill_nav: at most this many funds")
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="backfill_nav: also funds that already have history (re-read from the cache)",
+    )
     parser.add_argument("--full", action="store_true", help="index_history: whole history")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -35,6 +40,7 @@ def main() -> None:
         "backfill_nav": {
             "asset_classes": tuple(args.asset_class or BACKFILL_ASSET_CLASSES),
             "limit": args.limit,
+            "only_missing": not args.refresh,
         },
         "index_history": {"full": args.full},
     }
