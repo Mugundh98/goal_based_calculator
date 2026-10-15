@@ -18,10 +18,25 @@ import httpx
 MFAPI_URL = "https://api.mfapi.in/mf/{scheme_code}"
 
 
+GAP_WARNING_DAYS = 10  # weekends and holidays leave gaps of up to ~5 days; more is suspicious
+
+
 @dataclass
 class NavHistoryFile:
     points: list[tuple[date, Decimal]] = field(default_factory=list)  # oldest first
     skipped: Counter = field(default_factory=Counter)
+
+    def largest_gap(self) -> tuple[int, date | None]:
+        """Longest stretch without a NAV (days) and the date it ended - a data-quality check.
+
+        Small gaps are normal (weekends, holidays) and handled by using the last NAV on or
+        before a date; a long gap means missing data and is reported in job_runs.details.
+        """
+        gaps = [
+            ((later - earlier).days, later)
+            for (earlier, _), (later, _) in zip(self.points, self.points[1:], strict=False)
+        ]
+        return max(gaps, default=(0, None))
 
 
 def parse_history(document: dict) -> NavHistoryFile:

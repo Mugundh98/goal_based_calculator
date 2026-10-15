@@ -119,6 +119,12 @@ def test_backfill_loads_history_of_direct_growth_funds(db, history_cache):
         date(2021, 10, 15), date(2025, 10, 10), date(2026, 10, 14), date(2026, 10, 15),
     ]  # fmt: skip
     assert result.details["skipped"] == {"duplicate_date": 1, "bad_row": 1}
+    assert result.details["funds_with_gaps"] == 1  # the sample skips 2021 -> 2025
+    assert result.details["largest_gaps"][0] == {
+        "scheme_code": 120465,
+        "days": 1456,
+        "until": "2025-10-10",
+    }
 
     assert jobs.backfill_nav(db, cache_dir=history_cache).rows_written == 0  # idempotent
 

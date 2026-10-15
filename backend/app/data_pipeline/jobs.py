@@ -141,6 +141,7 @@ def backfill_nav(
     funds = backfill_candidates(db, asset_classes, limit, only_missing)
     result = JobResult(details={"funds": len(funds), "failed": [], "skipped": {}})
     skipped: Counter = Counter()
+    gaps: list[dict[str, Any]] = []
     with http_client() as client:
         for fund in funds:
             cached = (cache_dir / f"{fund.scheme_code}.json").exists()
@@ -153,6 +154,11 @@ def backfill_nav(
                 continue
             history = mfapi.parse_history(document)
             skipped.update(history.skipped)
+            gap_days, gap_end = history.largest_gap()
+            if gap_days > mfapi.GAP_WARNING_DAYS:
+                gaps.append(
+                    {"scheme_code": fund.scheme_code, "days": gap_days, "until": str(gap_end)}
+                )
             rows = [{"fund_id": fund.id, "nav_date": d, "nav": nav} for d, nav in history.points]
             result.rows_read += len(rows)
             result.rows_written += upsert_navs(db, rows)
@@ -160,6 +166,9 @@ def backfill_nav(
             if not cached:
                 time.sleep(DOWNLOAD_PAUSE_SECONDS)
     result.details["skipped"] = dict(skipped)
+    # Funds with a suspiciously long stretch without NAVs, longest first (at most 20 listed).
+    result.details["funds_with_gaps"] = len(gaps)
+    result.details["largest_gaps"] = sorted(gaps, key=lambda g: -g["days"])[:20]
     return result
 
 

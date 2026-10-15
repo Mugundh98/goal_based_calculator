@@ -139,6 +139,13 @@ def test_mfapi_history_sorted_deduplicated_and_validated():
     assert history.skipped == {"duplicate_date": 1, "bad_row": 1}
 
 
+def test_mfapi_largest_gap_reports_missing_data():
+    history = mfapi.parse_history(MFAPI_HISTORY)
+    # 15 Oct 2021 -> 10 Oct 2025: almost four years without a NAV in this sample
+    assert history.largest_gap() == (1456, date(2025, 10, 10))
+    assert mfapi.NavHistoryFile().largest_gap() == (0, None)
+
+
 def test_mfapi_reads_from_cache_without_network(tmp_path):
     (tmp_path / "120465.json").write_text('{"data": [{"date": "15-10-2026", "nav": "1.5"}]}')
 
