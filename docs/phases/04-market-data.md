@@ -390,7 +390,7 @@ The last one is a real finding. MOSPI's API returns two different index values f
 | `test_pipeline_jobs.py` | 16 | **Re-running a load writes 0 rows**; next day appends one NAV and moves latest forward; an older file never moves it back; corrected NAV is updated in place; database rejects duplicate key and NAV ≤ 0; backfill from cache (candidates, gap report, idempotent, filters, limit); index job full then incremental with overlap; CPI job and YoY = 1.33%; metrics job values and idempotency; job log success / **failure with rollback** / **skipped while running (partial unique index)** / abandoned run freed / unknown job |
 | `test_funds_api.py` | 29 | Login required on 7 paths; closed funds hidden by default; item shape; 9 search/filter cases incl. escaped `%`; sort by metric with nulls last; stable pagination; 6 invalid parameters → 422; categories; detail with/without metrics; 404s; NAV periods; market summary (index 1-year return 25%, CPI); index history; inflation; job log; **only admins can start jobs** |
 | Earlier phases | 165 | Auth, profile, risk, goals, TVM |
-| **Total** | **255** | **All passed** (local; GitHub Actions run @@CI_RUN@@) |
+| **Total** | **255** | **All passed** (local ~37 s; GitHub Actions run #14: passed in 46 s – backend 42 s, frontend 16 s) |
 
 No test touches the network: parsers get samples of the real formats (`tests/pipeline_samples.py`), jobs accept text/records or a fake fetch function, and the backfill reads a pre-filled cache.
 
