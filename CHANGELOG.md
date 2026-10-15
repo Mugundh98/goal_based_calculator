@@ -2,6 +2,23 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.5.0] – 2026-10-16 – Phase 5: Monte Carlo simulation engine
+
+### Added
+
+- `app/simulation/`: vectorised NumPy Monte Carlo engine (10,000 paths; Phase 3 conventions: effective monthly rate, annuity-due SIPs, yearly step-up; expected return = median growth rate, so zero volatility reproduces the Phase 3 projection exactly); success probability, P10–P90 bands per year, median shortfall, exact SIP for a 50/75/90% chance; plain-loop reference and `python -m app.simulation.benchmark` (30× faster vectorised).
+- Four return models: normal, circular 12-month block bootstrap (default), GARCH(1,1) fitted with `arch`, 2-state Gaussian HMM fitted with `hmmlearn`; volatility from Phase 4 data (Nifty 500 and the median of bond funds, Feb 2013 – Sep 2026), assumed volatilities when no data is loaded.
+- Equity share ↔ return link (13% equity, 7% debt) consistent with the Phase 3 return table.
+- `simulations` and `simulation_results` tables – migration `0006`.
+- `POST /api/goals/{id}/simulate`, `POST /api/goals/{id}/simulate/compare`, `POST/GET /api/goals/{id}/simulations`, `GET/DELETE /api/simulations/{id}`.
+- Frontend: goal simulation page with chance of success, SVG fan chart (tooltip, keyboard, table view), debounced what-if sliders (SIP, step-up, target year, equity share), SIP for a chosen certainty, four-model comparison and saved runs; "Simulate" on each goal card.
+- 70 new tests (325 total): zero-volatility identity, hand-calculated cases, loop cross-check, statistical sanity (median, mean, √N error, model fits recover known parameters), API.
+- Documentation: Phase 5 document, ADR-008, updated architecture, database and API docs and README.
+
+### Changed
+
+- Target-year validation shared between goals and what-if overrides; `niceTicks` moved to `src/lib/chart.ts`; `arch`/`hmmlearn` imported in the background at API start-up.
+
 ## [0.4.0] – 2026-10-15 – Phase 4: Market data pipeline
 
 ### Added

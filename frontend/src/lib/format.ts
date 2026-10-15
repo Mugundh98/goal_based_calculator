@@ -35,6 +35,14 @@ export function formatLakhCrore(value: number): string {
   return formatINR(value)
 }
 
+/** Axis labels: ₹50 L, ₹1 Cr, ₹1.5 Cr – no trailing zeros. */
+export function formatAxisMoney(value: number): string {
+  const abs = Math.abs(value)
+  if (abs >= 1e7) return `₹${Number((value / 1e7).toFixed(2))} Cr`
+  if (abs >= 1e5) return `₹${Number((value / 1e5).toFixed(2))} L`
+  return formatINR(value)
+}
+
 export function formatPercent(value: number): string {
   return `${Number(value.toFixed(2))}%`
 }
@@ -107,4 +115,24 @@ export const jobLabel: Record<string, string> = {
   index_history: 'Index levels (Yahoo Finance)',
   inflation: 'CPI inflation (MOSPI)',
   fund_metrics: 'Fund metrics',
+}
+
+export const simulationReturnSourceLabel: Record<string, string> = {
+  ...returnSourceLabel,
+  allocation: 'from the equity share you chose',
+}
+
+export const simulationModelLabel: Record<string, string> = {
+  bootstrap: 'Historical blocks',
+  normal: 'Normal',
+  garch: 'GARCH',
+  hmm: 'Market regimes',
+}
+
+/** What each return model assumes, in one sentence (shown under the model picker). */
+export const simulationModelHelp: Record<string, string> = {
+  bootstrap: 'Replays real 12-month stretches of Indian market history in random order, crashes included.',
+  normal: 'Independent bell-curve returns with the historical volatility: the textbook model.',
+  garch: 'Volatility clusters: a big shock makes the next months more volatile, then it calms down.',
+  hmm: 'Markets switch between a calm and a turbulent regime that each last for a while (hidden Markov model).',
 }

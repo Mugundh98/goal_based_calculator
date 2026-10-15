@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 4._
+_Living document – updated at the end of every phase. Last updated: Phase 5._
 
 ## Overview
 
@@ -49,6 +49,23 @@ flowchart TB
 
 Every run is recorded in `job_runs` (status, rows read/written, data-quality counts, error). A partial unique index allows only one running row per job, so two processes cannot run the same job at once. The scheduler runs inside the API process when `SCHEDULER_ENABLED=true`; jobs can also be run with `uv run python -m app.data_pipeline <job>` or, by an admin, with `POST /api/market/jobs/{job}/run`. Details: `docs/phases/04-market-data.md`, ADR-007.
 
+### Monte Carlo simulation (Phase 5)
+
+```mermaid
+flowchart LR
+    UI[GoalSimulationPage<br/>sliders, debounced 400 ms] -->|POST /api/goals/id/simulate| RT[simulations routes]
+    RT --> SV[services/simulations.py<br/>run_simulation]
+    SV -->|goal + overrides| IN[resolve inputs<br/>return, equity share]
+    SV -->|cached by data fingerprint| H[(index_history<br/>nav_history)]
+    H --> HI[simulation/history.py<br/>portfolio log returns]
+    HI --> M[simulation/models.py<br/>normal, bootstrap, GARCH, HMM<br/>fits cached per equity share]
+    M --> E[simulation/engine.py<br/>10,000 paths, vectorised]
+    E --> SV
+    SV -->|save| DB[(simulations,<br/>simulation_results)]
+```
+
+The engine follows the Phase 3 conventions (effective monthly rate, annuity-due SIPs, yearly step-up); the expected return is the median growth rate, so zero volatility reproduces the Phase 3 projection exactly. History-based models need at least 5 years of aligned equity and debt months; without market data only the normal model runs, with assumed volatilities. Fitting `arch`/`hmmlearn` models imports pandas and SciPy (seconds), so the API imports them in a background thread at start-up. Details: `docs/phases/05-simulation.md`, ADR-008.
+
 ## Components built so far
 
 | Component | Phase | Status |
@@ -66,6 +83,8 @@ Every run is recorded in `job_runs` (status, rows read/written, data-quality cou
 | `finance/fund_metrics.py` (returns, rolling returns, volatility, Sharpe, Sortino, drawdown) | 4 | Done |
 | `data_pipeline/`: AMFI, mfapi.in, Yahoo Finance and MOSPI ingestion, upserts, job log, scheduler, CLI | 4 | Done |
 | Fund explorer (search, filters, sortable paged table), fund detail page with NAV vs Nifty 50 chart | 4 | Done |
+| `simulation/`: vectorised Monte Carlo engine, normal / block bootstrap / GARCH(1,1) / 2-state HMM return models; simulations service and routes | 5 | Done |
+| Goal simulation page: fan chart, chance of success, what-if sliders, SIP for a chosen certainty, model comparison, saved runs | 5 | Done |
 
 ## Authentication flow
 
@@ -80,9 +99,9 @@ Every run is recorded in `job_runs` (status, rows read/written, data-quality cou
 |---|---|
 | `src/api/` | Typed functions calling the backend; `client.ts` holds the axios instance and interceptors |
 | `src/store/` | Auth context and provider (session state) |
-| `src/components/` | Layout, route guards, form controls, UI pieces, SVG `LineChart` |
+| `src/components/` | Layout, route guards, form controls, UI pieces, SVG `LineChart` and `FanChart` |
 | `src/pages/` | One component per route |
-| `src/lib/` | Token storage, validation schemas, error formatting |
+| `src/lib/` | Token storage, validation schemas, error formatting, number formats, chart ticks |
 | `src/hooks/` | TanStack Query hooks |
 
 ## Backend layering
@@ -95,7 +114,7 @@ Every run is recorded in `job_runs` (status, rows read/written, data-quality cou
 | Model | `app/models/` | SQLAlchemy ORM tables |
 | Core | `app/core/` | Settings, DB engine/session, security |
 | Pipeline | `app/data_pipeline/` | Source parsers, bulk upserts, jobs, scheduler, CLI (Phase 4) |
-| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4); later `app/simulation/`, `app/ml/`, `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
+| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4), `app/simulation/` (Phase 5); later `app/ml/`, `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
 
 ## Environments
 
