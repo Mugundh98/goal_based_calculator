@@ -18,6 +18,7 @@ dist/
 
 # ML artefacts and data caches
 ml/data/
+backend/data/
 *.joblib
 *.pkl
 
