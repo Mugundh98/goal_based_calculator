@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 2._
+_Living document – updated whenever a migration is added. Last updated: Phase 3._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -10,6 +10,7 @@ _Living document – updated whenever a migration is added. Last updated: Phase 
 erDiagram
     USERS ||--o| FINANCIAL_PROFILES : "has 0..1"
     USERS ||--o{ RISK_ASSESSMENTS : "has 0..*"
+    USERS ||--o{ GOALS : "has 0..*"
     USERS {
         int id PK
         varchar email UK "lower-case"
@@ -46,11 +47,45 @@ erDiagram
         jsonb capacity_breakdown
         timestamptz created_at
     }
+    GOALS {
+        int id PK
+        int user_id FK
+        varchar goal_type
+        varchar name
+        numeric target_amount "today's rupees"
+        smallint target_year
+        smallint priority "1-3"
+        numeric inflation_rate "%"
+        numeric expected_return "% or NULL = automatic"
+        numeric current_savings
+        numeric monthly_sip
+        numeric step_up_rate "%"
+        timestamptz created_at
+        timestamptz updated_at
+    }
 ```
 
-Conventions: money is `NUMERIC(14,2)`; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`.
+Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`.
 
 ## Table dictionary
+
+### `goals` (Phase 3) – many per user; inputs only
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `user_id` | integer | FK `users.id` ON DELETE CASCADE; index `ix_goals_user_id` | Owner |
+| `goal_type` | varchar(20) | CHECK (retirement, education, house, car, marriage, travel, emergency_fund, wealth, other) | Category |
+| `name` | varchar(100) | NOT NULL | User's label |
+| `target_amount` | numeric(14,2) | CHECK > 0 | Cost in today's rupees |
+| `target_year` | smallint | NOT NULL (future year checked by the API) | When the money is needed |
+| `priority` | smallint | default 2, CHECK 1–3 | 1 high … 3 low |
+| `inflation_rate` | numeric(5,2) | default 6, CHECK 0–20 | % a year |
+| `expected_return` | numeric(5,2) | NULL allowed, CHECK 0–30 | % a year; NULL = automatic from the latest risk profile |
+| `current_savings` | numeric(14,2) | default 0, ≥ 0 | Already saved for the goal |
+| `monthly_sip` | numeric(14,2) | default 0, ≥ 0 | Invested each month now |
+| `step_up_rate` | numeric(5,2) | default 0, CHECK 0–50 | Yearly SIP increase, % |
+| `created_at`, `updated_at` | timestamptz | default now() | |
 
 ### `financial_profiles` (Phase 2) – one per user
 
@@ -109,6 +144,7 @@ Conventions: money is `NUMERIC(14,2)`; timestamps are `timestamptz`; every user-
 | `0001` | 0 | Enable the `vector` extension |
 | `0002` | 1 | Create `users` table with unique email index and role check |
 | `0003` | 2 | Create `financial_profiles` and `risk_assessments` |
+| `0004` | 3 | Create `goals` |
 
 ## Databases
 
