@@ -30,6 +30,9 @@ export function Layout() {
                 <NavLink to="/goals" className={navLink}>
                   Goals
                 </NavLink>
+                <NavLink to="/funds" end={false} className={navLink}>
+                  Funds
+                </NavLink>
                 <span className="hidden text-sm text-slate-500 sm:inline">{user.full_name}</span>
                 <button
                   type="button"

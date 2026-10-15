@@ -59,3 +59,52 @@ export const returnSourceLabel: Record<string, string> = {
   short_horizon: 'cautious: the goal is less than 3 years away',
   default: 'default until you complete the risk profile',
 }
+
+/** NAVs keep their precision: ₹62.1500 → ₹62.15, ₹5,012.3457 */
+export function formatNav(value: number): string {
+  return `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`
+}
+
+/** −12.50%, +8.1% or — when the fund is too young for the statistic. */
+export function formatReturn(value: number | null, signed = false): string {
+  if (value === null) return '—'
+  const text = `${Math.abs(value).toFixed(2)}%`
+  if (value < 0) return `−${text}`
+  return signed && value > 0 ? `+${text}` : text
+}
+
+export function formatRatio(value: number | null): string {
+  return value === null ? '—' : value.toFixed(2)
+}
+
+export function formatMonth(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+}
+
+export const assetClassLabel: Record<string, string> = {
+  equity: 'Equity',
+  debt: 'Debt',
+  hybrid: 'Hybrid',
+  index: 'Index funds',
+  etf: 'ETFs',
+  fund_of_funds: 'Fund of funds',
+  solution_oriented: 'Retirement & children',
+  other: 'Other',
+}
+
+export const planLabel: Record<string, string> = { direct: 'Direct', regular: 'Regular' }
+
+export const optionLabel: Record<string, string> = {
+  growth: 'Growth',
+  idcw: 'IDCW (payout)',
+  bonus: 'Bonus',
+  other: 'Other',
+}
+
+export const jobLabel: Record<string, string> = {
+  daily_nav: 'Daily NAVs (AMFI)',
+  backfill_nav: 'NAV history (mfapi.in)',
+  index_history: 'Index levels (Yahoo Finance)',
+  inflation: 'CPI inflation (MOSPI)',
+  fund_metrics: 'Fund metrics',
+}
