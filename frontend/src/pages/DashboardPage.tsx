@@ -39,6 +39,11 @@ function Step({
   )
 }
 
+// Shown while a step's data loads, so a finished step never flashes as "to do".
+function Checking() {
+  return <span className="text-slate-400">Checking…</span>
+}
+
 export function DashboardPage() {
   const { user } = useAuth()
   const profile = useProfile()
@@ -59,7 +64,9 @@ export function DashboardPage() {
 
       <div className="space-y-4">
         <Step number={1} title="Financial profile" done={hasProfile}>
-          {profile.data ? (
+          {profile.isPending ? (
+            <Checking />
+          ) : profile.data ? (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>
                 Age {profile.data.age} · {formatINR(profile.data.monthly_surplus)} left to invest each month
@@ -77,7 +84,9 @@ export function DashboardPage() {
         </Step>
 
         <Step number={2} title="Risk profile" done={assessment !== null}>
-          {assessment ? (
+          {latest.isPending ? (
+            <Checking />
+          ) : assessment ? (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="flex items-center gap-2">
                 <CategoryBadge category={assessment.category} /> score {assessment.final_score} / 100
@@ -95,7 +104,9 @@ export function DashboardPage() {
         </Step>
 
         <Step number={3} title="Financial goals" done={Boolean(goals.data?.length)}>
-          {goals.data?.length ? (
+          {goals.isPending ? (
+            <Checking />
+          ) : goals.data?.length ? (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>
                 {goals.data.length} {goals.data.length === 1 ? 'goal' : 'goals'} ·{' '}

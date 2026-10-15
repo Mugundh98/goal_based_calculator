@@ -79,7 +79,12 @@ function MonthlySummary({ goals }: { goals: Goal[] }) {
           note={required > surplus ? 'Less than your goals need – consider later dates or lower targets.' : undefined}
         />
       ) : (
-        <Stat label="Left to invest each month" value="—" note="Complete your financial profile to compare." />
+        <Stat
+          label="Left to invest each month"
+          value="—"
+          // data is undefined while loading and null when there is no profile yet.
+          note={profile.data === null ? 'Complete your financial profile to compare.' : undefined}
+        />
       )}
     </Card>
   )
