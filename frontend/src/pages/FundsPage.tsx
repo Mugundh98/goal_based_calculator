@@ -173,7 +173,10 @@ function SortHeader({ column, label, title, sort, order, onSort, align = 'right'
     <th
       scope="col"
       aria-sort={active ? (order === 'asc' ? 'ascending' : 'descending') : 'none'}
-      className={`px-3 py-2 font-medium ${align === 'right' ? 'text-right' : 'text-left'}`}
+      className={`px-3 py-2 font-medium ${
+        // The fund column stays put while the numbers scroll sideways on a phone.
+        align === 'right' ? 'text-right' : 'sticky left-0 z-10 bg-slate-50 text-left'
+      }`}
     >
       <button
         type="button"
@@ -202,7 +205,7 @@ function FundTable({ items, sort, order, onSort }: {
   return (
     // Scrolls sideways inside the card on a phone; the page itself never does.
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[56rem] text-sm">
+      <table className="w-full min-w-[48rem] text-sm">
         <thead className="border-b border-slate-200 bg-slate-50 text-slate-600">
           <tr>
             <SortHeader column="name" label="Fund" sort={sort} order={order} onSort={onSort} align="left" />
@@ -213,8 +216,8 @@ function FundTable({ items, sort, order, onSort }: {
         </thead>
         <tbody className="divide-y divide-slate-100">
           {items.map((fund) => (
-            <tr key={fund.id} className="hover:bg-slate-50">
-              <td className="max-w-md px-3 py-2">
+            <tr key={fund.id} className="group hover:bg-slate-50">
+              <td className="sticky left-0 z-10 w-48 max-w-48 bg-white px-3 py-2 group-hover:bg-slate-50 sm:w-auto sm:max-w-md">
                 <Link to={`/funds/${fund.id}`} className="font-medium text-slate-900 hover:text-emerald-700 hover:underline">
                   {fund.name}
                 </Link>

@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type PointerEvent, useLayoutEffect, useRef, useState } from 'react'
+import { type KeyboardEvent, type PointerEvent, useLayoutEffect, useState } from 'react'
 
 export interface ChartPoint {
   date: string // ISO date
@@ -79,17 +79,17 @@ function indexAtOrBefore(points: ChartPoint[], t: number): number {
  * labels at the line ends.
  */
 export function LineChart({ series, label, formatValue, height = 280 }: LineChartProps) {
-  const wrapper = useRef<HTMLDivElement>(null)
+  // Callback ref kept in state: the effect re-attaches if the measured element is replaced.
+  const [wrapper, setWrapper] = useState<HTMLElement | null>(null)
   const [width, setWidth] = useState(640)
   const [active, setActive] = useState<number | null>(null) // index into series[0].points
 
   useLayoutEffect(() => {
-    const element = wrapper.current
-    if (!element) return
+    if (!wrapper) return
     const observer = new ResizeObserver(([entry]) => setWidth(Math.max(280, entry.contentRect.width)))
-    observer.observe(element)
+    observer.observe(wrapper)
     return () => observer.disconnect()
-  }, [])
+  }, [wrapper])
 
   const drawn = series.filter((s) => s.points.length > 0)
   const primary = drawn[0]?.points ?? []
@@ -116,7 +116,11 @@ export function LineChart({ series, label, formatValue, height = 280 }: LineChar
   })()
 
   if (!scales || primary.length < 2) {
-    return <p className="py-16 text-center text-sm text-slate-500">Not enough data to draw a chart.</p>
+    return (
+      <p ref={setWrapper} className="py-16 text-center text-sm text-slate-500">
+        Not enough data to draw a chart.
+      </p>
+    )
   }
   const { x, y, ticks, start, end, invertX } = scales
 
@@ -183,7 +187,7 @@ export function LineChart({ series, label, formatValue, height = 280 }: LineChar
           ))}
         </ul>
       )}
-      <div ref={wrapper} className="relative">
+      <div ref={setWrapper} className="relative">
         <svg
           width={width}
           height={height}
