@@ -6,9 +6,12 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.13",
     "apscheduler>=3.10,<4",
+    "arch>=8.0.0",
     "email-validator>=2.2",
     "fastapi>=0.115",
+    "hmmlearn>=0.3.3",
     "httpx>=0.28.1",
+    "numpy>=2.5.4",
     "psycopg[binary]>=3.2",
     "pwdlib[argon2]>=0.2",
     "pydantic-settings>=2.4",
@@ -37,6 +40,10 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+filterwarnings = [
+    # hmmlearn 0.3.3 sets ndarray.shape, deprecated in NumPy 2.5 (not our code).
+    "ignore:Setting the shape on a NumPy array:DeprecationWarning",
+]
 
 [dependency-groups]
 dev = [

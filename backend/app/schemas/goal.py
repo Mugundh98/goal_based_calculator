@@ -27,6 +27,16 @@ def PercentIn(maximum: int):  # noqa: N802 - reads like a type in the field defi
     return Annotated[Decimal, Field(ge=0, le=maximum, decimal_places=2)]
 
 
+def check_target_year(value: int) -> int:
+    """A target year after this year and at most MAX_HORIZON_YEARS ahead."""
+    this_year = date.today().year
+    if value <= this_year:
+        raise ValueError("Target year must be after this year")
+    if value > this_year + MAX_HORIZON_YEARS:
+        raise ValueError(f"Target year must be within {MAX_HORIZON_YEARS} years")
+    return value
+
+
 class GoalCalculationInput(BaseModel):
     """The numbers needed to project a goal. Also used for the live preview while typing."""
 
@@ -42,12 +52,7 @@ class GoalCalculationInput(BaseModel):
     @field_validator("target_year")
     @classmethod
     def in_the_future(cls, value: int) -> int:
-        this_year = date.today().year
-        if value <= this_year:
-            raise ValueError("Target year must be after this year")
-        if value > this_year + MAX_HORIZON_YEARS:
-            raise ValueError(f"Target year must be within {MAX_HORIZON_YEARS} years")
-        return value
+        return check_target_year(value)
 
 
 class GoalInput(GoalCalculationInput):
