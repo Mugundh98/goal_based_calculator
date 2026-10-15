@@ -6,6 +6,7 @@ import {
   getQuestionnaire,
   submitAssessment,
 } from '../api/risk'
+import { goalsKey } from './useGoals'
 
 const riskKeys = {
   questionnaire: ['risk', 'questionnaire'],
@@ -32,7 +33,11 @@ export function useSubmitAssessment() {
     mutationFn: (answers: Record<string, string>) => submitAssessment(answers),
     onSuccess: (assessment) => {
       queryClient.setQueryData(riskKeys.latest, assessment)
-      return queryClient.invalidateQueries({ queryKey: riskKeys.history })
+      // Goals with an automatic expected return depend on the risk category.
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: riskKeys.history }),
+        queryClient.invalidateQueries({ queryKey: goalsKey }),
+      ])
     },
   })
 }

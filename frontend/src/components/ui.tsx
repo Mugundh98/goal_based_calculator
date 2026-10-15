@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect, useId, useRef } from 'react'
 import { Link } from 'react-router'
 
 import type { RiskCategory } from '../api/risk'
@@ -72,4 +72,60 @@ export function ScoreBar({ label, score, emphasis = false }: { label: string; sc
 
 export function Spinner({ text = 'Loading…' }: { text?: string }) {
   return <p className="py-10 text-center text-slate-500">{text}</p>
+}
+
+/**
+ * Modal dialog built on the native <dialog> element: showModal() gives focus trapping, the
+ * Escape key and a backdrop for free. Render it only while it should be open.
+ */
+export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
+  useEffect(() => {
+    // No close() in a cleanup: that fires the close event (→ onClose) when StrictMode re-runs
+    // this effect. Unmounting removes the dialog from the page anyway.
+    if (ref.current && !ref.current.open) ref.current.showModal()
+  }, [])
+  return (
+    <dialog
+      ref={ref}
+      aria-labelledby={titleId}
+      onClose={onClose}
+      className="m-auto max-h-[90vh] w-[calc(100%-2rem)] max-w-4xl overflow-y-auto rounded-xl bg-slate-50 p-0 shadow-xl backdrop:bg-slate-900/40"
+    >
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
+        <h2 id={titleId} className="text-lg font-semibold">
+          {title}
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="rounded-md px-2 py-1 text-xl leading-none text-slate-500 hover:bg-slate-100"
+        >
+          ×
+        </button>
+      </div>
+      <div className="p-5">{children}</div>
+    </dialog>
+  )
+}
+
+/** Horizontal progress bar, 0-100. */
+export function ProgressBar({ percent, label, tone = 'emerald' }: { percent: number; label: string; tone?: 'emerald' | 'amber' }) {
+  return (
+    <div
+      className="h-2.5 w-full rounded-full bg-slate-100"
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={percent}
+    >
+      <div
+        className={`h-2.5 rounded-full ${tone === 'emerald' ? 'bg-emerald-600' : 'bg-amber-500'}`}
+        style={{ width: `${Math.min(percent, 100)}%` }}
+      />
+    </div>
+  )
 }
