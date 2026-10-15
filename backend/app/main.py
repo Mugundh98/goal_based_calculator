@@ -1,14 +1,30 @@
 """FastAPI application entry point. Run with: uv run uvicorn app.main:app --reload"""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import get_settings
+from app.data_pipeline.scheduler import create_scheduler
 
 settings = get_settings()
 
-app = FastAPI(title=settings.app_name, version=settings.app_version)
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Start the market data scheduler with the app (if enabled) and stop it on shutdown."""
+    scheduler = create_scheduler() if settings.scheduler_enabled else None
+    if scheduler:
+        scheduler.start()
+    yield
+    if scheduler:
+        scheduler.shutdown(wait=False)
+
+
+app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

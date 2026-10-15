@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import auth, goals, health, profile, risk
+from app.api.routes import auth, funds, goals, health, market, profile, risk
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(health.router)
@@ -10,3 +10,5 @@ api_router.include_router(auth.router)
 api_router.include_router(profile.router)
 api_router.include_router(risk.router)
 api_router.include_router(goals.router)
+api_router.include_router(funds.router)
+api_router.include_router(market.router)

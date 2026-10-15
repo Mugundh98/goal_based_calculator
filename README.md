@@ -49,6 +49,16 @@ MCA 4th-semester project, Andhra University CDOE.
 
 4. Open http://localhost:5173. API docs: http://localhost:8000/docs
 
+5. Load market data (in `backend/`, first time only; the backfill downloads the NAV history of
+   about 1,500 funds and takes roughly half an hour):
+
+   ```bash
+   uv run python -m app.data_pipeline all
+   ```
+
+   Afterwards set `SCHEDULER_ENABLED=true` in `.env` to refresh it every evening, or run single
+   jobs (`daily_nav`, `index_history`, `inflation`, `fund_metrics`) by hand.
+
 ## Tests
 
 ```bash

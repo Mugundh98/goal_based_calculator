@@ -1,5 +1,4 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
 
 import {
   calculateGoal,
@@ -10,6 +9,7 @@ import {
   getGoals,
   updateGoal,
 } from '../api/goals'
+import { useDebounced } from './useDebounced'
 
 export const goalsKey = ['goals']
 
@@ -33,16 +33,6 @@ export function useDeleteGoal() {
     mutationFn: deleteGoal,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsKey }),
   })
-}
-
-/** Value that only changes after it has stopped changing for `delay` ms. */
-function useDebounced<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-  return debounced
 }
 
 /**

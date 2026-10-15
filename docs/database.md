@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 3._
+_Living document – updated whenever a migration is added. Last updated: Phase 4._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -65,9 +65,148 @@ erDiagram
     }
 ```
 
-Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`.
+**Market data (Phase 4)** – not owned by users; filled by the data pipeline.
+
+```mermaid
+erDiagram
+    FUNDS ||--o{ NAV_HISTORY : "has 0..* daily NAVs"
+    FUNDS ||--o| FUND_METRICS : "has 0..1"
+    FUNDS {
+        int id PK
+        int scheme_code UK "AMFI code"
+        varchar name
+        varchar amc "fund house"
+        varchar scheme_type
+        varchar category "SEBI category"
+        varchar asset_class
+        varchar plan "direct | regular"
+        varchar option "growth | idcw | bonus | other"
+        varchar isin_growth
+        varchar isin_reinvestment
+        numeric expense_ratio "NULL until loaded"
+        numeric latest_nav "copy of newest NAV"
+        date latest_nav_date
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    NAV_HISTORY {
+        int fund_id PK,FK
+        date nav_date PK
+        numeric nav
+    }
+    FUND_METRICS {
+        int fund_id PK,FK
+        date as_of_date
+        date history_start
+        float return_1y_3y_5y "CAGR %"
+        float rolling_1y_3y "avg min max positive %"
+        float volatility
+        float sharpe
+        float sortino
+        float max_drawdown
+        float risk_free_rate
+        timestamptz computed_at
+    }
+    INDEX_HISTORY {
+        varchar symbol PK
+        date trade_date PK
+        numeric close
+    }
+    INFLATION_DATA {
+        smallint base_year PK
+        date period PK
+        numeric cpi
+        boolean is_final
+    }
+    JOB_RUNS {
+        int id PK
+        varchar job_name
+        varchar status
+        varchar triggered_by
+        timestamptz started_at
+        timestamptz finished_at
+        int rows_read
+        int rows_written
+        jsonb details
+        text error
+    }
+```
+
+Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`. Market data (Phase 4): time series use a **composite natural primary key** (entity + date) instead of a surrogate id; NAVs are `NUMERIC(18,8)` (AMFI publishes up to 8 decimals); fund metrics are stored as `double precision` because they are derived statistics recomputed nightly (ADR-007).
 
 ## Table dictionary
+
+### `funds` (Phase 4) – one row per AMFI scheme code
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `scheme_code` | integer | UNIQUE | AMFI's code; the natural key every daily file is matched on |
+| `name` | varchar(200) | NOT NULL | Scheme name as published |
+| `amc` | varchar(120) | index | Fund house (from the AMC line above the rows in NAVAll.txt) |
+| `scheme_type` | varchar(30) | | Open Ended / Close Ended / Interval Fund |
+| `category` | varchar(120) | index | SEBI category, e.g. "Large Cap Fund" |
+| `asset_class` | varchar(20) | CHECK (equity, debt, hybrid, index, etf, fund_of_funds, solution_oriented, other); index | Normalised from AMFI's changing category labels |
+| `plan` | varchar(10) | CHECK (direct, regular) | Direct = no distributor commission |
+| `option` | varchar(10) | CHECK (growth, idcw, bonus, other) | What happens to gains |
+| `isin_growth`, `isin_reinvestment` | varchar(12) | NULL allowed | ISINs ("-" in the file → NULL) |
+| `expense_ratio` | numeric(5,2) | NULL allowed | % a year; not loaded yet (AMFI publishes it separately) |
+| `latest_nav`, `latest_nav_date` | numeric(18,8), date | CHECK latest_nav > 0 | Copy of the newest NAV (controlled redundancy for the fund list); only ever moves forward in time |
+| `created_at`, `updated_at` | timestamptz | default now() | |
+
+### `nav_history` (Phase 4) – one NAV per fund per business day (the largest table)
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `fund_id` | integer | PK (part 1), FK `funds.id` ON DELETE CASCADE | |
+| `nav_date` | date | PK (part 2) | |
+| `nav` | numeric(18,8) | CHECK > 0 | Net asset value per unit, ₹ |
+
+The composite primary key prevents duplicate NAVs and its B-tree index (fund_id first) serves the only query on this table: one fund's NAVs between two dates.
+
+### `fund_metrics` (Phase 4) – one row per fund with ≥ 1 year of history
+
+| Column | Type | Meaning |
+|---|---|---|
+| `fund_id` | integer PK, FK `funds.id` ON DELETE CASCADE | |
+| `as_of_date`, `history_start` | date | Latest and first NAV used |
+| `return_1y`, `return_3y`, `return_5y` | double, NULL if history too short | Trailing CAGR, % |
+| `rolling_1y_avg/min/max/positive`, `rolling_3y_…` | double | Every 1- or 3-year window: average, worst, best, % of windows above 0 |
+| `volatility` | double | Annualised std. dev. of the last 36 monthly returns, % |
+| `sharpe`, `sortino` | double | Last 3 years, annualised |
+| `max_drawdown` | double | Largest peak-to-trough fall in the last 3 years, % (negative) |
+| `risk_free_rate` | double NOT NULL | The assumption used for Sharpe/Sortino, % |
+| `computed_at` | timestamptz | When a value last changed |
+
+### `index_history` (Phase 4)
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `symbol` | varchar(30) | PK (part 1) | Yahoo symbol: `^NSEI` Nifty 50, `^CRSLDX` Nifty 500, `NIFTYMIDCAP150.NS` |
+| `trade_date` | date | PK (part 2) | |
+| `close` | numeric(14,4) | CHECK > 0 | Closing level |
+
+### `inflation_data` (Phase 4)
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `base_year` | smallint | PK (part 1) | CPI base year (2012 = 100) |
+| `period` | date | PK (part 2) | First day of the month |
+| `cpi` | numeric(8,2) | CHECK > 0 | All-India Combined General index (MOSPI); inflation is derived on read |
+| `is_final` | boolean | default true | False = provisional figure |
+
+### `job_runs` (Phase 4) – the pipeline's log
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `job_name` | varchar(40) | index; **partial unique index `uq_job_runs_one_running` on (job_name) WHERE status = 'running'** | daily_nav, backfill_nav, index_history, inflation, fund_metrics |
+| `status` | varchar(10) | CHECK (running, success, failed, skipped) | |
+| `triggered_by` | varchar(20) | | scheduler / cli / admin |
+| `started_at`, `finished_at` | timestamptz | | |
+| `rows_read`, `rows_written` | integer | default 0 | Written = inserted or changed (0 on an idempotent re-run) |
+| `details` | jsonb | default {} | Data-quality counts (rows skipped and why), latest dates |
+| `error` | text | NULL allowed | Exception message of a failed run |
 
 ### `goals` (Phase 3) – many per user; inputs only
 
@@ -145,6 +284,7 @@ Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%
 | `0002` | 1 | Create `users` table with unique email index and role check |
 | `0003` | 2 | Create `financial_profiles` and `risk_assessments` |
 | `0004` | 3 | Create `goals` |
+| `0005` | 4 | Create `funds`, `nav_history`, `fund_metrics`, `index_history`, `inflation_data`, `job_runs` |
 
 ## Databases
 
