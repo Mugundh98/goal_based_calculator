@@ -74,10 +74,11 @@ def test_zero_years_changes_nothing():
     assert tvm.future_value(50_000, 0.12, 0) == 50_000
 
 
-@pytest.mark.parametrize("call", [lambda: tvm.future_value(1, 0.1, -1), lambda: tvm.monthly_rate(-1)])
-def test_lump_sum_rejects_meaningless_input(call):
+def test_lump_sum_rejects_meaningless_input():
     with pytest.raises(FinanceInputError):
-        call()
+        tvm.future_value(1, 0.1, -1)  # negative period
+    with pytest.raises(FinanceInputError):
+        tvm.monthly_rate(-1)  # -100% a year
 
 
 # --- SIPs -------------------------------------------------------------------------------------

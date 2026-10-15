@@ -7,6 +7,7 @@ from app.core.database import Base
 from app.models.mixins import TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.goal import Goal
     from app.models.profile import FinancialProfile
     from app.models.risk import RiskAssessment
 
@@ -26,7 +27,8 @@ class User(TimestampMixin, Base):
     profile: Mapped["FinancialProfile | None"] = relationship(
         back_populates="user", cascade="all, delete-orphan", uselist=False
     )
-    # One-to-many: every questionnaire attempt is kept as history.
+    # One-to-many: every questionnaire attempt is kept as history; a user has many goals.
     risk_assessments: Mapped[list["RiskAssessment"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    goals: Mapped[list["Goal"]] = relationship(back_populates="user", cascade="all, delete-orphan")
