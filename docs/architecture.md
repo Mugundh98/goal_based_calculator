@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 3._
+_Living document – updated at the end of every phase. Last updated: Phase 4._
 
 ## Overview
 
@@ -22,9 +22,32 @@ flowchart TB
     subgraph Data["Data tier"]
         PG[(PostgreSQL 16 + pgvector)]
     end
+    subgraph Pipeline["Data pipeline – backend/app/data_pipeline/"]
+        SCH[APScheduler / CLI] --> JOB[Jobs: extract → transform → load]
+    end
+    subgraph Sources["Public data sources (free, no API key)"]
+        AMFI[AMFI NAVAll.txt]
+        MFAPI[mfapi.in history]
+        YF[Yahoo Finance via yfinance]
+        MOSPI[MOSPI CPI API]
+    end
     APIC -- "REST / JSON over HTTP" --> RT
     MD -- "SQLAlchemy + psycopg" --> PG
+    Sources --> JOB
+    JOB -- "idempotent upserts, job_runs log" --> PG
 ```
+
+### Market data pipeline (Phase 4)
+
+| Job | Source | Schedule (India time) | Writes |
+|---|---|---|---|
+| `daily_nav` | AMFI `NAVAll.txt` | daily 23:30, then `fund_metrics` | `funds`, `nav_history` |
+| `backfill_nav` | mfapi.in (cached in `backend/data/cache/`) | by hand (CLI), resumable | `nav_history` |
+| `index_history` | Yahoo Finance (`yfinance`) | Mon–Fri 18:30 | `index_history` |
+| `inflation` | MOSPI CPI API | 13th of each month, 10:00 | `inflation_data` |
+| `fund_metrics` | `nav_history` | after `daily_nav` | `fund_metrics` |
+
+Every run is recorded in `job_runs` (status, rows read/written, data-quality counts, error). A partial unique index allows only one running row per job, so two processes cannot run the same job at once. The scheduler runs inside the API process when `SCHEDULER_ENABLED=true`; jobs can also be run with `uv run python -m app.data_pipeline <job>` or, by an admin, with `POST /api/market/jobs/{job}/run`. Details: `docs/phases/04-market-data.md`, ADR-007.
 
 ## Components built so far
 
@@ -40,6 +63,9 @@ flowchart TB
 | Profile form, risk questionnaire, results page, onboarding dashboard | 2 | Done |
 | `finance/tvm.py` time-value-of-money formulas, `finance/goal_plan.py` projections; goals service/routes | 3 | Done |
 | Goals page, goal dialog with live projection, dashboard goals step | 3 | Done |
+| `finance/fund_metrics.py` (returns, rolling returns, volatility, Sharpe, Sortino, drawdown) | 4 | Done |
+| `data_pipeline/`: AMFI, mfapi.in, Yahoo Finance and MOSPI ingestion, upserts, job log, scheduler, CLI | 4 | Done |
+| Fund explorer (search, filters, sortable paged table), fund detail page with NAV vs Nifty 50 chart | 4 | Done |
 
 ## Authentication flow
 
@@ -54,7 +80,7 @@ flowchart TB
 |---|---|
 | `src/api/` | Typed functions calling the backend; `client.ts` holds the axios instance and interceptors |
 | `src/store/` | Auth context and provider (session state) |
-| `src/components/` | Layout, route guards, form controls |
+| `src/components/` | Layout, route guards, form controls, UI pieces, SVG `LineChart` |
 | `src/pages/` | One component per route |
 | `src/lib/` | Token storage, validation schemas, error formatting |
 | `src/hooks/` | TanStack Query hooks |
@@ -68,7 +94,8 @@ flowchart TB
 | Service | `app/services/` | Business logic |
 | Model | `app/models/` | SQLAlchemy ORM tables |
 | Core | `app/core/` | Settings, DB engine/session, security |
-| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3); later `app/simulation/`, `app/ml/`, `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
+| Pipeline | `app/data_pipeline/` | Source parsers, bulk upserts, jobs, scheduler, CLI (Phase 4) |
+| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4); later `app/simulation/`, `app/ml/`, `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
 
 ## Environments
 
@@ -87,4 +114,8 @@ flowchart TB
 | `ENVIRONMENT` | backend | `development` |
 | `JWT_SECRET_KEY` | backend | random 48+ byte string (required in production) |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | backend | `60` |
+| `SCHEDULER_ENABLED` | backend | `false`; `true` runs the pipeline timetable in the API process (one process only) |
+| `DATA_CACHE_DIR` | backend | `data/cache` (downloaded NAV histories, git-ignored) |
+| `RISK_FREE_RATE` | backend | `0.06` (fraction a year, for Sharpe and Sortino) |
 | `VITE_API_BASE_URL` | frontend | empty in development |
+| `API_PROXY_TARGET` | Vite dev server | `http://127.0.0.1:8000` by default; another backend port when 8000 is busy |
