@@ -6,6 +6,7 @@ import { FormError } from '../components/form'
 import { GoalForm } from '../components/GoalForm'
 import { Card, Modal, PageHeader, ProgressBar, Spinner } from '../components/ui'
 import { useDeleteGoal, useGoals } from '../hooks/useGoals'
+import { useRetirementPlan } from '../hooks/useRetirement'
 import { useProfile } from '../hooks/useProfile'
 import { formatINR, formatLakhCrore, goalTypeLabel, priorityLabel, returnSourceLabel } from '../lib/format'
 
@@ -103,10 +104,16 @@ function Stat({ label, value, note }: { label: string; value: string; note?: str
 
 function GoalCard({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
   const deleteGoal = useDeleteGoal()
+  const retirement = useRetirementPlan()
   const p = goal.projection
+  // The retirement planner owns this goal: edit it there (the API refuses direct edits).
+  const planned = retirement.data?.goal_id === goal.id
 
   const onDelete = () => {
-    if (window.confirm(`Delete the goal “${goal.name}”? This cannot be undone.`)) deleteGoal.mutate(goal.id)
+    const message = planned
+      ? `Delete “${goal.name}”? This also deletes your retirement plan and cannot be undone.`
+      : `Delete the goal “${goal.name}”? This cannot be undone.`
+    if (window.confirm(message)) deleteGoal.mutate(goal.id)
   }
 
   return (
@@ -161,9 +168,15 @@ function GoalCard({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         >
           Simulate
         </Link>
-        <button type="button" onClick={onEdit} className={`${buttonClass} border border-slate-300 bg-white hover:bg-slate-50`}>
-          Edit
-        </button>
+        {planned ? (
+          <Link to="/retirement" className={`${buttonClass} border border-slate-300 bg-white hover:bg-slate-50`}>
+            Open planner
+          </Link>
+        ) : (
+          <button type="button" onClick={onEdit} className={`${buttonClass} border border-slate-300 bg-white hover:bg-slate-50`}>
+            Edit
+          </button>
+        )}
         <button
           type="button"
           onClick={onDelete}

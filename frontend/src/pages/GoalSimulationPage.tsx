@@ -29,6 +29,7 @@ import {
   simulationModelLabel,
   simulationReturnSourceLabel,
 } from '../lib/format'
+import { verdict } from '../lib/verdict'
 
 const THIS_YEAR = new Date().getFullYear()
 const buttonClass = 'rounded-md px-4 py-2 text-sm font-medium'
@@ -135,12 +136,6 @@ function Simulation({ goal }: { goal: Goal }) {
 }
 
 // --- Headline -----------------------------------------------------------------------------------
-
-function verdict(chance: number) {
-  if (chance >= 80) return { text: 'Likely', icon: '✓', tone: 'bg-emerald-100 text-emerald-800', bar: 'bg-emerald-600' }
-  if (chance >= 50) return { text: 'Uncertain', icon: '!', tone: 'bg-amber-100 text-amber-800', bar: 'bg-amber-500' }
-  return { text: 'Unlikely', icon: '✕', tone: 'bg-rose-100 text-rose-800', bar: 'bg-rose-600' }
-}
 
 function Headline({ result, updating }: { result: SimulationResult; updating: boolean }) {
   const chance = result.success_probability

@@ -3,8 +3,9 @@ import type { ReactNode } from 'react'
 import { ButtonLink, Card, CategoryBadge } from '../components/ui'
 import { useGoals } from '../hooks/useGoals'
 import { useProfile } from '../hooks/useProfile'
+import { useRetirementPlan } from '../hooks/useRetirement'
 import { useLatestAssessment } from '../hooks/useRisk'
-import { formatINR } from '../lib/format'
+import { formatINR, formatLakhCrore } from '../lib/format'
 import { useAuth } from '../store/authContext'
 
 function Step({
@@ -49,6 +50,7 @@ export function DashboardPage() {
   const profile = useProfile()
   const latest = useLatestAssessment()
   const goals = useGoals()
+  const retirement = useRetirementPlan()
   if (!user) return null
 
   const firstName = user.full_name.split(' ')[0]
@@ -122,6 +124,30 @@ export function DashboardPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>Add goals such as a child&apos;s education, a house or a car, and see how much to invest for each.</span>
               <ButtonLink to="/goals">Start</ButtonLink>
+            </div>
+          )}
+        </Step>
+
+        <Step number={4} title="Retirement plan" done={Boolean(retirement.data)}>
+          {retirement.isPending ? (
+            <Checking />
+          ) : retirement.data ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>
+                Retire at {retirement.data.retirement_age} · corpus{' '}
+                {formatLakhCrore(retirement.data.projection.corpus_needed)} ·{' '}
+                {retirement.data.projection.accumulation.required_sip === null
+                  ? 'due now'
+                  : `${formatINR(retirement.data.projection.accumulation.required_sip)} a month needed`}
+              </span>
+              <ButtonLink to="/retirement" variant="secondary">
+                View
+              </ButtonLink>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>Work out the corpus you need to retire and how long it will last.</span>
+              {hasProfile && <ButtonLink to="/retirement">Start</ButtonLink>}
             </div>
           )}
         </Step>

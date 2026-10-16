@@ -37,6 +37,7 @@ export function useSubmitAssessment() {
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: riskKeys.history }),
         queryClient.invalidateQueries({ queryKey: goalsKey }),
+        queryClient.invalidateQueries({ queryKey: ['retirement'] }),
       ])
     },
   })

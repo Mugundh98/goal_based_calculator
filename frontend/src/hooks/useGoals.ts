@@ -31,7 +31,12 @@ export function useDeleteGoal() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: deleteGoal,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsKey }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: goalsKey }),
+        // Deleting the retirement goal deletes the retirement plan too.
+        queryClient.invalidateQueries({ queryKey: ['retirement'] }),
+      ]),
   })
 }
 
