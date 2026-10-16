@@ -349,7 +349,7 @@ At US-like inflation the rule is almost never wrong, as Bengen found. At Indian 
 | `test_retirement_simulation.py` | 13 | **Zero volatility = the plan** (every band, success, depletion age, SIP and corpus); required SIP → 100% at zero volatility; **vectorised = plain loop** (flat and step-up); an exactly funded plan succeeds about half the time; survival falls and ends at the success probability; more certainty costs more and the median corpus ≈ the single-return corpus; SIP for q% reaches q% and one rupee less does not (3 levels); a higher SIP is never worse; reproducible; failed paths run out after retirement |
 | `test_retirement_api.py` | 27 | Login and profile required; 404 before a plan; worked example through the API; nothing saved by `calculate`; automatic and short-horizon returns; 8 invalid inputs → 422; "retire before your current age" names the age; save creates the plan and a goal that **reproduces the corpus and SIP through the Phase 3 maths**; save is idempotent (one plan, one goal); inputs read back; goal edit → 409; delete removes both; deleting the goal deletes the plan; new date of birth moves the year; users isolated; DB CHECK; cascade on user delete; simulation shape, survival, bands, equity shares; reproducible; history models need data (409) |
 | Earlier phases | 325 | Unchanged, all passing |
-| **Total** | **386** | **All passed** (local, ~83 s) |
+| **Total** | **386** | **All passed** (local, ~72 s; GitHub Actions run #20: passed in 52 s) |
 
 **Manual end-to-end test in the browser** (2026-10-16, local data):
 
