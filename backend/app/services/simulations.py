@@ -234,7 +234,7 @@ def _deterministic(inputs: GoalInputs) -> DeterministicOut:
     )
 
 
-def _history_out(history: MarketHistory | None) -> HistoryOut | None:
+def history_out(history: MarketHistory | None) -> HistoryOut | None:
     if history is None:
         return None
     return HistoryOut(
@@ -297,7 +297,7 @@ def run_simulation(
         deterministic=_deterministic(inputs),
         annual_volatility=round(model.annual_volatility * PERCENT, 2),
         model_details=model.details(),
-        history=_history_out(history),
+        history=history_out(history),
         bands=[
             BandOut(
                 year=band.year,
@@ -340,7 +340,7 @@ def compare_models(
         seed=seed,
         inputs=shown,
         deterministic=_deterministic(inputs),
-        history=_history_out(history),
+        history=history_out(history),
         models=results,
     )
 

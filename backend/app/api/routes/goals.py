@@ -43,8 +43,14 @@ def read_goal(goal_id: int, user: CurrentUser, db: DbSession) -> GoalRead:
 
 @router.put("/{goal_id}", response_model=GoalRead)
 def update_goal(goal_id: int, data: GoalInput, user: CurrentUser, db: DbSession) -> GoalRead:
-    """Replace every field of a goal."""
-    goal = service.update_goal(db, owned_goal(db, user, goal_id), data)
+    """Replace every field of a goal. The retirement goal is edited in the planner instead."""
+    goal = owned_goal(db, user, goal_id)
+    if goal.retirement_plan is not None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="This goal is managed by the retirement planner; edit it there",
+        )
+    goal = service.update_goal(db, goal, data)
     return service.to_read(goal, service.risk_category(db, user))
 
 
