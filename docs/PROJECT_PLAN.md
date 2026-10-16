@@ -182,7 +182,7 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
 ### Phase 6 – Retirement planner  · `phase-06-retirement` · `v0.6.0`
 
 - **Backend:** accumulation phase (corpus needed at retirement from expenses, inflation, life expectancy) and withdrawal phase (corpus longevity simulation, safe withdrawal rate).
-- **Database:** `retirement_plans` (linked to the retirement goal; assumptions JSON).
+- **Database:** `retirement_plans` (linked to the retirement goal; assumptions JSON). *As built:* typed columns instead of JSON (retirement age, plan-until age, spending, post-retirement return); savings inputs stay on the linked goal (ADR-009).
 - **Frontend:** step-by-step retirement wizard; chart of corpus over the full lifetime, with probability of not running out of money.
 - **Viva focus:** 4% rule (Bengen) and why it may not suit India; present value of a growing annuity; longevity risk.
 

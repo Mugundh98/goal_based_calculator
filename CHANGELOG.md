@@ -2,6 +2,22 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.6.0] – 2026-10-16 – Phase 6: Retirement planner
+
+### Added
+
+- `tvm.annuity_due_present_factor` and `tvm.present_value_growing_annuity`; `app/finance/retirement.py`: corpus needed (present value of monthly withdrawals rising with inflation, annuity due), savings phase as a Phase 3 goal, month-by-month drawdown and depletion age, corpus multiple, withdrawal rate and sustainable withdrawal rate.
+- `app/simulation/retirement.py`: lifetime Monte Carlo (Phase 5 engine until retirement, closed-form withdrawal phase): chance the money lasts, survival by age, depletion ages, exact SIP and corpus for a 50/75/90% chance; zero volatility reproduces the single-return plan.
+- `retirement_plans` table – migration `0007`; one per user, owning one `retirement` goal whose target and year the planner keeps in sync.
+- `GET/PUT/DELETE /api/retirement`, `POST /api/retirement/calculate`, `POST /api/retirement/simulate`; `PUT /api/goals/{id}` on the retirement goal returns `409`; saving the profile re-syncs the retirement year.
+- Frontend: five-step retirement wizard with live preview, retirement page (chance the money lasts, lifetime fan chart with a retirement marker, chance-by-age chart, certainty table, 4% rule comparison), "Open planner" on the retirement goal, dashboard step 4, "Retirement" in the navigation.
+- 61 new tests (386 total), including payment-by-payment and plain-loop cross-checks and the worked example.
+- Documentation: Phase 6 document (with a simulation of the 4% rule on Indian data), ADR-009, updated architecture, database and API docs.
+
+### Changed
+
+- `FanChart` is generic over its band type and accepts age labels, a marker and a target label; end labels stay above the axis. The chance verdict moved to `src/lib/verdict.ts`. `services.simulations.history_out` is public.
+
 ## [0.5.0] – 2026-10-16 – Phase 5: Monte Carlo simulation engine
 
 ### Added
