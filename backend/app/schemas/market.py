@@ -100,10 +100,18 @@ class SeriesPoint(BaseModel):
     value: float
 
 
+class UnitChangeOut(BaseModel):
+    date: date  # first NAV in the new units
+    factor: float  # the NAV jumped by this power of ten (100 = ₹10 -> ₹1,000 units)
+
+
 class FundNavHistory(BaseModel):
     fund_id: int
     period: Period
-    points: list[SeriesPoint]  # NAVs, oldest first
+    # NAVs, oldest first, in the units of the latest NAV: earlier NAVs are restated across
+    # face-value changes, so the chart shows what an investment really did.
+    points: list[SeriesPoint]
+    unit_changes: list[UnitChangeOut] = []
 
 
 class IndexSummary(BaseModel):

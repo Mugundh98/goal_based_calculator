@@ -74,8 +74,7 @@ def read_fund(fund_id: int, _: CurrentUser, db: DbSession) -> FundDetail:
 def nav_history(
     fund_id: int, _: CurrentUser, db: DbSession, period: Period = "3y"
 ) -> FundNavHistory:
-    """Daily NAVs for the period, oldest first."""
+    """Daily NAVs for the period, oldest first, in today's units (face-value changes listed)."""
     fund = existing_fund(db, fund_id)
-    return FundNavHistory(
-        fund_id=fund.id, period=period, points=service.nav_history(db, fund, period)
-    )
+    points, unit_changes = service.nav_history(db, fund, period)
+    return FundNavHistory(fund_id=fund.id, period=period, points=points, unit_changes=unit_changes)

@@ -2,6 +2,13 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.7.1] – 2026-10-17 – Fund metrics and NAV charts ignore face-value changes
+
+### Fixed
+
+- Fund metrics (Phase 4) treated a fund's change of unit face value (a NAV that jumps by a power of ten, e.g. UTI Liquid Fund's 1:10 change on 20 June 2026) as a return: −89% one-year return, 52% volatility. The `fund_metrics` job now restates earlier NAVs in today's units first (`app/finance/nav_adjust.adjust_series`, the rule used for the ML data in 0.7.0); 19 such changes in the loaded data. Stored NAVs are unchanged.
+- `GET /api/funds/{id}/nav` returns NAVs in today's units and a new `unit_changes` list; the fund page explains the adjustment under the chart.
+
 ## [0.7.0] – 2026-10-17 – Phase 7: ML fund intelligence
 
 ### Added

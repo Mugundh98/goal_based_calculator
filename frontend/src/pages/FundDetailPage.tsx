@@ -88,11 +88,12 @@ function NavChart({ fund }: { fund: FundDetail }) {
   const [period, setPeriod] = useState<Period>('3y')
   const [compare, setCompare] = useState(true)
   const nav = useFundNav(fund.id, period)
-  const start = nav.data?.[0]?.date ?? null
+  const start = nav.data?.points[0]?.date ?? null
   const benchmark = useIndexHistory(fund.benchmark, compare ? start : null)
   const benchmarkName = BENCHMARK_NAME[fund.benchmark] ?? fund.benchmark
 
-  const navPoints = nav.data ?? []
+  const navPoints = nav.data?.points ?? []
+  const unitChanges = nav.data?.unit_changes ?? []
   const comparing = compare && (benchmark.data?.length ?? 0) > 1
   const series: ChartSeries[] = comparing
     ? [
@@ -136,6 +137,20 @@ function NavChart({ fund }: { fund: FundDetail }) {
         <div className={`transition-opacity ${reloading ? 'opacity-60' : ''}`}>
           <LineChart series={series} formatValue={format} label={`${fund.name}: ${comparing ? `growth of ₹100 compared with ${benchmarkName}` : 'NAV'}`} />
           {comparing && <GrowthSentence series={series} />}
+          {unitChanges.length > 0 && (
+            <p className="mt-2 text-xs text-slate-500">
+              {unitChanges
+                .map(
+                  (c) =>
+                    `On ${formatDate(c.date)} the fund changed the face value of its units (NAV ${
+                      c.factor < 1 ? `÷${Math.round(1 / c.factor)}` : `×${Math.round(c.factor)}`
+                    }).`,
+                )
+                .join(' ')}{' '}
+              Earlier NAVs are shown in today&apos;s units, so the line shows what an investment really did; the
+              published NAVs were not a loss or a gain.
+            </p>
+          )}
           <DataTable series={series} format={format} />
         </div>
       )}
