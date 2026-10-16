@@ -14,6 +14,8 @@ calculation. Conventions used throughout:
   exact NUMERIC in the database (see ADR-006).
 """
 
+import math
+
 MONTHS_PER_YEAR = 12
 
 
@@ -158,3 +160,41 @@ def required_step_up_sip(
     if years == 0:
         raise FinanceInputError("the target date has already arrived")
     return remaining / step_up_sip_future_value(1.0, annual_rate, years, step_up_rate)
+
+
+# --- Withdrawals (present value) --------------------------------------------------------------
+
+
+def annuity_due_present_factor(i: float, months: int) -> float:
+    """Present value of 1 rupee paid at the START of each month for `months` months.
+
+    Sum of (1 + i)^-k for k = 0..n-1  =  (1 - (1 + i)^-n) / i * (1 + i). With i = 0 it is n.
+    """
+    _check_period(months, "months")
+    if i == 0:
+        return float(months)
+    return (1 - (1 + i) ** -months) / i * (1 + i)
+
+
+def present_value_growing_annuity(
+    first_monthly: float, growth_rate: float, annual_rate: float, years: int
+) -> float:
+    """Money needed today to pay `first_monthly` at the start of every month for `years` years,
+    the monthly amount rising by `growth_rate` once a year, while the balance earns `annual_rate`.
+
+    Year k pays first_monthly x (1 + g)^k twelve times; at the start of that year those twelve
+    payments are worth first_monthly x (1 + g)^k x a12 (a12 = annuity_due_present_factor), and
+    discounting by (1 + r)^k gives a geometric series in q = (1 + g) / (1 + r):
+
+        PV = first_monthly x a12 x (1 - q^n) / (1 - q),   or  first_monthly x a12 x n  if q = 1
+    """
+    _check_period(years, "years")
+    _check_rate(annual_rate)
+    _check_rate(growth_rate, "growth rate")
+    one_year = first_monthly * annuity_due_present_factor(
+        monthly_rate(annual_rate), MONTHS_PER_YEAR
+    )
+    q = (1 + growth_rate) / (1 + annual_rate)
+    if math.isclose(q, 1.0, rel_tol=0, abs_tol=1e-12):
+        return one_year * years
+    return one_year * (1 - q**years) / (1 - q)

@@ -9,6 +9,7 @@ from app.models.mixins import TimestampMixin
 if TYPE_CHECKING:
     from app.models.goal import Goal
     from app.models.profile import FinancialProfile
+    from app.models.retirement import RetirementPlan
     from app.models.risk import RiskAssessment
 
 
@@ -32,3 +33,7 @@ class User(TimestampMixin, Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     goals: Mapped[list["Goal"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    # One-to-one: at most one retirement plan (it also owns one of the goals above).
+    retirement_plan: Mapped["RetirementPlan | None"] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
+    )

@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 5._
+_Living document – updated at the end of every phase. Last updated: Phase 6._
 
 ## Overview
 
@@ -66,6 +66,21 @@ flowchart LR
 
 The engine follows the Phase 3 conventions (effective monthly rate, annuity-due SIPs, yearly step-up); the expected return is the median growth rate, so zero volatility reproduces the Phase 3 projection exactly. History-based models need at least 5 years of aligned equity and debt months; without market data only the normal model runs, with assumed volatilities. Fitting `arch`/`hmmlearn` models imports pandas and SciPy (seconds), so the API imports them in a background thread at start-up. Details: `docs/phases/05-simulation.md`, ADR-008.
 
+### Retirement planner (Phase 6)
+
+```mermaid
+flowchart LR
+    UI[RetirementWizard / RetirementPage] -->|PUT, GET, POST calculate, simulate| RT[retirement routes]
+    RT --> SV[services/retirement.py]
+    SV -->|age| PR[(financial_profiles)]
+    SV --> F[finance/retirement.py<br/>growing-annuity corpus, drawdown]
+    SV --> MC[simulation/retirement.py<br/>lifetime Monte Carlo, closed form]
+    MC --> E[simulation/engine.py + Phase 5 models]
+    SV -->|plan + synced goal| DB[(retirement_plans, goals)]
+```
+
+The savings phase is stored as a `retirement` goal (target = corpus in today's money), so the Goals page and the Phase 5 simulation use it unchanged; the planner owns it and the goals API refuses direct edits. The withdrawal phase has a closed form (balance = growth × (corpus − PV of withdrawals so far)), so success, depletion ages and the SIP and corpus for a chosen certainty come from one vectorised run. Details: `docs/phases/06-retirement.md`, ADR-009.
+
 ## Components built so far
 
 | Component | Phase | Status |
@@ -85,6 +100,8 @@ The engine follows the Phase 3 conventions (effective monthly rate, annuity-due 
 | Fund explorer (search, filters, sortable paged table), fund detail page with NAV vs Nifty 50 chart | 4 | Done |
 | `simulation/`: vectorised Monte Carlo engine, normal / block bootstrap / GARCH(1,1) / 2-state HMM return models; simulations service and routes | 5 | Done |
 | Goal simulation page: fan chart, chance of success, what-if sliders, SIP for a chosen certainty, model comparison, saved runs | 5 | Done |
+| `finance/retirement.py` (corpus, drawdown, withdrawal rates), `simulation/retirement.py` (lifetime Monte Carlo); retirement service and routes; `retirement_plans` | 6 | Done |
+| Retirement wizard, plan page (chance the money lasts, lifetime fan chart, survival chart, certainty, 4% rule), dashboard step | 6 | Done |
 
 ## Authentication flow
 

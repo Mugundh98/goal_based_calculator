@@ -9,6 +9,7 @@ from app.models.mixins import TimestampMixin
 from app.models.profile import Money
 
 if TYPE_CHECKING:
+    from app.models.retirement import RetirementPlan
     from app.models.user import User
 
 GOAL_TYPES = (
@@ -65,3 +66,7 @@ class Goal(TimestampMixin, Base):
     step_up_rate: Mapped[Decimal] = mapped_column(Percent, server_default="0")  # % a year
 
     user: Mapped["User"] = relationship(back_populates="goals")
+    # Set only for the goal that holds a retirement plan's savings phase.
+    retirement_plan: Mapped["RetirementPlan | None"] = relationship(
+        back_populates="goal", cascade="all, delete-orphan", uselist=False
+    )

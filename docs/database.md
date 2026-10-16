@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 5._
+_Living document – updated whenever a migration is added. Last updated: Phase 6._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -13,6 +13,8 @@ erDiagram
     USERS ||--o{ GOALS : "has 0..*"
     GOALS ||--o{ SIMULATIONS : "has 0..* saved runs"
     SIMULATIONS ||--|| SIMULATION_RESULTS : "has exactly 1"
+    USERS ||--o| RETIREMENT_PLANS : "has 0..1"
+    GOALS ||--o| RETIREMENT_PLANS : "savings phase of"
     USERS {
         int id PK
         varchar email UK "lower-case"
@@ -62,6 +64,17 @@ erDiagram
         numeric current_savings
         numeric monthly_sip
         numeric step_up_rate "%"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    RETIREMENT_PLANS {
+        int id PK
+        int user_id FK,UK
+        int goal_id FK,UK
+        smallint retirement_age
+        smallint life_expectancy "plan until"
+        numeric monthly_expense "today's rupees"
+        numeric post_retirement_return "%"
         timestamptz created_at
         timestamptz updated_at
     }
@@ -154,6 +167,19 @@ erDiagram
 Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`. Market data (Phase 4): time series use a **composite natural primary key** (entity + date) instead of a surrogate id; NAVs are `NUMERIC(18,8)` (AMFI publishes up to 8 decimals); fund metrics are stored as `double precision` because they are derived statistics recomputed nightly (ADR-007). Simulations (Phase 5): a saved run is a **snapshot** (random, depends on market data that changes daily), so its output is stored, unlike goal projections; the question (`simulations`) and the bulky answer (`simulation_results`) are split one-to-one (ADR-008).
 
 ## Table dictionary
+
+### `retirement_plans` (Phase 6) – one per user, owning one `retirement` goal
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `user_id` | integer | FK `users.id` ON DELETE CASCADE, UNIQUE | One plan per user |
+| `goal_id` | integer | FK `goals.id` ON DELETE CASCADE, UNIQUE | The goal holding the savings phase (savings, SIP, step-up, inflation, pre-retirement return); its target (corpus in today's money) and year are written by the planner |
+| `retirement_age` | smallint | CHECK 30–80 | |
+| `life_expectancy` | smallint | CHECK > retirement_age AND ≤ 105 | Plan until this age |
+| `monthly_expense` | numeric(14,2) | CHECK > 0 | Spending in retirement, today's rupees |
+| `post_retirement_return` | numeric(5,2) | default 8, CHECK 0–30 | % a year after retiring |
+| `created_at`, `updated_at` | timestamptz | default now() | |
 
 ### `simulations` (Phase 5) – saved Monte Carlo runs of a goal
 
@@ -328,6 +354,7 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `0004` | 3 | Create `goals` |
 | `0005` | 4 | Create `funds`, `nav_history`, `fund_metrics`, `index_history`, `inflation_data`, `job_runs` |
 | `0006` | 5 | Create `simulations` and `simulation_results` |
+| `0007` | 6 | Create `retirement_plans` |
 
 ## Databases
 

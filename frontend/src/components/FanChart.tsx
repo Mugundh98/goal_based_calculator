@@ -14,11 +14,17 @@ const TARGET = '#b45309' // amber-700, dotted
 
 const MARGIN = { top: 16, right: 16, bottom: 28, left: 64 }
 
-interface FanChartProps {
-  bands: Band[]
+interface FanChartProps<B extends Band> {
+  bands: B[]
   target: number // inflated target at the goal year
   label: string
   height?: number
+  /** Axis, table and tooltip label of a year (default: the calendar year). */
+  xLabel?: (band: B) => string
+  xName?: string // table column heading (default "Year")
+  targetLabel?: string // text on the dotted line (default "Target in <last year>")
+  /** A vertical reference line, e.g. the year of retirement. */
+  marker?: { calendarYear: number; label: string }
 }
 
 /**
@@ -26,7 +32,16 @@ interface FanChartProps {
  * of paths fall in, the median path, the single-number plan and the target. Hover or use the
  * arrow keys to read a year.
  */
-export function FanChart({ bands, target, label, height = 320 }: FanChartProps) {
+export function FanChart<B extends Band>({
+  bands,
+  target,
+  label,
+  height = 320,
+  xLabel = (b) => String(b.calendar_year),
+  xName = 'Year',
+  targetLabel,
+  marker,
+}: FanChartProps<B>) {
   const [wrapper, setWrapper] = useState<HTMLElement | null>(null)
   const [width, setWidth] = useState(640)
   const [active, setActive] = useState<number | null>(null)
@@ -94,6 +109,12 @@ export function FanChart({ bands, target, label, height = 320 }: FanChartProps) 
     .map((l) => ({ ...l, y: y(l.value) - 8 }))
     .sort((a, b) => a.y - b.y)
   if (endLabels[1].y - endLabels[0].y < 14) endLabels[1].y = endLabels[0].y + 14
+  // Keep both above the x-axis labels (e.g. when the money has run out and both end at ₹0).
+  const floor = height - MARGIN.bottom - 4
+  if (endLabels[1].y > floor) {
+    endLabels[1].y = floor
+    endLabels[0].y = Math.min(endLabels[0].y, floor - 14)
+  }
 
   return (
     <div>
@@ -106,7 +127,7 @@ export function FanChart({ bands, target, label, height = 320 }: FanChartProps) 
             Single-return plan
           </LegendItem>
           <LegendItem swatch={<line x1="0" y1="6" x2="18" y2="6" stroke={TARGET} strokeWidth="2" strokeDasharray="1 3" strokeLinecap="round" />}>
-            Target
+            {targetLabel ?? 'Target'}
           </LegendItem>
         </ul>
         <button
@@ -141,9 +162,31 @@ export function FanChart({ bands, target, label, height = 320 }: FanChartProps) 
           ))}
           {yearTicks.map((b) => (
             <text key={b.year} x={x(b.calendar_year)} y={height - 8} textAnchor="middle" className="fill-slate-500 text-[11px]">
-              {b.calendar_year}
+              {xLabel(b)}
             </text>
           ))}
+          {marker && (
+            <g>
+              <line
+                x1={x(marker.calendarYear)}
+                x2={x(marker.calendarYear)}
+                y1={MARGIN.top}
+                y2={height - MARGIN.bottom}
+                stroke="#64748b"
+                strokeDasharray="2 3"
+              />
+              <text
+                x={x(marker.calendarYear) + 4}
+                y={MARGIN.top + 10}
+                stroke="white"
+                strokeWidth="3"
+                paintOrder="stroke"
+                className="fill-slate-600 text-[11px] font-medium"
+              >
+                {marker.label}
+              </text>
+            </g>
+          )}
           <path d={area((b) => b.p90, (b) => b.p10)} fill={OUTER_BAND} />
           <path d={area((b) => b.p75, (b) => b.p25)} fill={INNER_BAND} />
           <line
@@ -164,7 +207,7 @@ export function FanChart({ bands, target, label, height = 320 }: FanChartProps) 
             paintOrder="stroke"
             className="fill-slate-700 text-[11px] font-medium"
           >
-            Target in {last}: {formatLakhCrore(target)}
+            {targetLabel ?? `Target in ${last}`}: {formatLakhCrore(target)}
           </text>
           <path d={line((b) => b.deterministic)} fill="none" stroke={PLAN} strokeWidth="2" strokeDasharray="5 4" />
           <path d={line((b) => b.p50)} fill="none" stroke={MEDIAN} strokeWidth="2" strokeLinejoin="round" />
@@ -206,7 +249,9 @@ export function FanChart({ bands, target, label, height = 320 }: FanChartProps) 
             style={hoverX > width / 2 ? { right: width - hoverX + 12 } : { left: hoverX + 12 }}
           >
             <p className="mb-1 text-xs text-slate-500">
-              End of {hovered.calendar_year} {hovered.year === 0 ? '(today)' : `(year ${hovered.year})`}
+              {xName === 'Year'
+                ? `End of ${hovered.calendar_year} ${hovered.year === 0 ? '(today)' : `(year ${hovered.year})`}`
+                : `${xName} ${xLabel(hovered)} (${hovered.calendar_year})`}
             </p>
             <dl className="grid grid-cols-[auto_auto] gap-x-3 tabular-nums">
               <TooltipRow label="Best 10% above">{formatLakhCrore(hovered.p90)}</TooltipRow>
@@ -226,7 +271,7 @@ export function FanChart({ bands, target, label, height = 320 }: FanChartProps) 
             <caption className="sr-only">{label}</caption>
             <thead className="sticky top-0 bg-white text-slate-500">
               <tr>
-                <th className="py-1 text-left font-medium">Year</th>
+                <th className="py-1 text-left font-medium">{xName}</th>
                 <th className="font-medium">10th</th>
                 <th className="font-medium">25th</th>
                 <th className="font-medium">Median</th>
@@ -238,7 +283,7 @@ export function FanChart({ bands, target, label, height = 320 }: FanChartProps) 
             <tbody>
               {bands.map((b) => (
                 <tr key={b.year} className="border-t border-slate-100">
-                  <td className="py-1 text-left">{b.calendar_year}</td>
+                  <td className="py-1 text-left">{xLabel(b)}</td>
                   <td>{formatLakhCrore(b.p10)}</td>
                   <td>{formatLakhCrore(b.p25)}</td>
                   <td className="font-medium">{formatLakhCrore(b.p50)}</td>
