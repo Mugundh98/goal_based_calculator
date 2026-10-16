@@ -71,9 +71,9 @@ FEATURE_LABELS = {
     "peer_ret_12m": "12-month return vs peers",
     "peer_ret_36m": "3-year return vs peers",
     "peer_sharpe_36m": "Sharpe vs peers",
-    "peer_vol_36m": "Volatility vs peers",
+    "peer_vol_36m": "Volatility rank among peers (high = more volatile)",
     "peer_alpha_36m": "Alpha vs peers",
-    "peer_max_dd_36m": "Worst fall vs peers",
+    "peer_max_dd_36m": "Fall rank among peers (high = milder falls)",
     "peer_size": "Funds in the peer group",
     "market_ret_12m": "Market return, last 12 months",
     "market_vol_12m": "Market volatility, last 12 months",
@@ -82,8 +82,9 @@ FEATURE_LABELS = {
     "is_hybrid": "Hybrid fund",
 }
 
-# Peer-relative features: the percentile rank among the peer group in the same month (1 = best
-# for returns, Sharpe and alpha; for volatility and drawdown 1 = the riskiest / deepest fall).
+# Peer-relative features: the percentile rank among the peer group in the same month, from the
+# lowest value (near 0) to the highest (1). So 1 = the best return, Sharpe and alpha, the HIGHEST
+# volatility, and the MILDEST worst fall (drawdowns are negative: -5% ranks above -30%).
 PEER_RANKED = {
     "peer_ret_12m": "ret_12m",
     "peer_ret_36m": "ret_36m",

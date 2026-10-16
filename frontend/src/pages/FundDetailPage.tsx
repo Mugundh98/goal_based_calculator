@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router'
 import type { FundDetail, FundMetrics, Period, SeriesPoint } from '../api/funds'
 import { FormError } from '../components/form'
 import { type ChartSeries, LineChart } from '../components/LineChart'
+import { FundInsightCard } from '../components/MlInsight'
 import { Card, Spinner } from '../components/ui'
 import { useFund, useFundNav, useIndexHistory } from '../hooks/useFunds'
 import { assetClassLabel, formatDate, formatMonth, formatNav, formatRatio, formatReturn, optionLabel, planLabel } from '../lib/format'
@@ -63,6 +64,7 @@ export function FundDetailPage() {
       </div>
 
       <NavChart fund={data} />
+      <FundInsightCard fundId={data.id} />
       {data.metrics ? (
         <Metrics metrics={data.metrics} />
       ) : (

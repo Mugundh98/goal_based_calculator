@@ -135,3 +135,31 @@ def test_small_or_unranked_peer_groups_are_left_out():
         ]
     )
     assert F.build_panel(navs, MARKET, meta).empty
+
+
+# --- Unit changes -----------------------------------------------------------------------------
+
+
+def test_face_value_change_is_adjusted_out():
+    from app.finance.nav_adjust import adjust_unit_changes
+
+    nav = growing(0.005, start=10.0)
+    nav[30:] *= 100  # the fund re-denominates its units from ₹10 to ₹1,000
+    adjusted, changes = adjust_unit_changes(frame({1: nav}))
+    assert len(changes) == 1 and changes[0].factor == 100 and changes[0].month == MONTHS[30]
+    ratios = (adjusted[1] / adjusted[1].shift(1)).dropna()
+    assert ratios.to_numpy() == pytest.approx(1.005)  # a smooth series again
+
+
+def test_split_and_real_crashes_are_told_apart():
+    from app.finance.nav_adjust import adjust_unit_changes, unit_factor
+
+    assert unit_factor(0.1007) == -1  # a 1:10 split with a +0.7% month on top
+    assert unit_factor(100.6) == 2
+    assert unit_factor(0.56) is None  # a 44% loss (a credit default) is real
+    assert unit_factor(2.09) is None  # and so is a recovery
+    nav = growing(0.01)
+    nav[40:] *= 0.56
+    adjusted, changes = adjust_unit_changes(frame({1: nav}))
+    assert changes == []
+    pd.testing.assert_frame_equal(adjusted, frame({1: nav}))

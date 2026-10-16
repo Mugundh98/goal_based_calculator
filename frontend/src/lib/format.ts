@@ -1,3 +1,5 @@
+import type { Factor } from '../api/ml'
+
 const inr = new Intl.NumberFormat('en-IN', {
   style: 'currency',
   currency: 'INR',
@@ -135,4 +137,24 @@ export const simulationModelHelp: Record<string, string> = {
   normal: 'Independent bell-curve returns with the historical volatility: the textbook model.',
   garch: 'Volatility clusters: a big shock makes the next months more volatile, then it calms down.',
   hmm: 'Markets switch between a calm and a turbulent regime that each last for a while (hidden Markov model).',
+}
+
+/** A feature's value in words: percentiles for peer ranks, percentages for returns and risk. */
+export function formatFactorValue(factor: Factor): string {
+  const v = factor.value
+  if (v === null) return 'not enough history'
+  const f = factor.feature
+  if (f.startsWith('peer_') && f !== 'peer_size') return `${ordinal(Math.round(v * 100))} percentile of peers`
+  if (f === 'peer_size') return `${v} funds`
+  if (f === 'age_months') return `${v} months`
+  if (f.startsWith('is_')) return v ? 'yes' : 'no'
+  if (f.startsWith('sharpe') || f.startsWith('beta') || f.startsWith('corr')) return v.toFixed(2)
+  return `${(v * 100).toFixed(1)}%`
+}
+
+/** 1st, 2nd, 3rd, 4th ... 11th, 12th, 13th ... 21st, 93rd. */
+export function ordinal(n: number): string {
+  const teen = n % 100 >= 11 && n % 100 <= 13
+  const suffix = teen ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'
+  return `${n}${suffix}`
 }

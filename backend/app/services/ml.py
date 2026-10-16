@@ -103,7 +103,10 @@ def rankings(db: Session, peer_group: str | None) -> RankingsOut:
     ).all()
     groups = [PeerGroupOut(id=g, label=LABELS.get(g, g), funds=n) for g, n, _ in counts]
     if peer_group is None and groups:
-        peer_group = max(groups, key=lambda g: g.funds).id  # the largest group by default
+        # The largest group by default, except sectoral/thematic funds: defence, pharma and
+        # overseas funds share that label but not a market, so it is the weakest peer group.
+        candidates = [g for g in groups if g.id != "sectoral_thematic"] or groups
+        peer_group = max(candidates, key=lambda g: g.funds).id
     rows = db.execute(
         select(FundPrediction, Fund)
         .join(Fund, Fund.id == FundPrediction.fund_id)

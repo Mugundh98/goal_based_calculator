@@ -108,13 +108,13 @@ def name_clusters(centroids_raw: pd.DataFrame) -> list[str]:
             else "weaker risk-adjusted return"
         )
         names.append(", ".join(parts))
-    # Two clusters can land in the same band and quality: number them so names stay unique.
-    seen: dict[str, int] = {}
-    unique = []
-    for name in names:
-        seen[name] = seen.get(name, 0) + 1
-        unique.append(name if names.count(name) == 1 else f"{name} ({seen[name]})")
-    return unique
+    # Two clusters can land in the same band and quality: tell them apart by their volatility.
+    return [
+        name
+        if names.count(name) == 1
+        else f"{name} (volatility {centroids_raw['vol_36m'].iloc[i] * 100:.1f}%)"
+        for i, name in enumerate(names)
+    ]
 
 
 def fit(frame: pd.DataFrame) -> tuple[ClusterModel, dict[str, Any]]:

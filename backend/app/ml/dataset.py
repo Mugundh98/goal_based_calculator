@@ -5,7 +5,8 @@ the same portfolio with a higher fee) and no IDCW payouts that look like losses.
 funds whose full history the pipeline backfills (Phase 4).
 
 The month of the newest NAV is dropped because it is incomplete: a "month-end" NAV from the
-15th would make that month look shorter than the others.
+15th would make that month look shorter than the others. Face-value changes (a NAV that jumps by
+a power of ten) are adjusted out first, see app/finance/nav_adjust.py.
 """
 
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.finance.nav_adjust import UnitChange, adjust_unit_changes
 from app.ml.peers import peer_group
 
 MARKET_INDEX = "^CRSLDX"  # Nifty 500, as in the simulations (Phase 5)
@@ -42,6 +44,7 @@ class MonthlyData:
     navs: pd.DataFrame  # index: month (first day), columns: fund_id; NaN where no NAV
     market: pd.Series  # index: month, month-end index level
     funds: pd.DataFrame  # index: fund_id; name, amc, category, asset_class, peer_group
+    unit_changes: tuple[UnitChange, ...] = ()  # face-value changes adjusted out of `navs`
 
     @property
     def last_month(self) -> pd.Timestamp:
@@ -72,6 +75,7 @@ def load(db: Session) -> MonthlyData:
     newest = navs.index.max()
     navs = navs.reindex(complete_months(navs.index))
     navs = navs[navs.index < newest]  # the newest month is incomplete
+    navs, changes = adjust_unit_changes(navs)  # face-value changes are not returns
 
     market = pd.DataFrame(market_rows, columns=["month", "close"])
     market = market.set_index(pd.to_datetime(market["month"]))["close"].astype(float)
@@ -81,4 +85,6 @@ def load(db: Session) -> MonthlyData:
     funds = funds.set_index("fund_id")
     funds["peer_group"] = funds["category"].map(peer_group)
     funds = funds.loc[funds.index.intersection(navs.columns)]
-    return MonthlyData(navs=navs[funds.index], market=market, funds=funds)
+    return MonthlyData(
+        navs=navs[funds.index], market=market, funds=funds, unit_changes=tuple(changes)
+    )

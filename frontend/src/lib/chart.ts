@@ -8,3 +8,17 @@ export function niceTicks(min: number, max: number, count = 5): number[] {
   for (let t = Math.ceil(min / step) * step; t <= max + step * 1e-9; t += step) ticks.push(Number(t.toFixed(10)))
   return ticks
 }
+
+/** Like niceTicks, but the first tick is at or below `min` and the last at or above `max`, so
+ * every data point falls inside the gridlines. */
+export function coveringTicks(min: number, max: number, count = 5): number[] {
+  const ticks = niceTicks(min, max, count)
+  const step = ticks.length > 1 ? ticks[1] - ticks[0] : 1
+  while (ticks[0] > min) ticks.unshift(Number((ticks[0] - step).toFixed(10)))
+  while (ticks[ticks.length - 1] < max) ticks.push(Number((ticks[ticks.length - 1] + step).toFixed(10)))
+  return ticks
+}
+
+// Categorical palette in fixed order (cluster 0 = least volatile), checked for colour-vision
+// deficiency with the dataviz palette validator; a white ring separates overlapping dots.
+export const CLUSTER_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948']

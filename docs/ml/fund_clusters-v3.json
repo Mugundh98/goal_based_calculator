@@ -4,83 +4,83 @@
   "k_scores": [
     {
       "k": 2,
-      "silhouette": 0.6055,
-      "inertia": 2080.45,
-      "gmm_bic": -4012.25
+      "silhouette": 0.6148,
+      "inertia": 2171.13,
+      "gmm_bic": -3983.13
     },
     {
       "k": 3,
-      "silhouette": 0.5452,
-      "inertia": 1530.68,
-      "gmm_bic": -7987.26
+      "silhouette": 0.5461,
+      "inertia": 1616.48,
+      "gmm_bic": -8758.96
     },
     {
       "k": 4,
-      "silhouette": 0.4185,
-      "inertia": 1151.34,
-      "gmm_bic": -9372.07
+      "silhouette": 0.4203,
+      "inertia": 1183.67,
+      "gmm_bic": -11499.39
     },
     {
       "k": 5,
-      "silhouette": 0.4249,
-      "inertia": 960.95,
-      "gmm_bic": -11379.98
+      "silhouette": 0.427,
+      "inertia": 978.95,
+      "gmm_bic": -13176.29
     },
     {
       "k": 6,
-      "silhouette": 0.4227,
-      "inertia": 839.26,
-      "gmm_bic": -12862.55
+      "silhouette": 0.4239,
+      "inertia": 855.45,
+      "gmm_bic": -13930.78
     },
     {
       "k": 7,
-      "silhouette": 0.4346,
-      "inertia": 723.48,
-      "gmm_bic": -14839.69
+      "silhouette": 0.4267,
+      "inertia": 747.04,
+      "gmm_bic": -14705.08
     },
     {
       "k": 8,
-      "silhouette": 0.4399,
-      "inertia": 623.01,
-      "gmm_bic": -15200.85
+      "silhouette": 0.4343,
+      "inertia": 641.74,
+      "gmm_bic": -15447.6
     },
     {
       "k": 9,
-      "silhouette": 0.3935,
-      "inertia": 559.03,
-      "gmm_bic": -16232.9
+      "silhouette": 0.3967,
+      "inertia": 571.14,
+      "gmm_bic": -15320.96
     },
     {
       "k": 10,
-      "silhouette": 0.3916,
-      "inertia": 509.88,
-      "gmm_bic": -17296.97
+      "silhouette": 0.3977,
+      "inertia": 521.3,
+      "gmm_bic": -16524.83
     }
   ],
   "best_bic_k": 10,
-  "gmm_agreement_ari": 0.5737,
-  "asset_class_ari": 0.3535,
+  "gmm_agreement_ari": 0.5421,
+  "asset_class_ari": 0.3417,
   "clusters": [
     {
       "cluster": 0,
-      "name": "Cash-like, strong risk-adjusted return (1)",
-      "funds": 38,
+      "name": "Cash-like, strong risk-adjusted return (volatility 0.2%)",
+      "funds": 39,
       "median": {
-        "ret_36m": 0.0696,
+        "ret_36m": 0.0695,
         "vol_36m": 0.0021,
         "downside_36m": 0.0,
         "max_dd_36m": 0.0,
-        "sharpe_36m": 4.1581,
+        "sharpe_36m": 4.1604,
         "beta_36m": 0.0058,
-        "corr_36m": 0.4289
+        "corr_36m": 0.429
       },
       "asset_classes": {
-        "debt": 38
+        "debt": 39
       },
       "top_peer_groups": [
         {
           "peer_group": "liquid",
-          "funds": 34
+          "funds": 35
         },
         {
           "peer_group": "ultra_short",
@@ -90,7 +90,7 @@
     },
     {
       "cluster": 1,
-      "name": "Cash-like, strong risk-adjusted return (2)",
+      "name": "Cash-like, strong risk-adjusted return (volatility 0.8%)",
       "funds": 142,
       "median": {
         "ret_36m": 0.0736,
@@ -165,18 +165,18 @@
     {
       "cluster": 3,
       "name": "Moderate risk, follows the market, weaker risk-adjusted return",
-      "funds": 81,
+      "funds": 79,
       "median": {
-        "ret_36m": 0.0859,
-        "vol_36m": 0.0805,
-        "downside_36m": 0.0479,
-        "max_dd_36m": -0.0689,
+        "ret_36m": 0.0858,
+        "vol_36m": 0.0725,
+        "downside_36m": 0.0428,
+        "max_dd_36m": -0.0672,
         "sharpe_36m": 0.374,
-        "beta_36m": 0.4148,
+        "beta_36m": 0.4112,
         "corr_36m": 0.9456
       },
       "asset_classes": {
-        "hybrid": 79,
+        "hybrid": 77,
         "equity": 2
       },
       "top_peer_groups": [
@@ -194,32 +194,69 @@
         },
         {
           "peer_group": "multi_asset",
-          "funds": 9
+          "funds": 8
         }
       ]
     },
     {
       "cluster": 4,
-      "name": "High risk, moves apart from the market, strong risk-adjusted return",
-      "funds": 21,
+      "name": "High risk, follows the market, weaker risk-adjusted return",
+      "funds": 285,
       "median": {
-        "ret_36m": 0.2125,
-        "vol_36m": 0.1493,
-        "downside_36m": 0.0787,
-        "max_dd_36m": -0.1219,
-        "sharpe_36m": 0.9239,
-        "beta_36m": 0.6034,
-        "corr_36m": 0.6807
+        "ret_36m": 0.0984,
+        "vol_36m": 0.1512,
+        "downside_36m": 0.1021,
+        "max_dd_36m": -0.163,
+        "sharpe_36m": 0.2402,
+        "beta_36m": 0.9234,
+        "corr_36m": 0.9655
       },
       "asset_classes": {
-        "equity": 14,
+        "equity": 213,
+        "index": 43,
+        "hybrid": 29
+      },
+      "top_peer_groups": [
+        {
+          "peer_group": "sectoral_thematic",
+          "funds": 51
+        },
+        {
+          "peer_group": "index",
+          "funds": 35
+        },
+        {
+          "peer_group": "flexi_multi_cap",
+          "funds": 34
+        },
+        {
+          "peer_group": "large_cap",
+          "funds": 29
+        }
+      ]
+    },
+    {
+      "cluster": 5,
+      "name": "High risk, moves apart from the market, strong risk-adjusted return",
+      "funds": 25,
+      "median": {
+        "ret_36m": 0.2086,
+        "vol_36m": 0.1496,
+        "downside_36m": 0.0808,
+        "max_dd_36m": -0.1309,
+        "sharpe_36m": 0.9125,
+        "beta_36m": 0.6474,
+        "corr_36m": 0.7005
+      },
+      "asset_classes": {
+        "equity": 18,
         "index": 4,
         "hybrid": 3
       },
       "top_peer_groups": [
         {
           "peer_group": "sectoral_thematic",
-          "funds": 14
+          "funds": 18
         },
         {
           "peer_group": "index",
@@ -232,68 +269,31 @@
       ]
     },
     {
-      "cluster": 5,
-      "name": "High risk, follows the market, weaker risk-adjusted return",
-      "funds": 303,
-      "median": {
-        "ret_36m": 0.0964,
-        "vol_36m": 0.153,
-        "downside_36m": 0.1026,
-        "max_dd_36m": -0.1649,
-        "sharpe_36m": 0.2275,
-        "beta_36m": 0.9267,
-        "corr_36m": 0.9631
-      },
-      "asset_classes": {
-        "equity": 223,
-        "index": 53,
-        "hybrid": 27
-      },
-      "top_peer_groups": [
-        {
-          "peer_group": "sectoral_thematic",
-          "funds": 59
-        },
-        {
-          "peer_group": "index",
-          "funds": 43
-        },
-        {
-          "peer_group": "flexi_multi_cap",
-          "funds": 35
-        },
-        {
-          "peer_group": "elss",
-          "funds": 29
-        }
-      ]
-    },
-    {
       "cluster": 6,
       "name": "Very high risk, amplifies the market, strong risk-adjusted return",
-      "funds": 189,
+      "funds": 186,
       "median": {
-        "ret_36m": 0.1612,
-        "vol_36m": 0.1857,
-        "downside_36m": 0.1164,
-        "max_dd_36m": -0.2131,
-        "sharpe_36m": 0.4867,
-        "beta_36m": 1.071,
-        "corr_36m": 0.9169
+        "ret_36m": 0.1604,
+        "vol_36m": 0.1858,
+        "downside_36m": 0.1166,
+        "max_dd_36m": -0.214,
+        "sharpe_36m": 0.4718,
+        "beta_36m": 1.0752,
+        "corr_36m": 0.9188
       },
       "asset_classes": {
-        "equity": 152,
-        "index": 36,
+        "equity": 147,
+        "index": 38,
         "hybrid": 1
       },
       "top_peer_groups": [
         {
           "peer_group": "sectoral_thematic",
-          "funds": 57
+          "funds": 53
         },
         {
           "peer_group": "index",
-          "funds": 27
+          "funds": 29
         },
         {
           "peer_group": "mid_cap",
@@ -307,39 +307,38 @@
     },
     {
       "cluster": 7,
-      "name": "Very high risk, moves apart from the market, weaker risk-adjusted return",
-      "funds": 13,
+      "name": "Very high risk, follows the market, weaker risk-adjusted return",
+      "funds": 31,
       "median": {
-        "ret_36m": 0.024,
-        "vol_36m": 0.2162,
-        "downside_36m": 0.1575,
-        "max_dd_36m": -0.2909,
-        "sharpe_36m": -0.2304,
-        "beta_36m": 0.8464,
-        "corr_36m": 0.6318
+        "ret_36m": 0.0538,
+        "vol_36m": 0.2014,
+        "downside_36m": 0.144,
+        "max_dd_36m": -0.2655,
+        "sharpe_36m": -0.0351,
+        "beta_36m": 0.9938,
+        "corr_36m": 0.9082
       },
       "asset_classes": {
-        "equity": 8,
-        "index": 3,
-        "hybrid": 1,
-        "debt": 1
+        "equity": 19,
+        "index": 11,
+        "hybrid": 1
       },
       "top_peer_groups": [
         {
           "peer_group": "sectoral_thematic",
-          "funds": 7
+          "funds": 15
         },
         {
           "peer_group": "index",
-          "funds": 2
+          "funds": 8
+        },
+        {
+          "peer_group": "other",
+          "funds": 3
         },
         {
           "peer_group": "elss",
-          "funds": 1
-        },
-        {
-          "peer_group": "balanced_advantage",
-          "funds": 1
+          "funds": 2
         }
       ]
     }
