@@ -135,7 +135,14 @@ export async function getFund(id: number): Promise<FundDetail> {
   return data
 }
 
-export async function getFundNav(id: number, period: Period): Promise<SeriesPoint[]> {
-  const { data } = await api.get<{ points: SeriesPoint[] }>(`/api/funds/${id}/nav`, { params: { period } })
-  return data.points
+// Mirrors FundNavHistory: NAVs in the units of the latest NAV; earlier NAVs are restated across
+// face-value changes (a NAV that jumped by a power of ten), which are listed.
+export interface FundNav {
+  points: SeriesPoint[]
+  unit_changes: { date: string; factor: number }[]
+}
+
+export async function getFundNav(id: number, period: Period): Promise<FundNav> {
+  const { data } = await api.get<FundNav>(`/api/funds/${id}/nav`, { params: { period } })
+  return data
 }

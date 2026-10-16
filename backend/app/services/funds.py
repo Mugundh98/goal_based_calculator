@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.data_pipeline.indices import DEFAULT_BENCHMARK
 from app.data_pipeline.jobs import ACTIVE_WITHIN_DAYS
 from app.finance.fund_metrics import shift_months
+from app.finance.nav_adjust import adjust_series
 from app.models.market import Fund, FundMetrics, NavHistory
 from app.schemas.market import (
     CategoryCount,
@@ -19,6 +20,7 @@ from app.schemas.market import (
     Period,
     SeriesPoint,
     SortOrder,
+    UnitChangeOut,
 )
 
 PERIOD_YEARS: dict[str, int | None] = {"1y": 1, "3y": 3, "5y": 5, "10y": 10, "max": None}
@@ -166,14 +168,19 @@ def to_detail(db: Session, fund: Fund) -> FundDetail:
     )
 
 
-def nav_history(db: Session, fund: Fund, period: Period) -> list[SeriesPoint]:
-    """NAVs for the period, counted back from the fund's latest NAV (oldest first)."""
+def nav_history(
+    db: Session, fund: Fund, period: Period
+) -> tuple[list[SeriesPoint], list[UnitChangeOut]]:
+    """NAVs for the period, counted back from the fund's latest NAV (oldest first), restated
+    in today's units across face-value changes, and the changes that were adjusted."""
     query = select(NavHistory.nav_date, NavHistory.nav).where(NavHistory.fund_id == fund.id)
     years = PERIOD_YEARS[period]
     last = db.scalar(select(func.max(NavHistory.nav_date)).where(NavHistory.fund_id == fund.id))
     if years and last:
         query = query.where(NavHistory.nav_date >= shift_months(last, -12 * years))
-    return [
-        SeriesPoint(date=day, value=nav)
-        for day, nav in db.execute(query.order_by(NavHistory.nav_date)).all()
-    ]
+    raw = [(day, float(nav)) for day, nav in db.execute(query.order_by(NavHistory.nav_date)).all()]
+    adjusted, changes = adjust_series(raw)
+    return (
+        [SeriesPoint(date=day, value=nav) for day, nav in adjusted],
+        [UnitChangeOut(date=c.day, factor=c.factor) for c in changes],
+    )

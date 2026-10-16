@@ -34,6 +34,7 @@ from app.data_pipeline.loaders import (
     upsert_navs,
 )
 from app.finance.fund_metrics import FundStatistics, fund_statistics
+from app.finance.nav_adjust import adjust_series
 from app.models.market import Fund, IndexHistory, JobRun, NavHistory
 
 logger = logging.getLogger(__name__)
@@ -261,7 +262,7 @@ def fund_metrics(db: Session, risk_free_rate: float | None = None) -> JobResult:
             .order_by(NavHistory.fund_id)
         )
     )
-    result = JobResult(details={"funds": len(fund_ids), "risk_free_rate": rate})
+    result = JobResult(details={"funds": len(fund_ids), "risk_free_rate": rate, "unit_changes": 0})
     batch: list[dict[str, Any]] = []
     for fund_id in fund_ids:
         series = [
@@ -273,6 +274,9 @@ def fund_metrics(db: Session, risk_free_rate: float | None = None) -> JobResult:
             ).all()
         ]
         result.rows_read += len(series)
+        # A face-value change (NAV x100, /10) is not a return: restate earlier NAVs first.
+        series, changes = adjust_series(series)
+        result.details["unit_changes"] += len(changes)
         batch.append(_metrics_row(fund_id, fund_statistics(series, rate), rate))
         if len(batch) >= METRICS_BATCH:
             result.rows_written += upsert_metrics(db, batch)

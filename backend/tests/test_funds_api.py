@@ -153,6 +153,22 @@ def test_nav_history_periods(client, auth_headers, market):
     assert client.get(url, params={"period": "2w"}, headers=auth_headers).status_code == 422
 
 
+def test_nav_history_restates_face_value_changes(client, auth_headers, market, db):
+    """Units ten times larger until December 2025 (NAV ~540), today's units after (NAV ~55):
+    the chart shows the whole period in today's units."""
+    fund_id = market[120465]
+    db.add(NavHistory(fund_id=fund_id, nav_date=date(2025, 10, 20), nav=Decimal("540")))
+    db.add(NavHistory(fund_id=fund_id, nav_date=date(2025, 11, 3), nav=Decimal("545")))
+    db.commit()  # the fixture's 55 on 1 Dec 2025 is then the first NAV in the new units
+    body = client.get(f"/api/funds/{fund_id}/nav", params={"period": "1y"}, headers=auth_headers)
+    body = body.json()
+    assert body["unit_changes"] == [{"date": "2025-12-01", "factor": 0.1}]
+    assert [round(p["value"], 2) for p in body["points"]] == [54.0, 54.5, 55.0, 62.15]
+    # The stored NAVs are untouched: they are what AMFI published.
+    stored = db.scalar(select(NavHistory.nav).where(NavHistory.nav_date == date(2025, 10, 20)))
+    assert stored == Decimal("540")
+
+
 def test_market_summary(client, auth_headers, market, db):
     jobs.run_job("daily_nav", db=db, text=NAV_ALL)
     summary = client.get("/api/market/summary", headers=auth_headers).json()

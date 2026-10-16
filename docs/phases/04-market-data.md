@@ -468,6 +468,7 @@ uv run python -m app.data_pipeline daily_nav  # any time: today's NAVs; run twic
 | Line-end labels were hard to read where lines crossed them | Text drawn over the lines | White halo (`paint-order: stroke`) behind the labels |
 | Chart could keep a 640 px width if first shown without data | The size observer was attached once to an element that was later replaced | Callback ref stored in state; the observer re-attaches |
 | Preview could not use port 8000 | Another session's backend was running on it | Vite proxy target configurable with `API_PROXY_TARGET` |
+| UTI Liquid Fund showed a −89% one-year return, 52% volatility and a −90% worst fall (found in Phase 7, fixed in v0.7.1) | A face-value change: on 20 June 2026 its NAV went from about ₹4,567 to ₹460 (1:10). Several funds re-denominated units (often ₹10 → ₹1,000); 19 such jumps in the loaded data. The metrics treated them as returns | `app/finance/nav_adjust.py`: a day-to-day NAV ratio within 3% of 10^k (k ≠ 0) is a unit change, and earlier NAVs are restated in today's units before any statistic is computed. The NAV chart uses the same restated series and says so under the chart; `nav_history` keeps the NAVs exactly as published. Real large moves (credit defaults, March 2020) are not powers of ten and are left alone. UTI Liquid Fund now shows 6.5% for one year |
 
 ## 9. Viva questions and answers
 

@@ -197,6 +197,30 @@ def test_fund_metrics_job(db):
     assert jobs.fund_metrics(db, risk_free_rate=0.06).rows_written == 0  # unchanged values
 
 
+def test_fund_metrics_ignore_a_face_value_change(db):
+    """The same fund, but its units were worth ten times more until day 300 (a 1:10 change):
+    every statistic must be exactly as if nothing had happened."""
+    jobs.daily_nav(db, text=NAV_ALL)
+    axis = fund(db, 120465)
+    start = date(2025, 9, 1)
+
+    def nav(day: int) -> Decimal:
+        value = 50 * 1.0005**day * (10 if day < 300 else 1)
+        return Decimal(value).quantize(Decimal("0.0001"))
+
+    db.add_all(
+        NavHistory(fund_id=axis.id, nav_date=start + timedelta(days=k), nav=nav(k))
+        for k in range(409)
+    )
+    db.commit()
+    result = jobs.fund_metrics(db, risk_free_rate=0.06)
+    assert result.details["unit_changes"] == 1
+    metrics = db.get(FundMetrics, axis.id)
+    unadjusted_day_44 = float(nav(44)) / 10
+    assert metrics.return_1y == pytest.approx((62.15 / unadjusted_day_44 - 1) * 100, abs=1e-2)
+    assert metrics.rolling_1y_positive == 100  # no fake -90% year
+
+
 # --- The job runner and job_runs --------------------------------------------------------------
 
 
