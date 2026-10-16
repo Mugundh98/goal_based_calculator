@@ -89,14 +89,14 @@ export function RetirementWizard({
             <li key={s.title}>
               <button
                 type="button"
-                // Earlier steps can be revisited; later ones are reached with "Next".
-                disabled={i > step}
+                // A new plan goes step by step; a saved one is already complete, so any step opens.
+                disabled={!plan && i > step}
                 onClick={() => setStep(i)}
                 aria-current={i === step ? 'step' : undefined}
                 className={`rounded-full px-3 py-1 ${
                   i === step
                     ? 'bg-emerald-600 text-white'
-                    : i < step
+                    : i < step || plan
                       ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                       : 'bg-slate-100 text-slate-500'
                 }`}

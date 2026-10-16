@@ -109,6 +109,12 @@ export function FanChart<B extends Band>({
     .map((l) => ({ ...l, y: y(l.value) - 8 }))
     .sort((a, b) => a.y - b.y)
   if (endLabels[1].y - endLabels[0].y < 14) endLabels[1].y = endLabels[0].y + 14
+  // Keep both above the x-axis labels (e.g. when the money has run out and both end at ₹0).
+  const floor = height - MARGIN.bottom - 4
+  if (endLabels[1].y > floor) {
+    endLabels[1].y = floor
+    endLabels[0].y = Math.min(endLabels[0].y, floor - 14)
+  }
 
   return (
     <div>
@@ -121,7 +127,7 @@ export function FanChart<B extends Band>({
             Single-return plan
           </LegendItem>
           <LegendItem swatch={<line x1="0" y1="6" x2="18" y2="6" stroke={TARGET} strokeWidth="2" strokeDasharray="1 3" strokeLinecap="round" />}>
-            Target
+            {targetLabel ?? 'Target'}
           </LegendItem>
         </ul>
         <button

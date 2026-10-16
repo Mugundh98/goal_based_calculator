@@ -315,7 +315,7 @@ function FourPercentRule({ plan }: { plan: RetirementPlan }) {
         <KeyNumber label="Corpus by the 4% rule" note="25× the first year's spending">
           {formatLakhCrore(p.bengen_corpus)}
         </KeyNumber>
-        <KeyNumber label="Your plan's return above inflation" note="After retiring; the US average was about 4%">
+        <KeyNumber label="Your plan's return above inflation" note={`After retiring: ${plan.post_retirement_return}% return, ${plan.inflation_rate}% inflation`}>
           {formatPercent(p.real_post_return)}
         </KeyNumber>
       </dl>
