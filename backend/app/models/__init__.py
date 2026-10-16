@@ -3,6 +3,7 @@
 from app.core.database import Base
 from app.models.goal import Goal
 from app.models.market import Fund, FundMetrics, IndexHistory, InflationData, JobRun, NavHistory
+from app.models.ml import FundCluster, FundPrediction, MLModel
 from app.models.profile import FinancialProfile
 from app.models.retirement import RetirementPlan
 from app.models.risk import RiskAssessment
@@ -13,11 +14,14 @@ __all__ = [
     "Base",
     "FinancialProfile",
     "Fund",
+    "FundCluster",
     "FundMetrics",
+    "FundPrediction",
     "Goal",
     "IndexHistory",
     "InflationData",
     "JobRun",
+    "MLModel",
     "NavHistory",
     "RetirementPlan",
     "RiskAssessment",

@@ -282,12 +282,21 @@ def fund_metrics(db: Session, risk_free_rate: float | None = None) -> JobResult:
     return result
 
 
+def ml_score(db: Session) -> JobResult:
+    """Apply the active ML models (Phase 7) to the latest month: rankings and clusters."""
+    from app.ml import train  # imported here: pandas/LightGBM are only needed by this job
+
+    counts = train.score(db)
+    return JobResult(rows_written=sum(counts.values()), details=counts)
+
+
 JOBS: dict[str, Callable[..., JobResult]] = {
     "daily_nav": daily_nav,
     "backfill_nav": backfill_nav,
     "index_history": index_history,
     "inflation": inflation,
     "fund_metrics": fund_metrics,
+    "ml_score": ml_score,
 }
 
 

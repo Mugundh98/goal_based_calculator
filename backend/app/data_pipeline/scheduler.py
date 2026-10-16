@@ -22,9 +22,10 @@ TIMEZONE = "Asia/Kolkata"
 
 
 def daily_update() -> None:
-    """Today's NAVs, then the metrics that depend on them."""
+    """Today's NAVs, then the metrics and ML scores that depend on them."""
     if run_job("daily_nav", triggered_by="scheduler").status == "success":
         run_job("fund_metrics", triggered_by="scheduler")
+        run_job("ml_score", triggered_by="scheduler")
 
 
 def create_scheduler() -> BackgroundScheduler:

@@ -1,0 +1,347 @@
+{
+  "funds": 1004,
+  "k": 8,
+  "k_scores": [
+    {
+      "k": 2,
+      "silhouette": 0.6055,
+      "inertia": 2080.45,
+      "gmm_bic": -4012.25
+    },
+    {
+      "k": 3,
+      "silhouette": 0.5452,
+      "inertia": 1530.68,
+      "gmm_bic": -7987.26
+    },
+    {
+      "k": 4,
+      "silhouette": 0.4185,
+      "inertia": 1151.34,
+      "gmm_bic": -9372.07
+    },
+    {
+      "k": 5,
+      "silhouette": 0.4249,
+      "inertia": 960.95,
+      "gmm_bic": -11379.98
+    },
+    {
+      "k": 6,
+      "silhouette": 0.4227,
+      "inertia": 839.26,
+      "gmm_bic": -12862.55
+    },
+    {
+      "k": 7,
+      "silhouette": 0.4346,
+      "inertia": 723.48,
+      "gmm_bic": -14839.69
+    },
+    {
+      "k": 8,
+      "silhouette": 0.4399,
+      "inertia": 623.01,
+      "gmm_bic": -15200.85
+    },
+    {
+      "k": 9,
+      "silhouette": 0.3935,
+      "inertia": 559.03,
+      "gmm_bic": -16232.9
+    },
+    {
+      "k": 10,
+      "silhouette": 0.3916,
+      "inertia": 509.88,
+      "gmm_bic": -17296.97
+    }
+  ],
+  "best_bic_k": 10,
+  "gmm_agreement_ari": 0.5737,
+  "asset_class_ari": 0.3535,
+  "clusters": [
+    {
+      "cluster": 0,
+      "name": "Cash-like, strong risk-adjusted return (1)",
+      "funds": 38,
+      "median": {
+        "ret_36m": 0.0696,
+        "vol_36m": 0.0021,
+        "downside_36m": 0.0,
+        "max_dd_36m": 0.0,
+        "sharpe_36m": 4.1581,
+        "beta_36m": 0.0058,
+        "corr_36m": 0.4289
+      },
+      "asset_classes": {
+        "debt": 38
+      },
+      "top_peer_groups": [
+        {
+          "peer_group": "liquid",
+          "funds": 34
+        },
+        {
+          "peer_group": "ultra_short",
+          "funds": 4
+        }
+      ]
+    },
+    {
+      "cluster": 1,
+      "name": "Cash-like, strong risk-adjusted return (2)",
+      "funds": 142,
+      "median": {
+        "ret_36m": 0.0736,
+        "vol_36m": 0.0061,
+        "downside_36m": 0.0,
+        "max_dd_36m": 0.0,
+        "sharpe_36m": 2.0772,
+        "beta_36m": 0.014,
+        "corr_36m": 0.3635
+      },
+      "asset_classes": {
+        "debt": 88,
+        "index": 30,
+        "hybrid": 24
+      },
+      "top_peer_groups": [
+        {
+          "peer_group": "arbitrage",
+          "funds": 24
+        },
+        {
+          "peer_group": "money_market",
+          "funds": 23
+        },
+        {
+          "peer_group": "index",
+          "funds": 23
+        },
+        {
+          "peer_group": "low_duration",
+          "funds": 20
+        }
+      ]
+    },
+    {
+      "cluster": 2,
+      "name": "Low risk, weaker risk-adjusted return",
+      "funds": 217,
+      "median": {
+        "ret_36m": 0.0702,
+        "vol_36m": 0.0167,
+        "downside_36m": 0.0034,
+        "max_dd_36m": -0.0051,
+        "sharpe_36m": 0.4454,
+        "beta_36m": 0.0494,
+        "corr_36m": 0.4838
+      },
+      "asset_classes": {
+        "debt": 177,
+        "index": 38,
+        "hybrid": 2
+      },
+      "top_peer_groups": [
+        {
+          "peer_group": "overnight",
+          "funds": 34
+        },
+        {
+          "peer_group": "index",
+          "funds": 31
+        },
+        {
+          "peer_group": "medium_duration",
+          "funds": 28
+        },
+        {
+          "peer_group": "gilt",
+          "funds": 27
+        }
+      ]
+    },
+    {
+      "cluster": 3,
+      "name": "Moderate risk, follows the market, weaker risk-adjusted return",
+      "funds": 81,
+      "median": {
+        "ret_36m": 0.0859,
+        "vol_36m": 0.0805,
+        "downside_36m": 0.0479,
+        "max_dd_36m": -0.0689,
+        "sharpe_36m": 0.374,
+        "beta_36m": 0.4148,
+        "corr_36m": 0.9456
+      },
+      "asset_classes": {
+        "hybrid": 79,
+        "equity": 2
+      },
+      "top_peer_groups": [
+        {
+          "peer_group": "balanced_advantage",
+          "funds": 26
+        },
+        {
+          "peer_group": "equity_savings",
+          "funds": 20
+        },
+        {
+          "peer_group": "conservative_hybrid",
+          "funds": 18
+        },
+        {
+          "peer_group": "multi_asset",
+          "funds": 9
+        }
+      ]
+    },
+    {
+      "cluster": 4,
+      "name": "High risk, moves apart from the market, strong risk-adjusted return",
+      "funds": 21,
+      "median": {
+        "ret_36m": 0.2125,
+        "vol_36m": 0.1493,
+        "downside_36m": 0.0787,
+        "max_dd_36m": -0.1219,
+        "sharpe_36m": 0.9239,
+        "beta_36m": 0.6034,
+        "corr_36m": 0.6807
+      },
+      "asset_classes": {
+        "equity": 14,
+        "index": 4,
+        "hybrid": 3
+      },
+      "top_peer_groups": [
+        {
+          "peer_group": "sectoral_thematic",
+          "funds": 14
+        },
+        {
+          "peer_group": "index",
+          "funds": 4
+        },
+        {
+          "peer_group": "multi_asset",
+          "funds": 3
+        }
+      ]
+    },
+    {
+      "cluster": 5,
+      "name": "High risk, follows the market, weaker risk-adjusted return",
+      "funds": 303,
+      "median": {
+        "ret_36m": 0.0964,
+        "vol_36m": 0.153,
+        "downside_36m": 0.1026,
+        "max_dd_36m": -0.1649,
+        "sharpe_36m": 0.2275,
+        "beta_36m": 0.9267,
+        "corr_36m": 0.9631
+      },
+      "asset_classes": {
+        "equity": 223,
+        "index": 53,
+        "hybrid": 27
+      },
+      "top_peer_groups": [
+        {
+          "peer_group": "sectoral_thematic",
+          "funds": 59
+        },
+        {
+          "peer_group": "index",
+          "funds": 43
+        },
+        {
+          "peer_group": "flexi_multi_cap",
+          "funds": 35
+        },
+        {
+          "peer_group": "elss",
+          "funds": 29
+        }
+      ]
+    },
+    {
+      "cluster": 6,
+      "name": "Very high risk, amplifies the market, strong risk-adjusted return",
+      "funds": 189,
+      "median": {
+        "ret_36m": 0.1612,
+        "vol_36m": 0.1857,
+        "downside_36m": 0.1164,
+        "max_dd_36m": -0.2131,
+        "sharpe_36m": 0.4867,
+        "beta_36m": 1.071,
+        "corr_36m": 0.9169
+      },
+      "asset_classes": {
+        "equity": 152,
+        "index": 36,
+        "hybrid": 1
+      },
+      "top_peer_groups": [
+        {
+          "peer_group": "sectoral_thematic",
+          "funds": 57
+        },
+        {
+          "peer_group": "index",
+          "funds": 27
+        },
+        {
+          "peer_group": "mid_cap",
+          "funds": 23
+        },
+        {
+          "peer_group": "flexi_multi_cap",
+          "funds": 22
+        }
+      ]
+    },
+    {
+      "cluster": 7,
+      "name": "Very high risk, moves apart from the market, weaker risk-adjusted return",
+      "funds": 13,
+      "median": {
+        "ret_36m": 0.024,
+        "vol_36m": 0.2162,
+        "downside_36m": 0.1575,
+        "max_dd_36m": -0.2909,
+        "sharpe_36m": -0.2304,
+        "beta_36m": 0.8464,
+        "corr_36m": 0.6318
+      },
+      "asset_classes": {
+        "equity": 8,
+        "index": 3,
+        "hybrid": 1,
+        "debt": 1
+      },
+      "top_peer_groups": [
+        {
+          "peer_group": "sectoral_thematic",
+          "funds": 7
+        },
+        {
+          "peer_group": "index",
+          "funds": 2
+        },
+        {
+          "peer_group": "elss",
+          "funds": 1
+        },
+        {
+          "peer_group": "balanced_advantage",
+          "funds": 1
+        }
+      ]
+    }
+  ]
+}
