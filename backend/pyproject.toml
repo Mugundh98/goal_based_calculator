@@ -1,6 +1,6 @@
 [project]
 name = "goalwise-backend"
-version = "0.6.0"
+version = "0.7.0"
 description = "GoalWise backend: FastAPI REST API for goal-based investment planning"
 requires-python = ">=3.12,<3.13"
 dependencies = [

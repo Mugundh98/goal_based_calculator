@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 6._
+_Living document – updated at the end of every phase. Last updated: Phase 7._
 
 ## Overview
 
@@ -81,6 +81,22 @@ flowchart LR
 
 The savings phase is stored as a `retirement` goal (target = corpus in today's money), so the Goals page and the Phase 5 simulation use it unchanged; the planner owns it and the goals API refuses direct edits. The withdrawal phase has a closed form (balance = growth × (corpus − PV of withdrawals so far)), so success, depletion ages and the SIP and corpus for a chosen certainty come from one vectorised run. Details: `docs/phases/06-retirement.md`, ADR-009.
 
+### ML fund intelligence (Phase 7)
+
+```mermaid
+flowchart LR
+    CLI[python -m app.ml train] --> D[ml/dataset + features]
+    D --> R[ranking: LightGBM, walk-forward, SHAP]
+    D --> C[clustering: K-Means]
+    I[inflation: SARIMA] --> REG
+    R & C --> REG[registry: ml_models + model files]
+    JOB[ml_score job, daily] --> S[scoring] --> P[(fund_predictions, fund_clusters)]
+    REG --> S
+    UI[InsightsPage, FundDetailPage] --> API[/api/ml] --> P
+```
+
+Training is offline and versioned (one active version per model, enforced by a partial unique index); a daily job scores the latest month; the API only reads stored predictions. Features use only data up to each month-end (tested), validation is purged walk-forward against momentum and random baselines, explanations are exact tree SHAP values. Face-value changes in NAV histories are adjusted out (`app/finance/nav_adjust.py`). Details: `docs/phases/07-ml.md`, ADR-010.
+
 ## Components built so far
 
 | Component | Phase | Status |
@@ -102,6 +118,8 @@ The savings phase is stored as a `retirement` goal (target = corpus in today's m
 | Goal simulation page: fan chart, chance of success, what-if sliders, SIP for a chosen certainty, model comparison, saved runs | 5 | Done |
 | `finance/retirement.py` (corpus, drawdown, withdrawal rates), `simulation/retirement.py` (lifetime Monte Carlo); retirement service and routes; `retirement_plans` | 6 | Done |
 | Retirement wizard, plan page (chance the money lasts, lifetime fan chart, survival chart, certainty, 4% rule), dashboard step | 6 | Done |
+| `ml/`: peer groups, past-only features, LightGBM ranker with walk-forward validation and SHAP, K-Means clusters, SARIMA CPI forecast, registry, scoring job; `ml_models`, `fund_predictions`, `fund_clusters` | 7 | Done |
+| Insights page (rankings with reasons, cluster scatter, inflation outlook, reliability), fund-page model card | 7 | Done |
 
 ## Authentication flow
 
@@ -131,7 +149,7 @@ The savings phase is stored as a `retirement` goal (target = corpus in today's m
 | Model | `app/models/` | SQLAlchemy ORM tables |
 | Core | `app/core/` | Settings, DB engine/session, security |
 | Pipeline | `app/data_pipeline/` | Source parsers, bulk upserts, jobs, scheduler, CLI (Phase 4) |
-| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4), `app/simulation/` (Phase 5); later `app/ml/`, `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
+| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4), `app/simulation/` (Phase 5), `app/ml/` (Phase 7: pure modules plus `dataset`, `registry`, `scoring` for data access); later `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
 
 ## Environments
 
