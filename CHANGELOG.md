@@ -2,6 +2,24 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.7.0] – 2026-10-17 – Phase 7: ML fund intelligence
+
+### Added
+
+- `app/ml/`: canonical SEBI peer groups from AMFI labels; month-end NAV dataset (direct growth funds); 26 features computed only from past data (tested for look-ahead); target = next-12-month return quartile within the peer group.
+- Fund ranker: LightGBM (very shallow trees, chosen on the 2018–2020 tuning years), purged walk-forward validation on 2021–2025 against momentum and random baselines and a shuffled split; rank correlation 0.248 (momentum 0.254), top picks in the top quartile 36% (chance 25%); exact tree SHAP explanations.
+- Behaviour clusters: K-Means on 3-year risk and return (k = 8 by silhouette among k ≥ 4), Gaussian mixture by BIC for comparison, plain-language names.
+- Inflation forecast: SARIMA(0,1,1)(0,1,1)₁₂ on log CPI, walk-forward error 1.31 pp a year ahead (naive 1.74, RBI target 1.86), 12-month forecast with an exact 80% band.
+- Model registry `ml_models` (one active version per name), `fund_predictions`, `fund_clusters` – migration `0008`; training CLI `python -m app.ml`; daily `ml_score` pipeline job; experiment records in `docs/ml/`.
+- `GET /api/ml/models`, `/api/ml/rankings`, `/api/ml/clusters`, `/api/ml/funds/{id}`, `/api/ml/inflation`.
+- Frontend: Insights page (rankings with SHAP "Why?" bars, cluster scatter with highlight and table, inflation outlook, reliability card) and a "What the models say" card on fund pages.
+- 43 new tests (429 total).
+- Documentation: Phase 7 document, ADR-010, updated architecture, database and API docs and README.
+
+### Fixed
+
+- NAV face-value changes (a jump by a power of ten, 14 funds) are adjusted out of the ML data (`app/finance/nav_adjust.py`).
+
 ## [0.6.0] – 2026-10-16 – Phase 6: Retirement planner
 
 ### Added

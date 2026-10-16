@@ -7,6 +7,7 @@ import { FundDetailPage } from './pages/FundDetailPage'
 import { FundsPage } from './pages/FundsPage'
 import { GoalSimulationPage } from './pages/GoalSimulationPage'
 import { GoalsPage } from './pages/GoalsPage'
+import { InsightsPage } from './pages/InsightsPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
           { path: '/retirement', element: <RetirementPage /> },
           { path: '/funds', element: <FundsPage /> },
           { path: '/funds/:fundId', element: <FundDetailPage /> },
+          { path: '/insights', element: <InsightsPage /> },
         ],
       },
       { path: '*', element: <Navigate to="/" replace /> },

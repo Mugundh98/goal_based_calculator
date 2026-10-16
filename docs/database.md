@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 6._
+_Living document – updated whenever a migration is added. Last updated: Phase 7._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -15,6 +15,10 @@ erDiagram
     SIMULATIONS ||--|| SIMULATION_RESULTS : "has exactly 1"
     USERS ||--o| RETIREMENT_PLANS : "has 0..1"
     GOALS ||--o| RETIREMENT_PLANS : "savings phase of"
+    ML_MODELS ||--o{ FUND_PREDICTIONS : "produced"
+    ML_MODELS ||--o{ FUND_CLUSTERS : "produced"
+    FUNDS ||--o{ FUND_PREDICTIONS : "about"
+    FUNDS ||--o{ FUND_CLUSTERS : "about"
     USERS {
         int id PK
         varchar email UK "lower-case"
@@ -66,6 +70,42 @@ erDiagram
         numeric step_up_rate "%"
         timestamptz created_at
         timestamptz updated_at
+    }
+    ML_MODELS {
+        int id PK
+        varchar name "fund_ranker | fund_clusters | inflation_forecast"
+        int version "UK with name"
+        varchar algorithm
+        jsonb params
+        jsonb metrics
+        jsonb features
+        varchar file_path
+        date data_start
+        date data_end
+        timestamptz trained_at
+        boolean is_active "one per name"
+    }
+    FUND_PREDICTIONS {
+        int model_id PK,FK
+        int fund_id PK,FK
+        date as_of
+        varchar peer_group
+        smallint predicted_quartile "1-4"
+        float prob_top
+        jsonb probabilities
+        float expected_quartile
+        int peer_rank
+        int peer_size
+        jsonb factors "top SHAP"
+    }
+    FUND_CLUSTERS {
+        int model_id PK,FK
+        int fund_id PK,FK
+        date as_of
+        smallint cluster
+        float distance
+        float volatility
+        float return_3y
     }
     RETIREMENT_PLANS {
         int id PK
@@ -167,6 +207,46 @@ erDiagram
 Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`. Market data (Phase 4): time series use a **composite natural primary key** (entity + date) instead of a surrogate id; NAVs are `NUMERIC(18,8)` (AMFI publishes up to 8 decimals); fund metrics are stored as `double precision` because they are derived statistics recomputed nightly (ADR-007). Simulations (Phase 5): a saved run is a **snapshot** (random, depends on market data that changes daily), so its output is stored, unlike goal projections; the question (`simulations`) and the bulky answer (`simulation_results`) are split one-to-one (ADR-008).
 
 ## Table dictionary
+
+### `ml_models` (Phase 7) – model registry, one row per trained version
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `name` | varchar(40) | CHECK (fund_ranker, fund_clusters, inflation_forecast); UNIQUE (`name`, `version`) | |
+| `version` | integer | NOT NULL | 1, 2, 3 … |
+| `algorithm` | varchar(80) | NOT NULL | |
+| `params` | jsonb | NOT NULL | Hyper-parameters, or the model itself (cluster scaler and centroids) |
+| `metrics` | jsonb | NOT NULL | Validation results, importance, cluster profiles, inflation forecast |
+| `features` | jsonb | default `[]` | Input order |
+| `file_path` | varchar(255) | NULL allowed | Model file (`backend/data/models/`, not in git) |
+| `data_start`, `data_end` | date | NOT NULL | Data window |
+| `trained_at` | timestamptz | default now() | |
+| `is_active` | boolean | default false; partial unique index `uq_ml_models_one_active` on `name` WHERE `is_active` | One active version per model |
+
+### `fund_predictions` (Phase 7) – the active ranker's view of each fund
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `model_id`, `fund_id` | integer | PK; FKs ON DELETE CASCADE; index `(model_id, peer_group, expected_quartile)` | |
+| `as_of` | date | NOT NULL | Month-end of the features |
+| `peer_group` | varchar(30) | NOT NULL | Canonical SEBI category |
+| `predicted_quartile` | smallint | CHECK 1–4 | Most likely quartile |
+| `prob_top` | double precision | CHECK 0–1 | P(top quartile) |
+| `probabilities` | jsonb | NOT NULL | P(Q1) … P(Q4) |
+| `expected_quartile` | double precision | NOT NULL | Ranking score (lower = better) |
+| `peer_rank`, `peer_size` | integer | NOT NULL | |
+| `factors` | jsonb | NOT NULL | Top 5 SHAP factors |
+
+### `fund_clusters` (Phase 7) – behaviour cluster of each fund
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `model_id`, `fund_id` | integer | PK; FKs ON DELETE CASCADE | |
+| `as_of` | date | NOT NULL | |
+| `cluster` | smallint | NOT NULL | 0 = least volatile |
+| `distance` | double precision | NOT NULL | To the cluster centre (standardised) |
+| `volatility`, `return_3y` | double precision | NOT NULL | Scatter coordinates (fractions) |
 
 ### `retirement_plans` (Phase 6) – one per user, owning one `retirement` goal
 
@@ -355,6 +435,7 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `0005` | 4 | Create `funds`, `nav_history`, `fund_metrics`, `index_history`, `inflation_data`, `job_runs` |
 | `0006` | 5 | Create `simulations` and `simulation_results` |
 | `0007` | 6 | Create `retirement_plans` |
+| `0008` | 7 | Create `ml_models`, `fund_predictions`, `fund_clusters` |
 
 ## Databases
 

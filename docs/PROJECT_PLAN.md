@@ -189,7 +189,7 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
 ### Phase 7 – ML: fund intelligence  · `phase-07-ml` · `v0.7.0`
 
 - **`ml/` (offline):** feature engineering from `nav_history`/`fund_metrics`; K-Means/GMM clustering; XGBoost/LightGBM classifier for next-12-month return quartile; **walk-forward validation** (no look-ahead bias); SHAP; SARIMA/Prophet CPI forecast; experiment results saved for the report.
-- **Database:** `ml_models` (name, version, metrics JSON, file path, trained_at, is_active), `fund_predictions` (fund_id, model_id, predicted quartile, probability, top SHAP factors JSON).
+- **Database:** `ml_models` (name, version, metrics JSON, file path, trained_at, is_active), `fund_predictions` (fund_id, model_id, predicted quartile, probability, top SHAP factors JSON). *As built:* also `fund_clusters`; LightGBM rather than XGBoost; SARIMA rather than Prophet; training lives in `backend/app/ml` (no top-level `ml/` folder) so training and serving share the feature code (ADR-010).
 - **Backend `ml/`:** loads the active model at startup; batch scoring job writes predictions; endpoints for clusters and predictions.
 - **Frontend:** cluster scatter plot, fund ranking table with "why" explanations (SHAP bars).
 - **Viva focus:** Why walk-forward instead of random split; class imbalance; choice of metrics; silhouette score; what SHAP values mean; model versioning; training offline vs serving online.

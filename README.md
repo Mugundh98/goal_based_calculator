@@ -59,6 +59,12 @@ MCA 4th-semester project, Andhra University CDOE.
    Afterwards set `SCHEDULER_ENABLED=true` in `.env` to refresh it every evening, or run single
    jobs (`daily_nav`, `index_history`, `inflation`, `fund_metrics`) by hand.
 
+   Then train the ML models (Phase 7, ~5 minutes; they need this data):
+
+   ```bash
+   uv run python -m app.ml train all
+   ```
+
    The Monte Carlo simulations (Phase 5) take their volatility from this data. Without it, only
    the normal model runs, with assumed volatilities. To time the vectorised engine against plain
    Python loops: `uv run python -m app.simulation.benchmark`.

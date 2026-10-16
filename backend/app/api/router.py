@@ -8,6 +8,7 @@ from app.api.routes import (
     goals,
     health,
     market,
+    ml,
     profile,
     retirement,
     risk,
@@ -24,3 +25,4 @@ api_router.include_router(simulations.router)
 api_router.include_router(retirement.router)
 api_router.include_router(funds.router)
 api_router.include_router(market.router)
+api_router.include_router(ml.router)
