@@ -195,6 +195,11 @@ How to run: `cd backend && uv run pytest --cov` · `cd frontend && npm test`.
 | Frontend tests | 52 | 55 |
 | End-to-end flows | 7 | 7 |
 
+**CI:**
+- Run #45 failed on lint: two docstring lines over 100 characters.
+- Runs #46 (the fix) and #47 (runners pinned to Ubuntu 24.04) passed all three jobs (backend with coverage, frontend, end-to-end) in 3 min 22 s and 3 min 24 s.
+- The merge into `main` is tagged `v1.0.0`.
+
 ## 8. How to run / demo this phase
 
 **The production image locally** (Docker Desktop running, from the repository root):
@@ -223,6 +228,7 @@ cd frontend && VITE_API_BASE_URL=http://127.0.0.1:8080 npm run build && npm run 
 - **The demo portfolio first raised rebalancing alerts on almost every goal.** The car goal held equity and a corporate-bond fund, but GoalWise recommends short-term debt (liquid funds) for a 2-year horizon. The demo now follows each goal's recommended mix, except the education goal, kept slightly equity-heavy to show one alert.
 - **Hosted URLs use `postgres://`, which SQLAlchemy rejects.** The settings now rewrite it.
 - **Pipeline failures were invisible to a scheduler.** The CLI always exited with 0; it now exits with 1 when a job fails.
+- **The first CI run failed on lint.** A late edit to a docstring in `demo.py` made two lines longer than 100 characters. Fixed the same day. While at it, the CI runners were pinned to Ubuntu 24.04, because GitHub announced that `ubuntu-latest` moves to Ubuntu 26 the next day, and a broken CI would now also stop deployments.
 - **Accounts cannot be created by the assistant.** The deployment is written as a guide for the owner. Everything that can be checked without accounts was checked locally under production settings.
 
 ## 10. Viva questions and answers

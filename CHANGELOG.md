@@ -25,6 +25,7 @@ All notable changes, one entry per phase tag. Format: [Keep a Changelog](https:/
 
 - `DATABASE_URL` accepts `postgres://` and `postgresql://` (as hosting providers give them).
 - `python -m app.data_pipeline` exits with status 1 when a job fails.
+- CI runners pinned to Ubuntu 24.04 (`ubuntu-latest` moves to Ubuntu 26 on 19 October 2026, and Render deploys only after CI passes).
 - Version 1.0.0.
 
 ## [0.12.0] – 2026-10-18 – Phase 12: Testing and evaluation
