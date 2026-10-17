@@ -6,9 +6,11 @@ on:
     branches: ["**"]
   pull_request:
 
+# Runners pinned to Ubuntu 24.04: ubuntu-latest moves to Ubuntu 26 from 19 Oct 2026, and Render
+# deploys only when these checks pass, so a runner change must not break them unannounced.
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
@@ -42,7 +44,7 @@ jobs:
         run: uv run pytest -v --cov --cov-report=term
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -61,7 +63,7 @@ jobs:
   e2e:
     # The whole stack in one runner: PostgreSQL, the API and the Vite dev server, driven by a
     # real Chromium through the main user flows (frontend/e2e). No market data or Gemini key.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [backend, frontend]
     services:
       db:
