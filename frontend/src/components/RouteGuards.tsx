@@ -16,6 +16,16 @@ export function ProtectedRoute() {
   return <Outlet />
 }
 
+/** Administrators only; everyone else is sent to the dashboard (the API refuses them too). */
+export function AdminRoute() {
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) return <FullPageMessage text="Loading your account…" />
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />
+  return <Outlet />
+}
+
 /** Login and register pages: a logged-in user goes straight to the dashboard. */
 export function GuestRoute() {
   const { user, isLoading } = useAuth()

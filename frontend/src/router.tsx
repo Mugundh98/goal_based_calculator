@@ -1,7 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 
 import { Layout } from './components/Layout'
-import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
+import { AdminRoute, GuestRoute, ProtectedRoute } from './components/RouteGuards'
+import { AdminPage } from './pages/AdminPage'
 import { AssistantPage } from './pages/AssistantPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { FundDetailPage } from './pages/FundDetailPage'
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
           { path: '/assistant', element: <AssistantPage /> },
         ],
       },
+      { element: <AdminRoute />, children: [{ path: '/admin', element: <AdminPage /> }] },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
