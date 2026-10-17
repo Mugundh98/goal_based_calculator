@@ -2,6 +2,24 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.12.0] – 2026-10-18 – Phase 12: Testing and evaluation
+
+### Added
+
+- Backend branch coverage with pytest-cov (93% of lines, 83% of branches; CI fails below 90% combined).
+- Frontend tests with Vitest and React Testing Library (52): formats, chart ticks, goal validation, API errors, the XSS-safe Markdown renderer, alerts, route guards, the login form, the PDF button and the SSE parser.
+- Playwright end-to-end tests (7 flows: onboarding, goals, validation, login redirect, admin access, plan PDF, assistant) and a CI job running them on PostgreSQL, the API and Vite.
+- `python -m app.evaluation ml | returns | chatbot | uat`: ML walk-forward results against last year's top funds and random with a paired t test; chance of success of 5 sample goals under the 4 return models; a 102-question assistant evaluation (tools, numbers, refusals, confirmation, hallucination with and without RAG, LLM judge); UAT plan, SUS form, response sheet and scorer. Reports in `docs/evaluation/`.
+- `run_turn` can offer a subset of tools and another prompt (evaluation without RAG).
+
+### Fixed
+
+- The assistant's simulation tool crashed whenever no equity override was given (since 0.10.0).
+- `list_goals` gave the plan from typed-in savings first and the real-holdings status nested, and a smaller model reported the wrong one; the real-holdings status now comes first.
+- The grounding check compares magnitudes ("behind by ₹38,483" for −38,483).
+- After logging in from a protected page, users were sent to the dashboard instead of that page (GuestRoute race, since Phase 1).
+- A portfolio test failed on Sundays and Mondays.
+
 ## [0.11.0] – 2026-10-17 – Phase 11: Reports and administration
 
 ### Added

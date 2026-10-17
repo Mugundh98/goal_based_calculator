@@ -59,8 +59,13 @@ def answer_of(events):
 
 
 def make_goal(client, headers, **overrides):
-    body = {"goal_type": "education", "name": "College", "target_amount": 2_000_000,
-            "target_year": THIS_YEAR + 10, "monthly_sip": 10_000} | overrides  # fmt: skip
+    body = {
+        "goal_type": "education",
+        "name": "College",
+        "target_amount": 2_000_000,
+        "target_year": THIS_YEAR + 10,
+        "monthly_sip": 10_000,
+    } | overrides
     response = client.post("/api/goals", json=body, headers=headers)
     assert response.status_code == 201
     return response.json()["id"]
@@ -151,8 +156,13 @@ def test_bad_arguments_and_unknown_tools_go_back_to_the_model(client, auth_heade
 
 
 def test_goal_is_saved_only_after_the_user_confirms(client, db, auth_headers, llm):
-    details = {"goal_type": "travel", "name": "Japan trip", "target_amount": 400_000,
-               "target_year": THIS_YEAR + 3, "monthly_sip": 8000}  # fmt: skip
+    details = {
+        "goal_type": "travel",
+        "name": "Japan trip",
+        "target_amount": 400_000,
+        "target_year": THIS_YEAR + 3,
+        "monthly_sip": 8000,
+    }
     llm.script = [
         call("create_goal", **details, confirmed=True),  # the model tries to skip the preview
         say("Here is the preview. Shall I save it?"),
@@ -176,15 +186,30 @@ def test_goal_is_saved_only_after_the_user_confirms(client, db, auth_headers, ll
 def test_charts_go_to_the_browser_not_the_model(client, db, auth_headers, llm):
     ids = []
     for k, (ret, vol) in enumerate([(14.0, 16.0), (12.0, 13.0)]):
-        fund = Fund(scheme_code=970_000 + k, name=f"Fund {k}", amc=f"AMC {k}",
-                    scheme_type="Open Ended", category="Mid Cap Fund", asset_class="equity",
-                    plan="direct", option="growth")  # fmt: skip
+        fund = Fund(
+            scheme_code=970_000 + k,
+            name=f"Fund {k}",
+            amc=f"AMC {k}",
+            scheme_type="Open Ended",
+            category="Mid Cap Fund",
+            asset_class="equity",
+            plan="direct",
+            option="growth",
+        )
         db.add(fund)
         db.flush()
-        db.add(FundMetrics(fund_id=fund.id, as_of_date=date(2026, 10, 15),
-                           history_start=date(2015, 1, 1), return_3y=ret, volatility=vol,
-                           sharpe=0.5, risk_free_rate=6.0,
-                           computed_at=datetime(2026, 1, 1, tzinfo=UTC)))  # fmt: skip
+        db.add(
+            FundMetrics(
+                fund_id=fund.id,
+                as_of_date=date(2026, 10, 15),
+                history_start=date(2015, 1, 1),
+                return_3y=ret,
+                volatility=vol,
+                sharpe=0.5,
+                risk_free_rate=6.0,
+                computed_at=datetime(2026, 1, 1, tzinfo=UTC),
+            )
+        )
         ids.append(fund.id)
     db.commit()
     llm.script = [call("compare_funds", fund_ids=ids), say("Fund 0 returned more, with more risk.")]
@@ -202,8 +227,10 @@ def test_charts_go_to_the_browser_not_the_model(client, db, auth_headers, llm):
 
 def test_explanations_come_from_the_knowledge_base(client, db, auth_headers, llm, monkeypatch):
     monkeypatch.setattr(tools, "RELEVANT_SIMILARITY", 0.1)  # bag-of-words fake embeddings
-    llm.script = [call("explain_term", question="What is an expense ratio and why does it matter?"),
-                  say("The expense ratio is a yearly cost (Costs of investing).")]  # fmt: skip
+    llm.script = [
+        call("explain_term", question="What is an expense ratio and why does it matter?"),
+        say("The expense ratio is a yearly cost (Costs of investing)."),
+    ]
     session_id = new_session(client, auth_headers)
     ask(client, auth_headers, session_id, "What is an expense ratio?")
     assert db.scalar(select(func.count()).select_from(KbDocument)) == 20  # built on first use
@@ -213,8 +240,10 @@ def test_explanations_come_from_the_knowledge_base(client, db, auth_headers, llm
 
 def test_off_topic_questions_find_no_passages(client, db, auth_headers, llm):
     rag.ingest(db, llm)
-    llm.script = [call("explain_term", question="capital city of a European country"),
-                  say("I can only help with personal finance.")]  # fmt: skip
+    llm.script = [
+        call("explain_term", question="capital city of a European country"),
+        say("I can only help with personal finance."),
+    ]
     session_id = new_session(client, auth_headers)
     ask(client, auth_headers, session_id, "What is the capital of France?")
     result = llm.conversations[0].results[0][0].data
@@ -244,17 +273,31 @@ def test_ingest_is_idempotent_and_follows_changes(db, tmp_path):
 
 
 def test_no_personal_identifiers_reach_the_model(client, auth_headers, llm):
-    client.put("/api/profile", headers=auth_headers, json={
-        "date_of_birth": "1990-05-17", "employment_type": "salaried", "monthly_income": 150000,
-        "monthly_expenses": 60000, "monthly_emi": 10000, "current_savings": 300000,
-        "existing_investments": 0, "dependents": 2,
-    })  # fmt: skip
+    client.put(
+        "/api/profile",
+        headers=auth_headers,
+        json={
+            "date_of_birth": "1990-05-17",
+            "employment_type": "salaried",
+            "monthly_income": 150000,
+            "monthly_expenses": 60000,
+            "monthly_emi": 10000,
+            "current_savings": 300000,
+            "existing_investments": 0,
+            "dependents": 2,
+        },
+    )
     llm.script = [call("get_risk_profile"), say("Your surplus is ₹80,000 a month.")]
     session_id = new_session(client, auth_headers)
     events = ask(client, auth_headers, session_id, "How much can I invest?")
     conversation = llm.conversations[0]
-    sent = json.dumps([conversation.system, conversation.sent,
-                       [r.data for rs in conversation.results for r in rs]])  # fmt: skip
+    sent = json.dumps(
+        [
+            conversation.system,
+            conversation.sent,
+            [r.data for rs in conversation.results for r in rs],
+        ]
+    )
     for identifier in ("user@example.com", "Test User", "1990-05-17"):
         assert identifier not in sent
     profile = conversation.results[0][0].data
@@ -311,3 +354,43 @@ def test_questions_are_rate_limited(client, db, auth_headers, llm, monkeypatch):
     body = ask(client, auth_headers, session_id, "3", expect=429)
     assert "2 questions an hour" in body["detail"]
     assert db.scalar(select(func.count()).where(ChatMessage.role == "user")) == 2
+
+
+def test_tracked_goals_report_the_status_of_their_real_holdings(
+    client, db, auth_headers, llm, monkeypatch
+):
+    from app.schemas.portfolio import GoalStatus
+
+    goal_id = make_goal(client, auth_headers)  # plan alone: off track (no savings)
+    status = GoalStatus(
+        goal_id=goal_id,
+        name="College",
+        goal_type="education",
+        target_year=THIS_YEAR + 10,
+        years_to_goal=10,
+        status="on_track",
+        value=1_600_000,
+        cost=1_150_000,
+        gain=450_000,
+        xirr=10.98,
+        expected_return=10,
+        plan_value=1_557_000,
+        vs_plan=43_000,
+        monthly_sip=10_000,
+        inflated_target=3_581_695,
+        projected_value=5_000_000,
+        funded_percent=100,
+        shortfall=0,
+        required_sip=0,
+        rebalance_needed=True,
+        equity_actual=86.6,
+        equity_target=60,
+    )
+    monkeypatch.setattr(tools, "_tracked", lambda ctx: {goal_id: status})
+    llm.script = [call("list_goals"), say("On track.")]
+    ask(client, auth_headers, new_session(client, auth_headers), "Am I on track?")
+    [goal] = llm.conversations[0].results[0][0].data["goals"]
+    # The answer a model sees first is the up-to-date one; the plan alone is kept apart.
+    assert goal["on_track"] is True and goal["status_source"] == "recorded investments"
+    assert goal["invested_value_now"] == 1_600_000 and goal["required_monthly_sip"] == 0
+    assert goal["plan_without_investments"]["on_track"] is False

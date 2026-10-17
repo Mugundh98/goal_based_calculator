@@ -33,3 +33,10 @@ Thumbs.db
 
 # Local tool settings
 .claude/
+
+# Coverage data and end-to-end test output
+coverage.json
+coverage.xml
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/

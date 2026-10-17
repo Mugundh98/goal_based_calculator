@@ -10,7 +10,7 @@ from google.genai import errors, types
 from app.chatbot import grounding, rag
 from app.chatbot.llm import GeminiConversation, HistoryMessage, LLMError, ToolResult, ToolSpec
 from app.chatbot.prompts import system_prompt
-from app.chatbot.tools import TOOLS
+from app.chatbot.tools import TOOLS, SimulationArgs, what_if_label
 from app.models import Goal
 from app.schemas.simulation import SimulationOverrides
 from app.services.simulations import resolve_inputs
@@ -82,6 +82,11 @@ def test_question_text_and_small_counts_do_not_need_a_source():
     answer = "For your 3 goals: the trip in 2029 costs ₹4 lakh as you said; here are 2 options."
     assert grounding.ungrounded(answer, ["a trip in 2029 costing 4 lakh"]) == []
     assert grounding.ungrounded("In 2031 you will have ₹4 lakh", []) == ["2031", "4 lakh"]
+
+
+def test_sign_does_not_matter_for_grounding():
+    # "behind plan by ₹38,483" reports the tool's vs_plan of -38483 in words.
+    assert grounding.ungrounded("You are behind plan by ₹38,483.", [{"vs_plan": -38483.3}]) == []
 
 
 def test_numbers_inside_tool_strings_count():
@@ -215,3 +220,11 @@ def test_gemini_errors_become_llm_errors():
     with pytest.raises(LLMError) as raised:
         list(chat.send("q"))
     assert raised.value.kind == "unavailable"
+
+
+def test_what_if_label_formats_only_the_values_given():
+    # Regression: formatting a missing value (f"{None:g}") crashed every plain simulation.
+    assert what_if_label(SimulationArgs(goal_id=1)) == ""
+    label = what_if_label(SimulationArgs(goal_id=1, monthly_sip=25000, equity_percent=40))
+    assert label == " (what if: SIP ₹25,000, 40% equity)"
+    assert "target 2030" in what_if_label(SimulationArgs(goal_id=1, target_year=2030))

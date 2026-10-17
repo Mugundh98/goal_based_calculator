@@ -38,8 +38,8 @@ jobs:
         run: uv run ruff check . && uv run ruff format --check .
       - name: Apply migrations
         run: uv run alembic upgrade head
-      - name: Test
-        run: uv run pytest -v
+      - name: Test with coverage
+        run: uv run pytest -v --cov --cov-report=term
 
   frontend:
     runs-on: ubuntu-latest
@@ -55,4 +55,51 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm test
       - run: npm run build
+
+  e2e:
+    # The whole stack in one runner: PostgreSQL, the API and the Vite dev server, driven by a
+    # real Chromium through the main user flows (frontend/e2e). No market data or Gemini key.
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: goalwise
+          POSTGRES_PASSWORD: goalwise
+          POSTGRES_DB: goalwise
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U goalwise -d goalwise"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://goalwise:goalwise@127.0.0.1:5432/goalwise
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Prepare the API
+        working-directory: backend
+        run: uv sync --frozen && uv run alembic upgrade head
+      - name: Install the frontend and Chromium
+        working-directory: frontend
+        run: npm ci && npx playwright install --with-deps chromium
+      - name: End-to-end tests
+        working-directory: frontend
+        run: npx playwright test
+      - name: Keep the report when something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7

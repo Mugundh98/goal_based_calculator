@@ -143,31 +143,35 @@ def list_goals(ctx: ToolContext, _: NoArgs) -> ToolOutput:
         }
         status = tracked.get(goal.id)
         if status is not None:
-            # The plan fields above start from the typed-in savings; these use the holdings.
-            entry["recorded_investments"] = status.model_dump(
-                include={
-                    "status",
-                    "value",
-                    "cost",
-                    "xirr",
-                    "plan_value",
-                    "vs_plan",
+            # With recorded investments the top-level status uses the real holdings (as the
+            # portfolio page does); the typed-in plan is kept apart so it cannot be mistaken
+            # for the answer (the Phase 12 evaluation caught a model reporting it).
+            entry["plan_without_investments"] = {
+                k: entry.pop(k)
+                for k in (
                     "projected_value",
                     "funded_percent",
-                    "shortfall",
-                    "required_sip",
-                    "rebalance_needed",
-                }
-            )
+                    "on_track",
+                    "required_monthly_sip",
+                    "current_savings",
+                )
+            }
+            entry |= {
+                "status_source": "recorded investments",
+                "invested_value_now": status.value,
+                "invested_cost": status.cost,
+                "xirr_percent": status.xirr,
+                "plan_value_by_now": status.plan_value,
+                "ahead_of_plan_by": status.vs_plan,
+                "projected_value": status.projected_value,
+                "funded_percent": status.funded_percent,
+                "on_track": status.status == "on_track",
+                "shortfall": status.shortfall,
+                "required_monthly_sip": status.required_sip,
+                "rebalance_needed": status.rebalance_needed,
+            }
         goals.append(entry)
-    return ToolOutput(
-        {
-            "risk_category": category,
-            "goals": goals,
-            "note": "When a goal has recorded_investments, its status there (based on the real "
-            "holdings) is the up-to-date answer to whether the goal is on track.",
-        }
-    )  # fmt: skip
+    return ToolOutput({"risk_category": category, "goals": goals})
 
 
 class CalculatorArgs(BaseModel):
@@ -269,6 +273,25 @@ class SimulationArgs(BaseModel):
     )
 
 
+def what_if_label(args: SimulationArgs) -> str:
+    """ " (what if: SIP ₹25,000, 40% equity)" for the chart title; empty without overrides.
+
+    Each value is formatted only when present: formatting None (e.g. f"{None:g}") raises.
+    """
+    parts = []
+    if args.monthly_sip is not None:
+        parts.append(f"SIP {inr(args.monthly_sip)}")
+    if args.equity_percent is not None:
+        parts.append(f"{args.equity_percent:g}% equity")
+    if args.target_year is not None:
+        parts.append(f"target {args.target_year}")
+    if args.step_up_rate is not None:
+        parts.append(f"{args.step_up_rate:g}% step-up")
+    if args.current_savings is not None:
+        parts.append(f"starting from {inr(args.current_savings)}")
+    return f" (what if: {', '.join(parts)})" if parts else ""
+
+
 def run_simulation(ctx: ToolContext, args: SimulationArgs) -> ToolOutput:
     goal = _owned_goal(ctx, args.goal_id)
     start = args.current_savings
@@ -304,21 +327,9 @@ def run_simulation(ctx: ToolContext, args: SimulationArgs) -> ToolOutput:
         "single_return_projection": result.deterministic.model_dump(),
         "portfolio_volatility_percent": result.annual_volatility,
     }
-    what_if = [
-        text
-        for value, text in (
-            (args.monthly_sip, f"SIP {inr(args.monthly_sip or 0)}"),
-            (args.equity_percent, f"{args.equity_percent:g}% equity"),
-            (args.target_year, f"target {args.target_year}"),
-            (args.step_up_rate, f"{args.step_up_rate:g}% step-up"),
-            (args.current_savings, f"starting from {inr(args.current_savings or 0)}"),
-        )
-        if value is not None
-    ]
     chart = {
         "type": "simulation",
-        "title": f"{goal.name}: simulated value each year"
-        + (f" (what if: {', '.join(what_if)})" if what_if else ""),
+        "title": f"{goal.name}: simulated value each year" + what_if_label(args),
         "bands": [b.model_dump() for b in result.bands],
         "target": inputs.inflated_target,
     }
@@ -443,9 +454,21 @@ def get_portfolio_status(ctx: ToolContext, _: NoArgs) -> ToolOutput:
             "goals": [
                 g.model_dump(
                     include={
-                        "goal_id", "name", "status", "value", "cost", "xirr", "expected_return",
-                        "plan_value", "vs_plan", "projected_value", "inflated_target",
-                        "required_sip", "monthly_sip", "rebalance_needed", "equity_actual",
+                        "goal_id",
+                        "name",
+                        "status",
+                        "value",
+                        "cost",
+                        "xirr",
+                        "expected_return",
+                        "plan_value",
+                        "vs_plan",
+                        "projected_value",
+                        "inflated_target",
+                        "required_sip",
+                        "monthly_sip",
+                        "rebalance_needed",
+                        "equity_actual",
                         "equity_target",
                     }
                 )
@@ -453,13 +476,19 @@ def get_portfolio_status(ctx: ToolContext, _: NoArgs) -> ToolOutput:
             ],
             "alerts": [f"{a.goal_name}: {a.message}" for a in p.alerts],
             "holdings": [
-                {"fund": h.fund_name, "goal": h.goal_name, "value": h.value, "cost": h.cost,
-                 "gain_percent": h.gain_percent, "xirr": h.xirr}
+                {
+                    "fund": h.fund_name,
+                    "goal": h.goal_name,
+                    "value": h.value,
+                    "cost": h.cost,
+                    "gain_percent": h.gain_percent,
+                    "xirr": h.xirr,
+                }
                 for h in holdings[:10]
             ],
             "note": "xirr is % a year (null under a year); amounts in rupees.",
         }
-    )  # fmt: skip
+    )
 
 
 def get_risk_profile(ctx: ToolContext, _: NoArgs) -> ToolOutput:
@@ -488,7 +517,7 @@ def get_risk_profile(ctx: ToolContext, _: NoArgs) -> ToolOutput:
             "capacity_score": assessment.capacity_score,
             "taken_on": assessment.created_at.date().isoformat(),
         }
-    return ToolOutput(data)  # fmt: skip
+    return ToolOutput(data)
 
 
 # --- Knowledge base --------------------------------------------------------------------------
@@ -510,13 +539,16 @@ def explain_term(ctx: ToolContext, args: ExplainArgs) -> ToolOutput:
     return ToolOutput(
         {
             "passages": [
-                {"source": f"{p.title} - {p.heading}", "text": p.content,
-                 "similarity": p.similarity}
+                {
+                    "source": f"{p.title} - {p.heading}",
+                    "text": p.content,
+                    "similarity": p.similarity,
+                }
                 for p in relevant
             ],
             "note": "Explain using these passages and name the source titles.",
         }
-    )  # fmt: skip
+    )
 
 
 TOOLS: dict[str, Tool] = {
