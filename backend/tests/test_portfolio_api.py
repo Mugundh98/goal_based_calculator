@@ -397,7 +397,8 @@ def test_goal_progress_history_and_projection(client, auth_headers, funds):
     progress = client.get(f"/api/portfolio/goals/{goal_id}", headers=auth_headers).json()
     history, status = progress["history"], progress["status"]
     assert len(history) >= 36
-    assert history[-1]["date"] == LATEST.isoformat()
+    # The last NAV, not "yesterday": on a Sunday or Monday that was a weekend day.
+    assert history[-1]["date"] == funds["equity"].latest_nav_date.isoformat()
     assert history[-1]["value"] == pytest.approx(status["value"], rel=1e-6)
     assert history[-1]["invested"] == pytest.approx(status["cost"])
     # The fund earned 12% against the plan's 10%: ahead of plan.
