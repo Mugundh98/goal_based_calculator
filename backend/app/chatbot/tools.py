@@ -269,6 +269,25 @@ class SimulationArgs(BaseModel):
     )
 
 
+def what_if_label(args: SimulationArgs) -> str:
+    """ " (what if: SIP ₹25,000, 40% equity)" for the chart title; empty without overrides.
+
+    Each value is formatted only when present: formatting None (e.g. f"{None:g}") raises.
+    """
+    parts = []
+    if args.monthly_sip is not None:
+        parts.append(f"SIP {inr(args.monthly_sip)}")
+    if args.equity_percent is not None:
+        parts.append(f"{args.equity_percent:g}% equity")
+    if args.target_year is not None:
+        parts.append(f"target {args.target_year}")
+    if args.step_up_rate is not None:
+        parts.append(f"{args.step_up_rate:g}% step-up")
+    if args.current_savings is not None:
+        parts.append(f"starting from {inr(args.current_savings)}")
+    return f" (what if: {', '.join(parts)})" if parts else ""
+
+
 def run_simulation(ctx: ToolContext, args: SimulationArgs) -> ToolOutput:
     goal = _owned_goal(ctx, args.goal_id)
     start = args.current_savings
@@ -304,21 +323,9 @@ def run_simulation(ctx: ToolContext, args: SimulationArgs) -> ToolOutput:
         "single_return_projection": result.deterministic.model_dump(),
         "portfolio_volatility_percent": result.annual_volatility,
     }
-    what_if = [
-        text
-        for value, text in (
-            (args.monthly_sip, f"SIP {inr(args.monthly_sip or 0)}"),
-            (args.equity_percent, f"{args.equity_percent:g}% equity"),
-            (args.target_year, f"target {args.target_year}"),
-            (args.step_up_rate, f"{args.step_up_rate:g}% step-up"),
-            (args.current_savings, f"starting from {inr(args.current_savings or 0)}"),
-        )
-        if value is not None
-    ]
     chart = {
         "type": "simulation",
-        "title": f"{goal.name}: simulated value each year"
-        + (f" (what if: {', '.join(what_if)})" if what_if else ""),
+        "title": f"{goal.name}: simulated value each year" + what_if_label(args),
         "bands": [b.model_dump() for b in result.bands],
         "target": inputs.inflated_target,
     }

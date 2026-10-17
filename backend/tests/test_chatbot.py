@@ -10,7 +10,7 @@ from google.genai import errors, types
 from app.chatbot import grounding, rag
 from app.chatbot.llm import GeminiConversation, HistoryMessage, LLMError, ToolResult, ToolSpec
 from app.chatbot.prompts import system_prompt
-from app.chatbot.tools import TOOLS
+from app.chatbot.tools import TOOLS, SimulationArgs, what_if_label
 from app.models import Goal
 from app.schemas.simulation import SimulationOverrides
 from app.services.simulations import resolve_inputs
@@ -215,3 +215,11 @@ def test_gemini_errors_become_llm_errors():
     with pytest.raises(LLMError) as raised:
         list(chat.send("q"))
     assert raised.value.kind == "unavailable"
+
+
+def test_what_if_label_formats_only_the_values_given():
+    # Regression: formatting a missing value (f"{None:g}") crashed every plain simulation.
+    assert what_if_label(SimulationArgs(goal_id=1)) == ""
+    label = what_if_label(SimulationArgs(goal_id=1, monthly_sip=25000, equity_percent=40))
+    assert label == " (what if: SIP ₹25,000, 40% equity)"
+    assert "target 2030" in what_if_label(SimulationArgs(goal_id=1, target_year=2030))
