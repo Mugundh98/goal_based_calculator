@@ -79,6 +79,12 @@ MCA 4th-semester project, Andhra University CDOE.
 
    Without a key the rest of GoalWise works and the Assistant page says it is switched off.
 
+7. Make yourself an administrator (Phase 11) to see the Admin dashboard, then log in again:
+
+   ```bash
+   uv run python -m app.admin make-admin you@example.com
+   ```
+
 ## Tests
 
 ```bash

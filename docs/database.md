@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 10._
+_Living document – updated whenever a migration is added. Last updated: Phase 11._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -26,6 +26,7 @@ erDiagram
     CHAT_SESSIONS ||--o{ CHAT_MESSAGES : "contains"
     CHAT_MESSAGES ||--o{ TOOL_CALLS : "answer used"
     KB_DOCUMENTS ||--o{ KB_CHUNKS : "split into"
+    USERS ||..o{ AUDIT_LOG : "acted (no FK: id and e-mail kept)"
     ML_MODELS ||--o{ FUND_PREDICTIONS : "produced"
     ML_MODELS ||--o{ FUND_CLUSTERS : "produced"
     FUNDS ||--o{ FUND_PREDICTIONS : "about"
@@ -81,6 +82,17 @@ erDiagram
         numeric step_up_rate "%"
         timestamptz created_at
         timestamptz updated_at
+    }
+    AUDIT_LOG {
+        int id PK
+        timestamptz created_at
+        int actor_id "no FK"
+        varchar actor_email
+        varchar action
+        varchar entity_type
+        int entity_id
+        jsonb details
+        varchar ip_address
     }
     CHAT_SESSIONS {
         int id PK
@@ -300,6 +312,21 @@ erDiagram
 Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`. Market data (Phase 4): time series use a **composite natural primary key** (entity + date) instead of a surrogate id; NAVs are `NUMERIC(18,8)` (AMFI publishes up to 8 decimals); fund metrics are stored as `double precision` because they are derived statistics recomputed nightly (ADR-007). Simulations (Phase 5): a saved run is a **snapshot** (random, depends on market data that changes daily), so its output is stored, unlike goal projections; the question (`simulations`) and the bulky answer (`simulation_results`) are split one-to-one (ADR-008).
 
 ## Table dictionary
+
+### `audit_log` (Phase 11) – append-only record of key actions
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `created_at` | timestamptz | default now(); index `ix_audit_log_created_at` | |
+| `actor_id` | integer | **no foreign key**; index `ix_audit_log_actor_created (actor_id, created_at)` | NULL: anonymous (failed login) or command line |
+| `actor_email` | varchar(255) | | Snapshot, kept after the account is deleted |
+| `action` | varchar(60) | index `ix_audit_log_action` | One of 22 actions (`app/services/audit.py`) |
+| `entity_type`, `entity_id` | varchar(40), integer | | What was acted on |
+| `details` | jsonb | default '{}' | e.g. before and after of a role change |
+| `ip_address` | varchar(45) | | Client address |
+
+Trigger `audit_log_append_only` (BEFORE UPDATE OR DELETE, function `audit_log_append_only()`) raises an exception: rows can only be inserted.
 
 ### `chat_sessions` (Phase 10) – one conversation
 
@@ -638,6 +665,7 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `0009` | 8 | Create `recommendations` |
 | `0010` | 9 | Create `transactions` and `holdings` |
 | `0011` | 10 | Create `chat_sessions`, `chat_messages`, `tool_calls`, `kb_documents`, `kb_chunks` (vector(768), HNSW index) |
+| `0012` | 11 | Create `audit_log` with its indexes and the append-only trigger |
 
 ## Databases
 

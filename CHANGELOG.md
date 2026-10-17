@@ -2,6 +2,18 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.11.0] – 2026-10-17 – Phase 11: Reports and administration
+
+### Added
+
+- Audit log: `audit_log` table – migration `0012` – made append-only by a trigger; actor kept by id and e-mail without a foreign key; 22 actions recorded after they succeed (sign-up, logins and failed logins, profile, risk, goals, retirement, saved simulations, recommendations, portfolio transactions, assistant-created goals, report downloads, admin changes, job runs, model activation, command-line role changes) with the client's IP address.
+- "Download my plan": `GET /api/reports/plan` renders the plan (profile and risk, goals with projections, recommendations, latest simulation and recorded investments, retirement, holdings and alerts, assumptions) as a PDF with ReportLab.
+- Administration: `/api/admin/overview`, `/users` (search, update role and active flag, no self-change), `/audit` and `/audit/actions`, `/models` and `/models/{id}/activate`; `python -m app.admin make-admin | revoke-admin <email>`.
+- Frontend: "Download my plan (PDF)" on the dashboard and goals page; admin dashboard (overview, users, audit log, data jobs, models) behind an admin-only route and menu link.
+- `app/finance/formatting.py` (`inr`, `lakh_crore`) shared by alerts, the assistant and the PDF; dependency `reportlab`, dev dependency `pypdf`.
+- 17 new tests (559 total).
+- Documentation: Phase 11 document, ADR-014, updated architecture, database, API docs and README.
+
 ## [0.10.0] – 2026-10-17 – Phase 10: Conversational assistant
 
 ### Added
