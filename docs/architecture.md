@@ -167,6 +167,20 @@ flowchart LR
 
 578 backend tests (93% of lines, 83% of branches), 52 frontend tests and 7 end-to-end flows run on every push. The evaluation scripts report the ML models against naive baselines, the four return models on sample goals, a 102-question assistant evaluation and UAT results. Details: `docs/phases/12-evaluation.md`, ADR-015.
 
+### Deployment (Phase 13)
+
+```mermaid
+flowchart LR
+    B[Browser] -->|static files| V[Vercel<br/>React build + vercel.json]
+    B -->|HTTPS /api + JWT, CORS| R[Render free<br/>Docker: alembic upgrade, uvicorn]
+    R -->|TLS| N[(Neon<br/>PostgreSQL 16 + pgvector)]
+    R --> G[Gemini Flash-Lite]
+    GH[GitHub Actions<br/>data-refresh 00:00 IST] --> N
+    DEV[Developer machine] -.->|copy-data, demo-user| N
+```
+
+The frontend waits for the sleeping API behind `ServerGate`. The API runs one Monte Carlo simulation at a time (`app/simulation/limits.py`) to stay inside 512 MB. Reference data is copied once from the local database with PostgreSQL `COPY`. GitHub Actions refreshes NAVs, metrics and index closes daily. Render deploys `main` only after CI passes. Details: `docs/deployment.md`, `docs/phases/13-deployment.md`, ADR-016.
+
 ## Components built so far
 
 | Component | Phase | Status |
@@ -199,6 +213,7 @@ flowchart LR
 | Audit log (append-only table, `Audit` dependency, 22 actions); plan PDF (`reports/`, ReportLab); admin API and `make-admin` command | 11 | Done |
 | Download my plan button; admin dashboard (overview, users, audit log, data jobs, models) behind `AdminRoute` | 11 | Done |
 | Coverage in CI, Vitest component tests, Playwright end-to-end job; `evaluation/` (ML, return models, chatbot, UAT) | 12 | Done |
+| Dockerfile, `render.yaml`, `vercel.json`, data-refresh workflow; `deploy/` (`copy-data`, `demo-user`); simulation concurrency limit; database URL normalising; `ServerGate` | 13 | Done |
 
 ## Authentication flow
 
@@ -236,19 +251,25 @@ flowchart LR
 |---|---|---|---|
 | Development | Vite dev server `127.0.0.1:5173` (proxies `/api`) | Uvicorn `127.0.0.1:8000` | Docker `pgvector/pgvector:pg16` on port 5432 |
 | CI | `npm ci` + lint + build | `uv sync` + ruff + migrations + pytest | GitHub Actions service container, same image |
-| Production (Phase 13) | Vercel | Render | Managed PostgreSQL with pgvector |
+| Production-like (local) | `vite build` with `VITE_API_BASE_URL` + `vite preview` | `docker run` of the production image, 512 MB cap | Fresh local database filled with `copy-data` |
+| Production (Phase 13) | Vercel (`frontend/vercel.json`) | Render free web service, Docker (`render.yaml`) | Neon Free, PostgreSQL 16 + pgvector |
 
 ## Configuration
 
 | Variable | Used by | Example |
 |---|---|---|
-| `DATABASE_URL` | backend | `postgresql+psycopg://goalwise:goalwise@127.0.0.1:5432/goalwise` |
+| `DATABASE_URL` | backend | `postgresql+psycopg://goalwise:goalwise@127.0.0.1:5432/goalwise` (`postgres://` and `postgresql://` accepted) |
+| `DATABASE_CONNECT_TIMEOUT` | backend | `3` seconds; `15` on Render (Neon wakes up) |
 | `CORS_ORIGINS` | backend | `http://localhost:5173,http://127.0.0.1:5173` (comma-separated) |
+| `CORS_ORIGIN_REGEX` | backend | empty; e.g. `https://goalwise-[a-z0-9-]+\.vercel\.app` for preview deployments |
 | `ENVIRONMENT` | backend | `development` |
 | `JWT_SECRET_KEY` | backend | random 48+ byte string (required in production) |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | backend | `60` |
 | `SCHEDULER_ENABLED` | backend | `false`; `true` runs the pipeline timetable in the API process (one process only) |
 | `DATA_CACHE_DIR` | backend | `data/cache` (downloaded NAV histories, git-ignored) |
 | `RISK_FREE_RATE` | backend | `0.06` (fraction a year, for Sharpe and Sortino) |
-| `VITE_API_BASE_URL` | frontend | empty in development |
+| `SIMULATION_CONCURRENCY` | backend | `4`; `1` on Render (512 MB) |
+| `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `GEMINI_EMBEDDING_MODEL`, `CHAT_MESSAGES_PER_HOUR` | backend | empty key = assistant off; Flash-Lite models on Render |
+| `DEMO_PASSWORD` | `python -m app.deploy demo-user` | the demo account's password (else one is generated) |
+| `VITE_API_BASE_URL` | frontend (build time) | empty in development; the Render address in production |
 | `API_PROXY_TARGET` | Vite dev server | `http://127.0.0.1:8000` by default; another backend port when 8000 is busy |

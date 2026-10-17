@@ -2,6 +2,31 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [1.0.0] – 2026-10-18 – Phase 13: Deployment
+
+### Added
+
+- Deployment configuration:
+  - `backend/Dockerfile`: Python 3.12 slim, uv 0.13.0, frozen dependencies, LightGBM's OpenMP runtime, unprivileged user, migrations on start, one uvicorn worker on `$PORT`.
+  - `render.yaml`: free Docker web service in Singapore, health check, deploys after CI passes, secrets asked for once, generated JWT secret.
+  - `frontend/vercel.json`: SPA rewrite, asset caching, security headers.
+- `python -m app.deploy copy-data`: streams the reference data (funds, NAVs, metrics, indices, inflation, ML outputs, knowledge base) to another database with `COPY`. It checks migrations and columns, refuses to overwrite without `--replace`, never copies user data, and moves the id sequences forward.
+- `python -m app.deploy demo-user [--reset]`: a complete demo household (profile, risk profile, three goals, retirement plan, three years of SIPs in real funds, recommendations), dated relative to today.
+- `.github/workflows/data-refresh.yml`: nightly NAVs, metrics, index closes and inflation against the production database. Off until `PRODUCTION_DATABASE_URL` and `DATA_REFRESH=on` are set.
+- Settings:
+  - `DATABASE_CONNECT_TIMEOUT`;
+  - `CORS_ORIGIN_REGEX` (e.g. Vercel previews);
+  - `SIMULATION_CONCURRENCY`: Monte Carlo runs queue behind a process-wide semaphore, so the API fits in 512 MB.
+- Frontend `ServerGate`: waits for a sleeping API and shows "Waking up the server…", with a retry after two minutes.
+- Tests: settings, CORS pattern, simulation slots, data copy between two real databases, demo account, `ServerGate` (18 new: 593 backend, 55 frontend).
+- Documentation: `docs/deployment.md` (step-by-step guide), Phase 13 document, ADR-016; updated architecture, database docs, README and project plan.
+
+### Changed
+
+- `DATABASE_URL` accepts `postgres://` and `postgresql://` (as hosting providers give them).
+- `python -m app.data_pipeline` exits with status 1 when a job fails.
+- Version 1.0.0.
+
 ## [0.12.0] – 2026-10-18 – Phase 12: Testing and evaluation
 
 ### Added

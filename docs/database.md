@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 11._
+_Living document – updated whenever a migration is added. Last updated: Phase 13._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -673,6 +673,12 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 |---|---|
 | `goalwise` | Development data |
 | `goalwise_test` | Created automatically by the test suite; rebuilt from migrations each run |
+| `goalwise_test_copy` | Created by the tests of `copy-data` (Phase 13): an empty database at the same migration |
+| Neon `neondb` (production) | Migrated with `alembic upgrade head` (also on every API start); reference data copied with `python -m app.deploy copy-data`; demo account from `demo-user`. No schema changes in Phase 13 |
+
+### Reference data and user data (Phase 13)
+
+`copy-data` copies only the **reference tables**, parents first: `funds`, `nav_history`, `fund_metrics`, `index_history`, `inflation_data`, `ml_models`, `fund_predictions`, `fund_clusters`, `kb_documents`, `kb_chunks` (about 2.58 million rows, ~190 MB). It never copies user data: accounts, profiles, goals, portfolios, chats, the audit log, job runs. Ids are copied as they are, and each id sequence is then moved past the highest id.
 
 ## Commands
 
@@ -684,3 +690,5 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | Show current version | `uv run alembic current` |
 | Preview SQL without running | `uv run alembic upgrade head --sql` |
 | Open a SQL shell | `docker exec -it goalwise-db psql -U goalwise -d goalwise` |
+| Copy reference data to another database | `uv run python -m app.deploy copy-data --target "<url>" [--replace] [--table T ...]` |
+| Create or reset the demo account | `uv run python -m app.deploy demo-user [--reset]` |
