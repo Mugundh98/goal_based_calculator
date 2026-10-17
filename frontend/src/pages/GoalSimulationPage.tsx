@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 
 import type { Goal } from '../api/goals'
 import {
@@ -46,7 +46,14 @@ export function GoalSimulationPage() {
 
 function Simulation({ goal }: { goal: Goal }) {
   const [model, setModel] = useState<SimulationModel>('bootstrap')
-  const [overrides, setOverrides] = useState<SimulationOverrides>({})
+  // "Simulate this allocation" on a recommendation opens the page with ?equity=60.
+  const [params] = useSearchParams()
+  const recommendedEquity = params.get('equity')
+  const [overrides, setOverrides] = useState<SimulationOverrides>(() =>
+    recommendedEquity === null || Number.isNaN(Number(recommendedEquity))
+      ? {}
+      : { equity_percent: Math.min(100, Math.max(0, Number(recommendedEquity))) },
+  )
   const [comparing, setComparing] = useState(false)
   const request = { model, overrides }
   const simulation = useSimulation(goal.id, goal.updated_at, request)
@@ -64,6 +71,14 @@ function Simulation({ goal }: { goal: Goal }) {
           10,000 possible futures for your savings and SIPs, each with its own ups and downs of the market, instead of one
           fixed return.
         </p>
+        {recommendedEquity !== null && overrides.equity_percent !== undefined && (
+          <p className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            Simulating the recommended allocation: {overrides.equity_percent}% in equity.{' '}
+            <Link to={`/goals/${goal.id}/recommend`} className="underline">
+              Back to the recommendation
+            </Link>
+          </p>
+        )}
       </div>
 
       <fieldset>
