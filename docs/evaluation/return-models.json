@@ -1,0 +1,230 @@
+{
+  "generated": "2026-10-17",
+  "goals": [
+    {
+      "goal": "Car, 3 years, conservative",
+      "years": 3,
+      "equity_percent": 30,
+      "expected_return": 8.8,
+      "inflated_target": 952812.8,
+      "monthly_sip": 23179.0,
+      "models": {
+        "normal": {
+          "success": 51.1,
+          "sip_for_90": 24922.0,
+          "volatility": 5.54,
+          "median_final": 954405.68,
+          "p10_final": 886179.8
+        },
+        "bootstrap": {
+          "success": 48.5,
+          "sip_for_90": 24886.0,
+          "volatility": 5.54,
+          "median_final": 950619.84,
+          "p10_final": 887459.52
+        },
+        "garch": {
+          "success": 51.2,
+          "sip_for_90": 24894.0,
+          "volatility": 5.52,
+          "median_final": 954554.85,
+          "p10_final": 887200.5
+        },
+        "hmm": {
+          "success": 52.5,
+          "sip_for_90": 25267.0,
+          "volatility": 6.58,
+          "median_final": 956209.57,
+          "p10_final": 874096.1
+        }
+      },
+      "history": {
+        "equity_source": "Nifty 500 (^CRSLDX) month-end closes",
+        "debt_source": "median monthly return of up to 137 bond funds (growth option)",
+        "start": "2013-02-01",
+        "end": "2026-09-01",
+        "months": 164
+      }
+    },
+    {
+      "goal": "House deposit, 7 years, moderate",
+      "years": 7,
+      "equity_percent": 60,
+      "expected_return": 10.6,
+      "inflated_target": 3007260.52,
+      "monthly_sip": 24546.0,
+      "models": {
+        "normal": {
+          "success": 51.6,
+          "sip_for_90": 30401.0,
+          "volatility": 10.23,
+          "median_final": 3026524.4,
+          "p10_final": 2428107.59
+        },
+        "bootstrap": {
+          "success": 49.7,
+          "sip_for_90": 29992.0,
+          "volatility": 10.23,
+          "median_final": 3003295.99,
+          "p10_final": 2461232.24
+        },
+        "garch": {
+          "success": 51.5,
+          "sip_for_90": 30416.0,
+          "volatility": 10.36,
+          "median_final": 3027230.65,
+          "p10_final": 2426921.16
+        },
+        "hmm": {
+          "success": 51.9,
+          "sip_for_90": 30623.0,
+          "volatility": 10.52,
+          "median_final": 3035157.31,
+          "p10_final": 2410492.21
+        }
+      },
+      "history": {
+        "equity_source": "Nifty 500 (^CRSLDX) month-end closes",
+        "debt_source": "median monthly return of up to 137 bond funds (growth option)",
+        "start": "2013-02-01",
+        "end": "2026-09-01",
+        "months": 164
+      }
+    },
+    {
+      "goal": "Education, 10 years, moderate",
+      "years": 10,
+      "equity_percent": 60,
+      "expected_return": 10.6,
+      "inflated_target": 4477119.24,
+      "monthly_sip": 21529.0,
+      "models": {
+        "normal": {
+          "success": 51.2,
+          "sip_for_90": 27833.0,
+          "volatility": 10.23,
+          "median_final": 4510294.05,
+          "p10_final": 3463048.01
+        },
+        "bootstrap": {
+          "success": 49.9,
+          "sip_for_90": 27694.0,
+          "volatility": 10.23,
+          "median_final": 4474582.54,
+          "p10_final": 3480531.81
+        },
+        "garch": {
+          "success": 51.6,
+          "sip_for_90": 27820.0,
+          "volatility": 10.36,
+          "median_final": 4513271.92,
+          "p10_final": 3464696.61
+        },
+        "hmm": {
+          "success": 52.3,
+          "sip_for_90": 28060.0,
+          "volatility": 10.52,
+          "median_final": 4535162.61,
+          "p10_final": 3435090.42
+        }
+      },
+      "history": {
+        "equity_source": "Nifty 500 (^CRSLDX) month-end closes",
+        "debt_source": "median monthly return of up to 137 bond funds (growth option)",
+        "start": "2013-02-01",
+        "end": "2026-09-01",
+        "months": 164
+      }
+    },
+    {
+      "goal": "Education, 15 years, aggressive",
+      "years": 15,
+      "equity_percent": 85,
+      "expected_return": 12.1,
+      "inflated_target": 5991395.48,
+      "monthly_sip": 12482.0,
+      "models": {
+        "normal": {
+          "success": 51.6,
+          "sip_for_90": 19734.0,
+          "volatility": 14.32,
+          "median_final": 6084916.71,
+          "p10_final": 3789424.55
+        },
+        "bootstrap": {
+          "success": 50.7,
+          "sip_for_90": 19633.0,
+          "volatility": 14.32,
+          "median_final": 6032179.36,
+          "p10_final": 3809289.87
+        },
+        "garch": {
+          "success": 51.3,
+          "sip_for_90": 19830.0,
+          "volatility": 14.53,
+          "median_final": 6064854.88,
+          "p10_final": 3771207.49
+        },
+        "hmm": {
+          "success": 52.7,
+          "sip_for_90": 20034.0,
+          "volatility": 14.26,
+          "median_final": 6138525.05,
+          "p10_final": 3732889.27
+        }
+      },
+      "history": {
+        "equity_source": "Nifty 500 (^CRSLDX) month-end closes",
+        "debt_source": "median monthly return of up to 137 bond funds (growth option)",
+        "start": "2013-02-01",
+        "end": "2026-09-01",
+        "months": 164
+      }
+    },
+    {
+      "goal": "Wealth, 25 years, aggressive",
+      "years": 25,
+      "equity_percent": 85,
+      "expected_return": 12.1,
+      "inflated_target": 42918707.2,
+      "monthly_sip": 24817.0,
+      "models": {
+        "normal": {
+          "success": 51.2,
+          "sip_for_90": 47478.0,
+          "volatility": 14.32,
+          "median_final": 43669529.12,
+          "p10_final": 22433841.09
+        },
+        "bootstrap": {
+          "success": 50.8,
+          "sip_for_90": 47338.0,
+          "volatility": 14.32,
+          "median_final": 43323775.1,
+          "p10_final": 22500422.85
+        },
+        "garch": {
+          "success": 51.5,
+          "sip_for_90": 47457.0,
+          "volatility": 14.53,
+          "median_final": 43738949.14,
+          "p10_final": 22443774.4
+        },
+        "hmm": {
+          "success": 51.4,
+          "sip_for_90": 49448.0,
+          "volatility": 14.26,
+          "median_final": 43772082.38,
+          "p10_final": 21540022.2
+        }
+      },
+      "history": {
+        "equity_source": "Nifty 500 (^CRSLDX) month-end closes",
+        "debt_source": "median monthly return of up to 137 bond funds (growth option)",
+        "start": "2013-02-01",
+        "end": "2026-09-01",
+        "months": 164
+      }
+    }
+  ]
+}

@@ -71,6 +71,9 @@ def run_turn(
     text: str,
     llm: LLM,
     today: date | None = None,
+    *,
+    tool_names: set[str] | None = None,  # evaluation: offer only these tools
+    prompt: str | None = None,  # evaluation: a different system prompt
 ) -> Iterator[Event]:
     earlier = history(db, session)
     question = ChatMessage(session_id=session.id, role="user", content=text)
@@ -82,14 +85,15 @@ def run_turn(
     db.add(answer)
     db.commit()  # the question is kept even if the model fails
 
-    prompt = system_prompt(today)
+    prompt = prompt or system_prompt(today)
     context = ToolContext(db, user, llm, today, _awaiting_confirmation(earlier))
     past = [
         HistoryMessage("user" if m.role == "user" else "assistant", m.content[:HISTORY_CHARS])
         for m in earlier
         if m.content and not m.payload.get("error")
     ]
-    conversation = llm.conversation(prompt, past, [t.spec for t in TOOLS.values()])
+    offered = [t for name, t in TOOLS.items() if tool_names is None or name in tool_names]
+    conversation = llm.conversation(prompt, past, [t.spec for t in offered])
     pieces: list[str] = []
     charts: list[dict[str, Any]] = []
     sources: list[Any] = [prompt, text, *(m.content for m in earlier)]
