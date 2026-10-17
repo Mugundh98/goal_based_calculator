@@ -4,6 +4,7 @@ from app.core.database import Base
 from app.models.goal import Goal
 from app.models.market import Fund, FundMetrics, IndexHistory, InflationData, JobRun, NavHistory
 from app.models.ml import FundCluster, FundPrediction, MLModel
+from app.models.portfolio import Holding, Transaction
 from app.models.profile import FinancialProfile
 from app.models.recommendation import Recommendation
 from app.models.retirement import RetirementPlan
@@ -19,6 +20,7 @@ __all__ = [
     "FundMetrics",
     "FundPrediction",
     "Goal",
+    "Holding",
     "IndexHistory",
     "InflationData",
     "JobRun",
@@ -29,5 +31,6 @@ __all__ = [
     "RiskAssessment",
     "Simulation",
     "SimulationResult",
+    "Transaction",
     "User",
 ]
