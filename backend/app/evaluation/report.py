@@ -24,8 +24,10 @@ def table(headers: Sequence[str], rows: Sequence[Sequence[Any]]) -> str:
 def write(name: str, markdown: str, data: Any, out_dir: Path = OUT_DIR) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / f"{name}.json").write_text(
-        json.dumps(data, indent=2, default=str, ensure_ascii=False), encoding="utf-8"
+        json.dumps(data, indent=2, default=str, ensure_ascii=False),
+        encoding="utf-8",
+        newline="\n",  # same line endings on Windows and Linux
     )
     path = out_dir / f"{name}.md"
-    path.write_text(markdown.strip() + "\n", encoding="utf-8")
+    path.write_text(markdown.strip() + "\n", encoding="utf-8", newline="\n")
     return path
