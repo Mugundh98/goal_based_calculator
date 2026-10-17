@@ -10,7 +10,7 @@ function user(role: 'user' | 'admin'): User {
   return { id: 1, email: 'a@example.com', full_name: 'A', role, is_active: true, created_at: '2026-10-17T00:00:00Z' } as User
 }
 
-function renderAt(path: string, state: Partial<AuthState>) {
+function renderAt(path: string | { pathname: string; state: unknown }, state: Partial<AuthState>) {
   const auth: AuthState = { user: null, isLoading: false, login: async () => {}, register: async () => {}, logout: () => {}, ...state }
   return render(
     <AuthContext.Provider value={auth}>
@@ -18,6 +18,7 @@ function renderAt(path: string, state: Partial<AuthState>) {
         <Routes>
           <Route path="/login" element={<p>login page</p>} />
           <Route path="/dashboard" element={<p>dashboard page</p>} />
+          <Route path="/portfolio" element={<p>portfolio page</p>} />
           <Route element={<GuestRoute />}>
             <Route path="/register" element={<p>register page</p>} />
           </Route>
@@ -47,6 +48,11 @@ describe('route guards', () => {
   it('redirects logged-in users away from the register page', () => {
     renderAt('/register', { user: user('user') })
     expect(screen.getByText('dashboard page')).toBeInTheDocument()
+  })
+
+  it('after logging in, returns to the page that was asked for', () => {
+    renderAt({ pathname: '/register', state: { from: '/portfolio' } }, { user: user('user') })
+    expect(screen.getByText('portfolio page')).toBeInTheDocument()
   })
 
   it('keeps non-admins out of the admin page', () => {

@@ -26,11 +26,19 @@ export function AdminRoute() {
   return <Outlet />
 }
 
-/** Login and register pages: a logged-in user goes straight to the dashboard. */
+/**
+ * Login and register pages: a logged-in user goes to the page they originally asked for (set by
+ * ProtectedRoute), else the dashboard. This guard re-renders the moment login succeeds, so it
+ * must honour that page itself, or it would win the race against the login page's own redirect.
+ */
 export function GuestRoute() {
   const { user, isLoading } = useAuth()
+  const location = useLocation()
 
   if (isLoading) return <FullPageMessage text="Loading…" />
-  if (user) return <Navigate to="/dashboard" replace />
+  if (user) {
+    const from = (location.state as { from?: string } | null)?.from
+    return <Navigate to={from ?? '/dashboard'} replace />
+  }
   return <Outlet />
 }
