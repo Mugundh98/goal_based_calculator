@@ -1,0 +1,42 @@
+# Render Blueprint (Phase 13): the GoalWise API as a free Docker web service.
+# Render > New > Blueprint > pick this repository. Values marked sync: false are asked for once,
+# when the Blueprint is first applied. The database is NOT on Render (its free PostgreSQL expires
+# after 30 days): DATABASE_URL points at Neon. Full steps: docs/deployment.md
+services:
+  - type: web
+    name: goalwise-api
+    runtime: docker
+    plan: free
+    region: singapore # closest to India; cannot be changed later
+    rootDir: backend # only changes under backend/ trigger a deploy
+    dockerfilePath: ./backend/Dockerfile # relative to the repository root
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass # deploy a commit to main only after GitHub CI passes
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL # Neon connection string (postgresql://...?sslmode=require)
+        sync: false
+      - key: DATABASE_CONNECT_TIMEOUT # Neon sleeps after 5 idle minutes; waking takes a moment
+        value: "15"
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS # the Vercel address, e.g. https://goalwise.vercel.app
+        sync: false
+      - key: CORS_ORIGIN_REGEX # optional, e.g. https://goalwise-[a-z0-9-]+\.vercel\.app
+        sync: false
+      - key: GEMINI_API_KEY # optional: leave empty to switch the assistant off
+        sync: false
+      # The free Gemini tier allows ~20 requests a day per model; Flash-Lite has its own quota.
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: GEMINI_FALLBACK_MODEL
+        value: gemini-3.1-flash-lite
+      # One Monte Carlo run at a time: two of the largest at once would exceed 512 MB.
+      - key: SIMULATION_CONCURRENCY
+        value: "1"
+      # Free web services sleep, so in-process jobs would not run on time: a GitHub Actions
+      # schedule refreshes the data instead (.github/workflows/data-refresh.yml).
+      - key: SCHEDULER_ENABLED
+        value: "false"

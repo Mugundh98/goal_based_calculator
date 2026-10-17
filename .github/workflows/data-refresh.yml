@@ -1,0 +1,35 @@
+# Daily market data refresh for the deployed database (Phase 13).
+# The free Render service sleeps when idle, so the in-process scheduler (SCHEDULER_ENABLED) cannot
+# be relied on; GitHub runs the same jobs on a timetable instead. Switched off until the repository
+# has a PRODUCTION_DATABASE_URL secret and a DATA_REFRESH variable set to "on" (docs/deployment.md).
+name: Data refresh
+
+on:
+  schedule:
+    - cron: "30 18 * * *" # 00:00 India time: after AMFI publishes the day's NAVs (~23:00 IST)
+  workflow_dispatch: # also runnable by hand from the Actions tab
+
+jobs:
+  refresh:
+    if: ${{ vars.DATA_REFRESH == 'on' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      DATABASE_CONNECT_TIMEOUT: "30"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --no-dev
+      - name: Latest NAVs, then fund metrics
+        run: |
+          uv run python -m app.data_pipeline daily_nav
+          uv run python -m app.data_pipeline fund_metrics
+      - name: Index closes
+        run: uv run python -m app.data_pipeline index_history
+      - name: Inflation (MOSPI publishes monthly; a run with nothing new writes nothing)
+        continue-on-error: true # a MOSPI outage must not hide the NAV refresh result
+        run: uv run python -m app.data_pipeline inflation

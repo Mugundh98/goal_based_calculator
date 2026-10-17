@@ -11,6 +11,7 @@ uv run python -m app.data_pipeline all          # first-time setup: every job in
 import argparse
 import json
 import logging
+import sys
 
 from app.data_pipeline.jobs import BACKFILL_ASSET_CLASSES, JOBS, run_job
 
@@ -44,13 +45,17 @@ def main() -> None:
         },
         "index_history": {"full": args.full},
     }
+    failed = False
     for job in SETUP_ORDER if args.job == "all" else [args.job]:
         run = run_job(job, triggered_by="cli", **options.get(job, {}))
+        failed = failed or run.status == "failed"
         print(
             f"{job}: {run.status} - read {run.rows_read}, wrote {run.rows_written}"
             + (f" - {run.error}" if run.error else "")
         )
         print(json.dumps(run.details, indent=2, default=str)[:2000])
+    if failed:
+        sys.exit(1)  # so a scheduled run (GitHub Actions) shows up as failed
 
 
 if __name__ == "__main__":

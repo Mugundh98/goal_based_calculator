@@ -42,6 +42,7 @@ from app.services.risk import ProfileRequiredError
 from app.simulation import engine
 from app.simulation import retirement as lifetime
 from app.simulation.allocation import equity_share_for_return
+from app.simulation.limits import simulation_slot
 
 PERCENT = 100
 CENT = Decimal("0.01")
@@ -245,7 +246,8 @@ def simulate(
     post_share = equity_share_for_return(plan.post_retirement_return)
     pre_model = simulations.return_model(request.model, history, pre_share)
     post_model = simulations.return_model(request.model, history, post_share)
-    outcome = lifetime.run(plan, pre_model, post_model, paths=request.paths, seed=seed)
+    with simulation_slot():
+        outcome = lifetime.run(plan, pre_model, post_model, paths=request.paths, seed=seed)
     elapsed = round((time.perf_counter() - started) * 1000)
 
     def phase(annual_return: float, share: float, model) -> ReturnPhaseOut:

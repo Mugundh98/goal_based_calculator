@@ -7,10 +7,11 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import get_settings
 
+settings = get_settings()
 engine = create_engine(
-    get_settings().database_url,
-    pool_pre_ping=True,
-    connect_args={"connect_timeout": 3},  # fail fast if PostgreSQL is down
+    settings.database_url,
+    pool_pre_ping=True,  # a hosted database may have closed idle connections
+    connect_args={"connect_timeout": settings.database_connect_timeout},  # fail fast if it is down
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
