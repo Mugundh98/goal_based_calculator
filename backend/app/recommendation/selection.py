@@ -67,8 +67,13 @@ def _rank(candidates: list[Candidate]) -> tuple[list[Candidate], str]:
     return sorted(with_sharpe, key=lambda c: -c.sharpe_3y), "sharpe"
 
 
+def _lower_first(text: str) -> str:
+    """'Banking & PSU' -> 'banking & PSU': for mid-sentence use, keeping acronyms."""
+    return text[:1].lower() + text[1:]
+
+
 def _reason(c: Candidate, basis: str, sleeve: str) -> str:
-    group = PEER_LABELS.get(c.peer_group, c.peer_group).lower()
+    group = _lower_first(PEER_LABELS.get(c.peer_group, c.peer_group))
     if basis == "model":
         text = (
             f"Ranked {c.peer_rank} of {c.peer_size} {group} funds by the fund model: "
@@ -138,6 +143,7 @@ def allocation_reasons(
     base_equity: float,
     years: int,
     goal_return: float | None,
+    mid_small_limit: float = 0.5,
 ) -> list[str]:
     """Why the money is split this way, in plain sentences (percentages rounded for reading)."""
     w = allocation.weights
@@ -157,18 +163,36 @@ def allocation_reasons(
         )
         equity = allocation.equity_share
         mid_share = w["mid_small_cap"] / equity if equity else 0
-        reasons.append(
-            f"Within equity, {mid_share:.0%} goes to mid & small caps: they are expected to earn "
-            "more but swing harder; the optimiser balances the two for your risk profile "
-            "(at most half of the equity)."
-        )
+        if mid_small_limit == 0:
+            reasons.append(
+                "All the equity is in large caps: mid and small caps fall harder and can take "
+                "years to recover, which a goal less than three years away cannot wait for."
+            )
+        else:
+            reasons.append(
+                f"Within equity, {mid_share:.0%} goes to mid & small caps: they are expected to "
+                "earn more but swing harder; the optimiser balances the two for your risk "
+                f"profile (at most {mid_small_limit:.0%} of the equity at this horizon)."
+            )
     debt = 1 - allocation.equity_share
     if debt > 0:
         long_share = w["long_debt"] / debt
-        reasons.append(
-            f"Within debt, {long_share:.0%} goes to longer-term bonds for a little more return, "
-            "the rest to short-term debt that barely moves."
-        )
+        if long_share >= 0.995:
+            reasons.append(
+                "All the debt goes to longer-term bonds for a little more return: the goal is far "
+                "enough away to ride out their ups and downs when interest rates change."
+            )
+        elif long_share <= 0.005:
+            reasons.append(
+                "All the debt goes to short-term funds that barely move: the money will be needed "
+                "soon, so it should not depend on interest rates."
+            )
+        else:
+            reasons.append(
+                f"Within debt, {long_share:.0%} goes to longer-term bonds for a little more "
+                f"return and {1 - long_share:.0%} to short-term debt that barely moves, as the "
+                "money will be needed soon."
+            )
     text = (
         f"Expected return {allocation.expected_return:.1%} a year with {allocation.volatility:.1%} "
         f"volatility: returns are planning assumptions, risk is measured on {market.months} months "

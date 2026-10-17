@@ -202,5 +202,11 @@ def test_reasons_explain_the_allocation():
     assert reasons[0].startswith("Your moderate risk profile allows 60% in equity")
     assert "the glide rule sets 60%" in reasons[0]
     assert "The goal currently assumes 10.0%." in reasons[-1]
+    assert reasons[2].startswith("All the debt goes to longer-term bonds")
+    near = allocation_reasons(
+        A.allocate(MARKET, "moderate", 3), MARKET, "moderate", 0.6, 3, None, 0.0
+    )
+    assert near[1].startswith("All the equity is in large caps")
+    assert near[2].startswith("Within debt, 50% goes to longer-term bonds")
     due = allocation_reasons(A.allocate(MARKET, "moderate", 1), MARKET, "moderate", 0.6, 1, None)
     assert due[0].startswith("The goal is 1 year away")
