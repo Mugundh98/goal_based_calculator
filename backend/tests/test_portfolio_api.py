@@ -370,6 +370,20 @@ def test_off_track_and_stale_recommendation_alerts(client, db, auth_headers, fun
     assert "would close the gap" in alerts[0]["message"]
 
 
+@pytest.mark.parametrize(
+    ("amount", "text"),
+    [
+        (0, "₹0"),
+        (999, "₹999"),
+        (874_512, "₹8,74,512"),
+        (12_345_678.4, "₹1,23,45,678"),
+        (-1500, "−₹1,500"),
+    ],
+)
+def test_rupees_use_indian_grouping(amount, text):
+    assert service.inr(amount) == text
+
+
 def test_goal_progress_history_and_projection(client, auth_headers, funds):
     goal_id = make_goal(client, auth_headers, target_year=THIS_YEAR + 5)
     response = client.post(

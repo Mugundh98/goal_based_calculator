@@ -531,8 +531,16 @@ def _goal_view(
     return GoalView(status, drift, recommendation, rate, as_of)
 
 
-def _inr(amount: float) -> str:
-    return f"₹{amount:,.0f}"
+def inr(amount: float) -> str:
+    """₹8,74,512: Indian digit grouping (the last three digits, then pairs), as the UI shows."""
+    digits = str(abs(round(amount)))
+    head, tail = digits[:-3], digits[-3:]
+    pairs = []
+    while len(head) > 2:
+        head, pair = head[:-2], head[-2:]
+        pairs.insert(0, pair)
+    grouped = ",".join(([head] if head else []) + pairs + [tail])
+    return f"{'−' if amount < 0 else ''}₹{grouped}"
 
 
 def _alerts(view: GoalView, today: date) -> list[Alert]:
@@ -563,7 +571,7 @@ def _alerts(view: GoalView, today: date) -> list[Alert]:
         )
     if status.status == "off_track":
         extra = (
-            f" A monthly SIP of {_inr(status.required_sip)} would close the gap."
+            f" A monthly SIP of {inr(status.required_sip)} would close the gap."
             if status.required_sip
             else ""
         )
@@ -573,8 +581,8 @@ def _alerts(view: GoalView, today: date) -> list[Alert]:
                 severity="warning",
                 message=(
                     f"Off track: at {status.expected_return:g}% a year the holdings and a SIP of "
-                    f"{_inr(status.monthly_sip)} reach {_inr(status.projected_value)} of the "
-                    f"{_inr(status.inflated_target)} needed in {status.target_year}.{extra}"
+                    f"{inr(status.monthly_sip)} reach {inr(status.projected_value)} of the "
+                    f"{inr(status.inflated_target)} needed in {status.target_year}.{extra}"
                 ),
                 **base,
             )
