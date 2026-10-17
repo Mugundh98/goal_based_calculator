@@ -22,7 +22,7 @@ describe('ServerGate', () => {
     const fetch = vi.fn().mockImplementationOnce(down).mockImplementationOnce(down).mockImplementation(ok)
     vi.stubGlobal('fetch', fetch)
     render(
-      <ServerGate apiBase="https://api.example.com" noticeAfterMs={0} retryEveryMs={10}>
+      <ServerGate apiBase="https://api.example.com" noticeAfterMs={0} retryEveryMs={100}>
         app
       </ServerGate>,
     )

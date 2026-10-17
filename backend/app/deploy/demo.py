@@ -2,10 +2,11 @@
 
 The household is a salaried 36-year-old with two children: a profile, a moderate risk profile,
 three goals, a retirement plan, about three years of SIPs and lump sums in real funds (so the
-portfolio has an XIRR and goal progress) and a recommendation for every goal. Each goal's mix is
-close to what GoalWise recommends for its horizon - mostly liquid funds for the car in two years - except
-the education goal, which has drifted a little towards equity, to show a rebalancing alert. Dates are
-relative to today, so the portfolio always looks current.
+portfolio has an XIRR and goal progress) and a recommendation for every goal.
+
+Each goal's mix is close to what GoalWise recommends for its horizon (mostly liquid funds for the
+car in two years), except the education goal, which has drifted a little towards equity, to show
+a rebalancing alert. Dates are relative to today, so the portfolio always looks current.
 """
 
 import secrets
