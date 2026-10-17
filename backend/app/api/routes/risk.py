@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import Audit, CurrentUser, DbSession
 from app.finance.risk_profile import QUESTIONNAIRE_VERSION, QUESTIONS, InvalidAnswersError
 from app.schemas.risk import (
     AssessmentInput,
@@ -36,7 +36,9 @@ def questionnaire(_: CurrentUser) -> QuestionnaireOut:
 
 
 @router.post("/assessments", response_model=AssessmentRead, status_code=status.HTTP_201_CREATED)
-def submit_assessment(data: AssessmentInput, user: CurrentUser, db: DbSession) -> AssessmentRead:
+def submit_assessment(
+    data: AssessmentInput, user: CurrentUser, db: DbSession, audit: Audit
+) -> AssessmentRead:
     """Score the answers together with the financial profile and store the result."""
     try:
         assessment = create_assessment(db, user, data.answers)
@@ -46,6 +48,13 @@ def submit_assessment(data: AssessmentInput, user: CurrentUser, db: DbSession) -
         ) from None
     except InvalidAnswersError as error:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)) from None
+    audit(
+        "risk.assess",
+        user,
+        entity_type="risk_assessment",
+        entity_id=assessment.id,
+        details={"category": assessment.category, "final_score": assessment.final_score},
+    )
     return AssessmentRead.model_validate(assessment)
 
 

@@ -20,17 +20,18 @@ from sqlalchemy.orm import Session
 
 from app.chatbot import rag
 from app.chatbot.llm import LLM, ToolSpec
+from app.finance.formatting import inr
 from app.models import Goal, User
 from app.schemas.goal import GoalCalculationInput, GoalInput
 from app.schemas.portfolio import GoalStatus
 from app.schemas.simulation import SimulationOverrides, SimulationRequest
+from app.services import audit
 from app.services import funds as fund_service
 from app.services import goals as goal_service
 from app.services import portfolio as portfolio_service
 from app.services import profile as profile_service
 from app.services import recommendations as recommendation_service
 from app.services import simulations as simulation_service
-from app.services.portfolio import inr
 from app.services.risk import latest_assessment
 
 logger = logging.getLogger(__name__)
@@ -240,6 +241,15 @@ def create_goal(ctx: ToolContext, args: CreateGoalArgs) -> ToolOutput:
         **_calculation_input(args),
     )
     goal = goal_service.create_goal(ctx.db, ctx.user, data)
+    audit.record(
+        ctx.db,
+        "assistant.goal.create",
+        actor=ctx.user,
+        entity_type="goal",
+        entity_id=goal.id,
+        details={"name": goal.name, "goal_type": goal.goal_type, "target_year": goal.target_year},
+    )
+    ctx.db.commit()
     return ToolOutput({"saved": True, "goal_id": goal.id, "projection": projection})
 
 

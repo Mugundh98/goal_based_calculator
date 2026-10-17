@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import Audit, CurrentUser, DbSession
 from app.api.routes.goals import owned_goal
 from app.schemas.recommendation import RecommendationRead, RecommendationSummary
 from app.services import recommendations as service
@@ -9,13 +9,21 @@ router = APIRouter(prefix="/goals/{goal_id}/recommendations", tags=["recommendat
 
 
 @router.post("", response_model=RecommendationRead, status_code=status.HTTP_201_CREATED)
-def create(goal_id: int, user: CurrentUser, db: DbSession) -> RecommendationRead:
+def create(goal_id: int, user: CurrentUser, db: DbSession, audit: Audit) -> RecommendationRead:
     """Recommend an allocation and funds for the goal now, and keep it as a snapshot."""
     goal = owned_goal(db, user, goal_id)
     try:
-        return service.to_read(service.recommend(db, user, goal))
+        recommendation = service.recommend(db, user, goal)
     except service.RecommendationUnavailable as error:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=str(error)) from None
+    audit(
+        "recommendation.create",
+        user,
+        entity_type="recommendation",
+        entity_id=recommendation.id,
+        details={"goal_id": goal.id, "equity_share": round(recommendation.equity_share, 4)},
+    )
+    return service.to_read(recommendation)
 
 
 @router.get("", response_model=list[RecommendationSummary])

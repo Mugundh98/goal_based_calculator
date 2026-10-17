@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import Audit, CurrentUser, DbSession
 from app.api.routes.goals import owned_goal
 from app.models.simulation import Simulation
 from app.models.user import User
@@ -59,7 +59,7 @@ def compare(
     status_code=status.HTTP_201_CREATED,
 )
 def create_simulation(
-    goal_id: int, request: SimulationRequest, user: CurrentUser, db: DbSession
+    goal_id: int, request: SimulationRequest, user: CurrentUser, db: DbSession, audit: Audit
 ) -> SimulationRead:
     """Run a simulation and save it as a snapshot."""
     goal = owned_goal(db, user, goal_id)
@@ -67,7 +67,15 @@ def create_simulation(
         result = service.run_simulation(db, user, goal, request)
     except service.SimulationUnavailable as error:
         raise _unavailable(error) from None
-    return service.to_read(service.save_simulation(db, goal, result))
+    saved = service.save_simulation(db, goal, result)
+    audit(
+        "simulation.save",
+        user,
+        entity_type="simulation",
+        entity_id=saved.id,
+        details={"goal_id": goal.id, "model": result.model, "chance": result.success_probability},
+    )
+    return service.to_read(saved)
 
 
 @router.get("/goals/{goal_id}/simulations", response_model=list[SimulationSummary])
@@ -83,5 +91,6 @@ def read_simulation(simulation_id: int, user: CurrentUser, db: DbSession) -> Sim
 
 
 @router.delete("/simulations/{simulation_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_simulation(simulation_id: int, user: CurrentUser, db: DbSession) -> None:
+def delete_simulation(simulation_id: int, user: CurrentUser, db: DbSession, audit: Audit) -> None:
     service.delete_simulation(db, owned_simulation(db, user, simulation_id))
+    audit("simulation.delete", user, entity_type="simulation", entity_id=simulation_id)

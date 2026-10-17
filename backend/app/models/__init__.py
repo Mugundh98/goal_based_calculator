@@ -1,6 +1,7 @@
 """ORM models. Import every model here so Alembic can detect it."""
 
 from app.core.database import Base
+from app.models.audit import AuditLog
 from app.models.chat import ChatMessage, ChatSession, KbChunk, KbDocument, ToolCall
 from app.models.goal import Goal
 from app.models.market import Fund, FundMetrics, IndexHistory, InflationData, JobRun, NavHistory
@@ -14,6 +15,7 @@ from app.models.simulation import Simulation, SimulationResult
 from app.models.user import User
 
 __all__ = [
+    "AuditLog",
     "Base",
     "ChatMessage",
     "ChatSession",

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import Audit, CurrentUser, DbSession
 from app.finance.tvm import FinanceInputError
 from app.models.retirement import RetirementPlan
 from app.models.user import User
@@ -55,19 +55,25 @@ def read_plan(user: CurrentUser, db: DbSession) -> RetirementPlanRead:
 
 
 @router.put("", response_model=RetirementPlanRead)
-def save_plan(data: RetirementInput, user: CurrentUser, db: DbSession) -> RetirementPlanRead:
+def save_plan(
+    data: RetirementInput, user: CurrentUser, db: DbSession, audit: Audit
+) -> RetirementPlanRead:
     """Create or replace the plan (idempotent). Also creates/updates its `retirement` goal."""
     try:
         plan = service.save_plan(db, user, data)
+        audit("retirement.save", user, entity_type="retirement_plan", entity_id=plan.id)
         return service.to_read(db, user, plan)
     except HANDLED as error:
         raise _errors(error) from None
 
 
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)
-def delete_plan(user: CurrentUser, db: DbSession) -> None:
+def delete_plan(user: CurrentUser, db: DbSession, audit: Audit) -> None:
     """Delete the plan and its goal."""
-    service.delete_plan(db, owned_plan(db, user))
+    plan = owned_plan(db, user)
+    plan_id = plan.id
+    service.delete_plan(db, plan)
+    audit("retirement.delete", user, entity_type="retirement_plan", entity_id=plan_id)
 
 
 @router.post("/calculate", response_model=RetirementProjectionOut)
