@@ -42,6 +42,9 @@ export function Layout() {
                 <NavLink to="/insights" className={navLink}>
                   Insights
                 </NavLink>
+                <NavLink to="/assistant" className={navLink}>
+                  Assistant
+                </NavLink>
                 <span className="hidden text-sm text-slate-500 sm:inline">{user.full_name}</span>
                 <button
                   type="button"
