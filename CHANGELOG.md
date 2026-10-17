@@ -2,6 +2,17 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.8.0] – 2026-10-17 – Phase 8: Recommendations
+
+### Added
+
+- `app/recommendation/allocation.py`: four sleeves (large cap, mid & small cap, longer-term bonds, short-term debt) from median direct-growth fund returns; assumed returns (12.5 / 13.5 / 7.5 / 6.5%) with measured covariances (164 months); glide rule for the equity share by risk category and years to the goal; gliding mid/small-cap limit; liquidity rule for short-term debt; emergency funds kept liquid; mean-variance utility maximisation with SLSQP (risk aversion 8 / 4 / 2); efficient frontier.
+- `app/recommendation/selection.py`: fund picks per sleeve from the Phase 7 ranker (one per fund house, Sharpe fallback) and plain-language reasons.
+- `recommendations` table – migration `0009`; `POST/GET /api/goals/{id}/recommendations`, `GET …/latest`, `GET …/{id}`.
+- Frontend: recommendation page (allocation bar and reasons, efficient frontier with labelled sleeves, funds with reasons, assumptions, history) and "Simulate this allocation" into the Phase 5 simulation; "Recommend" on goal cards.
+- 28 new tests (464 total), including the closed-form two-asset check and constraints for every profile and horizon.
+- Documentation: Phase 8 document, ADR-011, updated architecture, database and API docs.
+
 ## [0.7.1] – 2026-10-17 – Fund metrics and NAV charts ignore face-value changes
 
 ### Fixed

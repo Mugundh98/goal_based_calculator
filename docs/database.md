@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 7._
+_Living document – updated whenever a migration is added. Last updated: Phase 8._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -15,6 +15,7 @@ erDiagram
     SIMULATIONS ||--|| SIMULATION_RESULTS : "has exactly 1"
     USERS ||--o| RETIREMENT_PLANS : "has 0..1"
     GOALS ||--o| RETIREMENT_PLANS : "savings phase of"
+    GOALS ||--o{ RECOMMENDATIONS : "has 0..* (history)"
     ML_MODELS ||--o{ FUND_PREDICTIONS : "produced"
     ML_MODELS ||--o{ FUND_CLUSTERS : "produced"
     FUNDS ||--o{ FUND_PREDICTIONS : "about"
@@ -70,6 +71,21 @@ erDiagram
         numeric step_up_rate "%"
         timestamptz created_at
         timestamptz updated_at
+    }
+    RECOMMENDATIONS {
+        int id PK
+        int goal_id FK
+        timestamptz created_at
+        date as_of "market data month"
+        varchar risk_category
+        smallint years_to_goal
+        float equity_share
+        float expected_return
+        float volatility
+        jsonb allocation
+        jsonb funds
+        jsonb reasons
+        jsonb inputs "capital market, frontier, rules, model"
     }
     ML_MODELS {
         int id PK
@@ -207,6 +223,22 @@ erDiagram
 Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`. Market data (Phase 4): time series use a **composite natural primary key** (entity + date) instead of a surrogate id; NAVs are `NUMERIC(18,8)` (AMFI publishes up to 8 decimals); fund metrics are stored as `double precision` because they are derived statistics recomputed nightly (ADR-007). Simulations (Phase 5): a saved run is a **snapshot** (random, depends on market data that changes daily), so its output is stored, unlike goal projections; the question (`simulations`) and the bulky answer (`simulation_results`) are split one-to-one (ADR-008).
 
 ## Table dictionary
+
+### `recommendations` (Phase 8) – stored snapshots, many per goal
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `goal_id` | integer | FK `goals.id` ON DELETE CASCADE; index `ix_recommendations_goal_created (goal_id, created_at)` | |
+| `created_at` | timestamptz | default now() | |
+| `as_of` | date | NOT NULL | Last month of market data used |
+| `risk_category` | varchar(20) | NULL allowed | Risk profile then (NULL = none, treated as moderate) |
+| `years_to_goal` | smallint | NOT NULL | |
+| `equity_share`, `expected_return`, `volatility` | double precision | NOT NULL | Fractions |
+| `allocation` | jsonb | NOT NULL | Per sleeve: label, weight (%) |
+| `funds` | jsonb | NOT NULL | Picks with weight, basis and reason |
+| `reasons` | jsonb | NOT NULL | Why this allocation |
+| `inputs` | jsonb | NOT NULL | Capital market (assumed returns, measured volatility, correlations), frontier, rules, goal return, fund model version, notes |
 
 ### `ml_models` (Phase 7) – model registry, one row per trained version
 
@@ -436,6 +468,7 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `0006` | 5 | Create `simulations` and `simulation_results` |
 | `0007` | 6 | Create `retirement_plans` |
 | `0008` | 7 | Create `ml_models`, `fund_predictions`, `fund_clusters` |
+| `0009` | 8 | Create `recommendations` |
 
 ## Databases
 
