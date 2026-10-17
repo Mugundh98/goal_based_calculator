@@ -69,6 +69,16 @@ MCA 4th-semester project, Andhra University CDOE.
    the normal model runs, with assumed volatilities. To time the vectorised engine against plain
    Python loops: `uv run python -m app.simulation.benchmark`.
 
+6. Switch on the assistant (Phase 10): put a Google AI Studio key in `backend/.env` as
+   `GEMINI_API_KEY=...` (never commit it), restart the API and build the knowledge base once
+   (about 30 seconds; it is also built automatically the first time a term is explained):
+
+   ```bash
+   uv run python -m app.chatbot ingest
+   ```
+
+   Without a key the rest of GoalWise works and the Assistant page says it is switched off.
+
 ## Tests
 
 ```bash

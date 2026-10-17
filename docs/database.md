@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 9._
+_Living document – updated whenever a migration is added. Last updated: Phase 10._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -22,6 +22,10 @@ erDiagram
     USERS ||--o{ HOLDINGS : "holds (derived)"
     GOALS |o--o{ HOLDINGS : "for"
     FUNDS ||--o{ HOLDINGS : "of"
+    USERS ||--o{ CHAT_SESSIONS : "has"
+    CHAT_SESSIONS ||--o{ CHAT_MESSAGES : "contains"
+    CHAT_MESSAGES ||--o{ TOOL_CALLS : "answer used"
+    KB_DOCUMENTS ||--o{ KB_CHUNKS : "split into"
     ML_MODELS ||--o{ FUND_PREDICTIONS : "produced"
     ML_MODELS ||--o{ FUND_CLUSTERS : "produced"
     FUNDS ||--o{ FUND_PREDICTIONS : "about"
@@ -77,6 +81,48 @@ erDiagram
         numeric step_up_rate "%"
         timestamptz created_at
         timestamptz updated_at
+    }
+    CHAT_SESSIONS {
+        int id PK
+        int user_id FK
+        varchar title
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    CHAT_MESSAGES {
+        int id PK
+        int session_id FK
+        varchar role "user | assistant"
+        text content
+        jsonb payload "charts, model, ungrounded, error"
+        timestamptz created_at
+    }
+    TOOL_CALLS {
+        int id PK
+        int message_id FK
+        varchar tool
+        jsonb arguments
+        jsonb result
+        varchar status "ok | error"
+        int latency_ms
+        timestamptz created_at
+    }
+    KB_DOCUMENTS {
+        int id PK
+        varchar slug UK
+        varchar title
+        varchar source
+        varchar content_hash
+        varchar embedding_model
+        timestamptz created_at
+    }
+    KB_CHUNKS {
+        int id PK
+        int document_id FK
+        smallint chunk_index "UK with document"
+        varchar heading
+        text content
+        vector embedding "768, HNSW cosine index"
     }
     TRANSACTIONS {
         int id PK
@@ -254,6 +300,61 @@ erDiagram
 Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`. Market data (Phase 4): time series use a **composite natural primary key** (entity + date) instead of a surrogate id; NAVs are `NUMERIC(18,8)` (AMFI publishes up to 8 decimals); fund metrics are stored as `double precision` because they are derived statistics recomputed nightly (ADR-007). Simulations (Phase 5): a saved run is a **snapshot** (random, depends on market data that changes daily), so its output is stored, unlike goal projections; the question (`simulations`) and the bulky answer (`simulation_results`) are split one-to-one (ADR-008).
 
 ## Table dictionary
+
+### `chat_sessions` (Phase 10) – one conversation
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `user_id` | integer | FK `users.id` ON DELETE CASCADE; index | |
+| `title` | varchar(80) | default 'New chat' | The first question, shortened |
+| `created_at`, `updated_at` | timestamptz | default now() | `updated_at` moves with every question (list order) |
+
+### `chat_messages` (Phase 10) – questions and answers
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `session_id` | integer | FK `chat_sessions.id` ON DELETE CASCADE; index `ix_chat_messages_session_id (session_id, id)` | |
+| `role` | varchar(10) | CHECK (user, assistant) | |
+| `content` | text | NOT NULL | |
+| `payload` | jsonb | default '{}' | Answers: charts for the browser, model used, `ungrounded` numbers, `error` kind or `interrupted` |
+| `created_at` | timestamptz | default now() | Also used by the hourly rate limit |
+
+### `tool_calls` (Phase 10) – audit trail of function calls
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `message_id` | integer | FK `chat_messages.id` ON DELETE CASCADE; index | The answer the call served |
+| `tool` | varchar(40) | index | e.g. `run_simulation` |
+| `arguments` | jsonb | NOT NULL | As sent by the model |
+| `result` | jsonb | NOT NULL | Exactly what the model was shown (`{"error": …}` on failure) |
+| `status` | varchar(5) | CHECK (ok, error) | |
+| `latency_ms` | integer | NOT NULL | |
+| `created_at` | timestamptz | default now() | |
+
+### `kb_documents` (Phase 10) – knowledge-base articles
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `slug` | varchar(80) | UNIQUE | File name in `app/chatbot/knowledge/` |
+| `title`, `source` | varchar | NOT NULL | |
+| `content_hash` | varchar(64) | NOT NULL | SHA-256 of the text: unchanged articles are not re-embedded |
+| `embedding_model` | varchar(60) | NOT NULL | A model change re-embeds everything |
+| `created_at` | timestamptz | default now() | |
+
+### `kb_chunks` (Phase 10) – passages with embeddings
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `document_id` | integer | FK `kb_documents.id` ON DELETE CASCADE | |
+| `chunk_index` | smallint | UNIQUE `uq_kb_chunks_document_index (document_id, chunk_index)` | Order within the article |
+| `heading` | varchar(200) | NOT NULL | Section heading |
+| `content` | text | NOT NULL | The passage (≤ about 1,200 characters) |
+| `embedding` | vector(768) | NOT NULL; **HNSW index `ix_kb_chunks_embedding` (vector_cosine_ops)** | Gemini embedding, unit length; searched with `<=>` (cosine distance) |
 
 ### `transactions` (Phase 9) – purchases and redemptions, the source of truth
 
@@ -536,6 +637,7 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `0008` | 7 | Create `ml_models`, `fund_predictions`, `fund_clusters` |
 | `0009` | 8 | Create `recommendations` |
 | `0010` | 9 | Create `transactions` and `holdings` |
+| `0011` | 10 | Create `chat_sessions`, `chat_messages`, `tool_calls`, `kb_documents`, `kb_chunks` (vector(768), HNSW index) |
 
 ## Databases
 

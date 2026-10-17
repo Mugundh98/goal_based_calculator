@@ -216,7 +216,7 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
   - **Orchestration loop:** user message → Gemini (with tools) → tool call → execute with the logged-in user's permissions → result back to Gemini → final answer (+ chart payload).
   - **RAG:** investor-education documents chunked, embedded, stored in pgvector; similarity search for `explain_term`.
   - **Guardrails:** system prompt limits scope; no personally identifying data sent; numbers only from tool results; fallback message if the API fails or rate-limits.
-- **Database:** `chat_sessions`, `chat_messages`, `tool_calls` (tool, arguments, result, latency – audit trail), `kb_documents`, `kb_chunks` (embedding `vector` column).
+- **Database:** `chat_sessions`, `chat_messages`, `tool_calls` (tool, arguments, result, latency – audit trail), `kb_documents`, `kb_chunks` (embedding `vector` column). *As built:* 10 tools (`get_fund_metrics` searches by name; added `goal_calculator`, `get_risk_profile`); `create_goal` saves only after a confirmed preview (enforced in code); a grounding check records numbers not found in tool results; `gemini-3.5-flash` with `gemini-2.5-flash` as fallback, `gemini-embedding-001` (768 dims) with an HNSW cosine index; answers streamed as server-sent events; 20 knowledge articles written for the project (ADR-013).
 - **Frontend:** chat panel with streaming responses, suggestion chips, inline charts when a tool returns simulation data.
 - **Viva focus:** What is function calling; why the LLM must not do arithmetic; RAG vs fine-tuning; embeddings and cosine similarity; prompt injection and how scope is limited; rate limits and graceful degradation; privacy.
 

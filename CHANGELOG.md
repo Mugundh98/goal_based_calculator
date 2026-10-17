@@ -2,6 +2,19 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.10.0] – 2026-10-17 – Phase 10: Conversational assistant
+
+### Added
+
+- `app/chatbot/`: Gemini adapter (`google-genai`, streamed, function calling, fallback model on rate limits, normalised 768-dimension embeddings); 10 tools over the existing services, run for the logged-in user with Pydantic-validated arguments; orchestrator loop (≤ 6 rounds) with an audit trail, grounding check of numbers, fallback answers and interrupted streams; system prompt with scope, tool, knowledge-base, confirmation, injection and privacy rules.
+- Knowledge base: 20 investor-education articles chunked into 86 passages, embedded with `gemini-embedding-001` into pgvector (HNSW cosine index), idempotent ingestion; `python -m app.chatbot ingest|search`.
+- Tables `chat_sessions`, `chat_messages`, `tool_calls`, `kb_documents`, `kb_chunks` – migration `0011`; endpoints `/api/chat/status`, `/api/chat/sessions` (list, create, read, delete) and `/api/chat/sessions/{id}/messages` (server-sent events); 2,000-character questions, 30 questions an hour per user.
+- Simulation what-if override `current_savings`; the assistant simulates and judges goals from their recorded investments.
+- Frontend: Assistant page (conversations, suggestion chips, streamed answers, tool chips with timings, fan chart / allocation / fund comparison under answers, grounding warnings, safe Markdown renderer).
+- Settings `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `GEMINI_EMBEDDING_MODEL`, `CHAT_MESSAGES_PER_HOUR`; dependencies `google-genai`, `pgvector`.
+- 32 new tests (542 total), with a scripted fake model and a stubbed Gemini client.
+- Documentation: Phase 10 document, ADR-013, updated architecture, database, API docs and README.
+
 ## [0.9.0] – 2026-10-17 – Phase 9: Portfolio tracker
 
 ### Added
