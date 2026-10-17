@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, status
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import Audit, CurrentUser, DbSession
 from app.api.routes.goals import owned_goal
 from app.schemas.portfolio import (
     GoalProgress,
@@ -39,33 +39,52 @@ def transactions(
 
 
 @router.post("/transactions", response_model=TransactionRead, status_code=status.HTTP_201_CREATED)
-def create(data: TransactionCreate, user: CurrentUser, db: DbSession) -> TransactionRead:
+def create(
+    data: TransactionCreate, user: CurrentUser, db: DbSession, audit: Audit
+) -> TransactionRead:
     """Record a purchase or redemption at that day's NAV; holdings are updated with it."""
     try:
         transaction = service.add_transaction(db, user, data)
     except service.PortfolioError as error:
         raise _http(error) from None
+    audit(
+        "portfolio.transaction.create",
+        user,
+        entity_type="transaction",
+        entity_id=transaction.id,
+        details={"type": transaction.txn_type, "fund_id": transaction.fund_id,
+                 "amount": float(transaction.amount), "goal_id": transaction.goal_id},
+    )  # fmt: skip
     return next(t for t in service.list_transactions(db, user) if t.id == transaction.id)
 
 
 @router.post(
     "/transactions/sip", response_model=list[TransactionRead], status_code=status.HTTP_201_CREATED
 )
-def create_sip(data: SipCreate, user: CurrentUser, db: DbSession) -> list[TransactionRead]:
+def create_sip(
+    data: SipCreate, user: CurrentUser, db: DbSession, audit: Audit
+) -> list[TransactionRead]:
     """Record the past instalments of a monthly SIP in one go."""
     try:
         ids = set(service.add_sip(db, user, data))
     except service.PortfolioError as error:
         raise _http(error) from None
+    audit(
+        "portfolio.sip.create",
+        user,
+        details={"fund_id": data.fund_id, "goal_id": data.goal_id, "instalments": len(ids),
+                 "amount": float(data.amount)},
+    )  # fmt: skip
     return [t for t in service.list_transactions(db, user) if t.id in ids]
 
 
 @router.delete("/transactions/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove(transaction_id: int, user: CurrentUser, db: DbSession) -> None:
+def remove(transaction_id: int, user: CurrentUser, db: DbSession, audit: Audit) -> None:
     try:
         service.delete_transaction(db, user, transaction_id)
     except service.PortfolioError as error:
         raise _http(error, conflict=True) from None
+    audit("portfolio.transaction.delete", user, entity_type="transaction", entity_id=transaction_id)
 
 
 @router.get("/goals/{goal_id}", response_model=GoalProgress)

@@ -222,7 +222,7 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
 
 ### Phase 11 – Reports and administration  · `phase-11-reports-admin` · `v0.11.0`
 
-- **Backend:** PDF plan export (WeasyPrint or ReportLab); admin endpoints (users, pipeline runs, model versions); `audit_log` written for key actions.
+- **Backend:** PDF plan export (WeasyPrint or ReportLab); admin endpoints (users, pipeline runs, model versions); `audit_log` written for key actions. *As built:* ReportLab (no system libraries; "Rs" instead of ₹); `audit_log` append-only through a database trigger, actor kept without a foreign key; administrators created with `python -m app.admin make-admin`; admin model rollback and assistant statistics (ADR-014).
 - **Frontend:** "Download my plan" button; admin dashboard (role-protected).
 - **Viva focus:** Role-based access control; audit logging; server-side PDF generation.
 

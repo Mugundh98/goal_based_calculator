@@ -117,6 +117,7 @@ export const jobLabel: Record<string, string> = {
   index_history: 'Index levels (Yahoo Finance)',
   inflation: 'CPI inflation (MOSPI)',
   fund_metrics: 'Fund metrics',
+  ml_score: 'Fund predictions (ML)',
 }
 
 export const simulationReturnSourceLabel: Record<string, string> = {

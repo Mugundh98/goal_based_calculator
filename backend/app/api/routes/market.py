@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 
-from app.api.deps import CurrentUser, DbSession, require_admin
+from app.api.deps import Audit, CurrentUser, DbSession, require_admin
 from app.data_pipeline.cpi import DEFAULT_BASE_YEAR
 from app.data_pipeline.indices import INDICES
 from app.data_pipeline.jobs import JOBS, run_job
@@ -58,10 +58,12 @@ def job_runs(
 def start_job(
     job_name: str,
     background: BackgroundTasks,
-    _: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_admin)],
+    audit: Audit,
 ) -> dict[str, str]:
     """Admin only: run a pipeline job now, in the background. Watch it in GET /jobs."""
     if job_name not in JOBS:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Unknown job")
     background.add_task(run_job, job_name, "admin")
+    audit("admin.job.run", admin, details={"job": job_name})
     return {"detail": f"{job_name} started"}

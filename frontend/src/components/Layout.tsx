@@ -45,6 +45,11 @@ export function Layout() {
                 <NavLink to="/assistant" className={navLink}>
                   Assistant
                 </NavLink>
+                {user.role === 'admin' && (
+                  <NavLink to="/admin" className={navLink}>
+                    Admin
+                  </NavLink>
+                )}
                 <span className="hidden text-sm text-slate-500 sm:inline">{user.full_name}</span>
                 <button
                   type="button"

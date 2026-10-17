@@ -3,13 +3,14 @@
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.user import User
+from app.services.audit import Auditor
 
 # Reads "Authorization: Bearer <token>"; tokenUrl powers the Authorize button in /docs.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -43,3 +44,12 @@ def require_admin(user: CurrentUser) -> User:
     if user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return user
+
+
+def get_auditor(request: Request, db: DbSession) -> Auditor:
+    """Records key actions of this request in the audit log, with the client's IP address."""
+    return Auditor(db, request.client.host if request.client else None)
+
+
+Audit = Annotated[Auditor, Depends(get_auditor)]
+AdminUser = Annotated[User, Depends(require_admin)]

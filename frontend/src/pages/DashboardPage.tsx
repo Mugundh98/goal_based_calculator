@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { DownloadPlanButton } from '../components/DownloadPlanButton'
 import { PortfolioAlerts } from '../components/PortfolioAlerts'
 import { ButtonLink, Card, CategoryBadge } from '../components/ui'
 import { useGoals } from '../hooks/useGoals'
@@ -62,9 +63,12 @@ export function DashboardPage() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Welcome, {firstName}</h1>
-        <p className="text-slate-600">Complete these steps to start planning your goals.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Welcome, {firstName}</h1>
+          <p className="text-slate-600">Complete these steps to start planning your goals.</p>
+        </div>
+        {Boolean(goals.data?.length) && <DownloadPlanButton />}
       </div>
 
       {/* Only the warnings here; the portfolio page lists the rest. */}

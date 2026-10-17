@@ -6,6 +6,7 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import func, insert, select
 
+from app.finance.formatting import inr
 from app.models import Fund, Holding, NavHistory, Recommendation, Transaction, User
 from app.services import portfolio as service
 from tests.conftest import login_headers
@@ -381,7 +382,7 @@ def test_off_track_and_stale_recommendation_alerts(client, db, auth_headers, fun
     ],
 )
 def test_rupees_use_indian_grouping(amount, text):
-    assert service.inr(amount) == text
+    assert inr(amount) == text
 
 
 def test_goal_progress_history_and_projection(client, auth_headers, funds):

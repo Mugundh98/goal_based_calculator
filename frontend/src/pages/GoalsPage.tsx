@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 
 import type { Goal } from '../api/goals'
 import { FormError } from '../components/form'
+import { DownloadPlanButton } from '../components/DownloadPlanButton'
 import { GoalForm } from '../components/GoalForm'
 import { Card, Modal, PageHeader, ProgressBar, Spinner } from '../components/ui'
 import { useDeleteGoal, useGoals } from '../hooks/useGoals'
@@ -24,13 +25,16 @@ export function GoalsPage() {
     <section className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader title="Your goals" subtitle="Every amount is adjusted for inflation up to the goal's year." />
-        <button
-          type="button"
-          onClick={() => setEditing('new')}
-          className={`${buttonClass} bg-emerald-600 text-white hover:bg-emerald-700`}
-        >
-          Add goal
-        </button>
+        <div className="flex flex-wrap items-start gap-2">
+          {Boolean(goals.data?.length) && <DownloadPlanButton />}
+          <button
+            type="button"
+            onClick={() => setEditing('new')}
+            className={`${buttonClass} bg-emerald-600 text-white hover:bg-emerald-700`}
+          >
+            Add goal
+          </button>
+        </div>
       </div>
 
       {goals.isPending && <Spinner />}

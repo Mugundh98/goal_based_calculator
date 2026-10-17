@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "GoalWise API"
-    app_version: str = "0.10.0"
+    app_version: str = "0.11.0"
     environment: str = "development"
 
     database_url: str = "postgresql+psycopg://goalwise:goalwise@127.0.0.1:5432/goalwise"

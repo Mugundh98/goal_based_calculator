@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 10._
+_Living document – updated at the end of every phase. Last updated: Phase 11._
 
 ## Overview
 
@@ -142,6 +142,18 @@ flowchart LR
 
 The model chooses tools; the server runs them with the logged-in user's permissions and logs every call; explanations come from the pgvector knowledge base; a grounding check flags numbers not found in tool results; creating a goal needs a confirmed preview; a fallback model and fallback messages handle rate limits. Details: `docs/phases/10-chatbot.md`, ADR-013.
 
+### Reports and administration (Phase 11)
+
+```mermaid
+flowchart LR
+    U[Dashboard / Goals] -->|Download my plan| RP[routes/reports.py] --> RS[services/reports.py] --> PDF[reports/plan_pdf.py<br/>ReportLab]
+    AP[AdminPage, AdminRoute] -->|require_admin| AD[routes/admin.py] --> AS[services/admin.py]
+    R[Routes] -->|Audit dependency, after success| AL[(audit_log<br/>append-only trigger)]
+    CLI[python -m app.admin] --> AL
+```
+
+The PDF is rendered on the server from the same services as the pages. Admin routes check the role from the database on every request; administrators are created from the command line. Key actions are recorded with user, entity, details and IP in an append-only table. Details: `docs/phases/11-reports-admin.md`, ADR-014.
+
 ## Components built so far
 
 | Component | Phase | Status |
@@ -171,6 +183,8 @@ The model chooses tools; the server runs them with the logged-in user's permissi
 | Portfolio page (summary, alerts, goal status, holdings, transactions), transaction form, goal progress page (value vs plan, projection, rebalancing), dashboard step | 9 | Done |
 | `chatbot/`: Gemini adapter with fallback, 10 tools over the services, RAG over pgvector (20 articles), orchestrator with audit and grounding check, SSE endpoints; chat and knowledge-base tables | 10 | Done |
 | Assistant page (conversations, suggestions, streamed answers, tool chips, inline charts, safe Markdown) | 10 | Done |
+| Audit log (append-only table, `Audit` dependency, 22 actions); plan PDF (`reports/`, ReportLab); admin API and `make-admin` command | 11 | Done |
+| Download my plan button; admin dashboard (overview, users, audit log, data jobs, models) behind `AdminRoute` | 11 | Done |
 
 ## Authentication flow
 
