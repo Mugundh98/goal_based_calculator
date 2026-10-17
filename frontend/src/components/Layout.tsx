@@ -30,6 +30,9 @@ export function Layout() {
                 <NavLink to="/goals" end={false} className={navLink}>
                   Goals
                 </NavLink>
+                <NavLink to="/portfolio" className={navLink}>
+                  Portfolio
+                </NavLink>
                 <NavLink to="/retirement" className={navLink}>
                   Retirement
                 </NavLink>

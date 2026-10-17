@@ -5,10 +5,12 @@ import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
 import { DashboardPage } from './pages/DashboardPage'
 import { FundDetailPage } from './pages/FundDetailPage'
 import { FundsPage } from './pages/FundsPage'
+import { GoalProgressPage } from './pages/GoalProgressPage'
 import { GoalSimulationPage } from './pages/GoalSimulationPage'
 import { GoalsPage } from './pages/GoalsPage'
 import { InsightsPage } from './pages/InsightsPage'
 import { LoginPage } from './pages/LoginPage'
+import { PortfolioPage } from './pages/PortfolioPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { RecommendationPage } from './pages/RecommendationPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -40,6 +42,8 @@ export const router = createBrowserRouter([
           { path: '/goals', element: <GoalsPage /> },
           { path: '/goals/:goalId/simulate', element: <GoalSimulationPage /> },
           { path: '/goals/:goalId/recommend', element: <RecommendationPage /> },
+          { path: '/goals/:goalId/progress', element: <GoalProgressPage /> },
+          { path: '/portfolio', element: <PortfolioPage /> },
           { path: '/retirement', element: <RetirementPage /> },
           { path: '/funds', element: <FundsPage /> },
           { path: '/funds/:fundId', element: <FundDetailPage /> },
