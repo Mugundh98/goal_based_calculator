@@ -225,7 +225,7 @@ The first two show why unit tests are not enough. The simulation tool's success 
 | Backend (pytest) | 578 | CI job `backend` with coverage |
 | Frontend (Vitest) | 52 | CI job `frontend` |
 | End-to-end (Playwright) | 7 | CI job `e2e` |
-| **Total automated** | **637** | |
+| **Total automated** | **637** | All passed locally; GitHub Actions run #42: all three jobs passed in 3 min 23 s |
 
 ## 8. How to run / demo this phase
 
