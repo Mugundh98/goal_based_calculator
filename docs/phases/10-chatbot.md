@@ -229,7 +229,7 @@ Measured in the manual test (12 questions): answers took 2.6 to 12.6 seconds; to
 | `test_chatbot.py` | 15 | Every tool has a clean schema (no refs, titles or nulls); required fields, enums (no retirement), unwrapped optionals, limits; system prompt rules; numbers with ₹, %, lakh, crore; rounded tool numbers grounded; invented numbers flagged once; the question's numbers and small counts allowed; numbers inside tool strings; all 20 articles parse; long sections split by paragraph; simulation override starts from recorded investments; **Gemini adapter with a stub client**: text and function-call chunks, function responses with ids, thought parts kept but not shown, fallback model on 429, error kinds (rate limit, bad key not retried, unavailable) |
 | `test_chat_api.py` | 17 | Status with and without a key (`503`); private sessions; message length; streamed plain answer stored with a title; **tool calls run for this user and are audited**; bad arguments, unknown tool and missing goal go back to the model; **goal saved only after confirmation**; charts sent to the browser but not to the model; **explanations from the knowledge base built on first use**; off-topic questions find nothing; ingestion idempotent and following changes; **no name, e-mail or date of birth reaches the model**; invented numbers recorded; fallback answer and history without it; history sent; loop stops after 6 rounds; rate limit |
 | Earlier phases | 510 | Unchanged |
-| **Total** | **542** | **All passed** (local, ~153 s) |
+| **Total** | **542** | **All passed** (local, ~153 s; GitHub Actions run #34: passed in 1 min 10 s, with no Gemini key) |
 
 **Manual test with the real model** (2026-10-17):
 
