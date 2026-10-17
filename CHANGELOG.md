@@ -2,6 +2,18 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [0.9.0] – 2026-10-17 – Phase 9: Portfolio tracker
+
+### Added
+
+- `app/finance/xirr.py`: XIRR by Newton-Raphson from 10% with a bisection fallback; matches the example in Excel's documentation (0.373362535).
+- `app/portfolio/`: FIFO replay of transactions into holdings (cost, realised gain, stamp duty, three-decimal units); fund → rebalancing row (sleeves via peer groups, index funds by name); drift from the recommendation with a 5-point band and amounts to move; plan value.
+- `transactions` and `holdings` tables – migration `0010`; holdings rebuilt in the same database transaction as each change under a per-user advisory lock; units restated across face-value changes; deleting a goal keeps its transactions as unassigned.
+- `GET /api/portfolio`, `GET/POST /api/portfolio/transactions`, `POST /api/portfolio/transactions/sip`, `DELETE /api/portfolio/transactions/{id}`, `GET /api/portfolio/goals/{id}`: valuation, XIRR, goal status (on/off track, plan value, projection), rebalancing and alerts.
+- Frontend: portfolio page (summary, alerts, goal cards, holdings, transactions), transaction form (purchase, SIP history, redemption; fund search with plan and option), goal progress page (value against plan, projection against target, rebalancing), "Progress" on goal cards, dashboard step 5 and warnings.
+- 46 new tests (510 total).
+- Documentation: Phase 9 document, ADR-012, updated architecture, database and API docs.
+
 ## [0.8.0] – 2026-10-17 – Phase 8: Recommendations
 
 ### Added

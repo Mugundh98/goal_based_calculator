@@ -203,7 +203,7 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
 
 ### Phase 9 – Portfolio tracker  · `phase-09-portfolio` · `v0.9.0`
 
-- **Database:** `transactions` (user, fund, goal, date, amount, units, type), `holdings` (derived/materialised per user–fund).
+- **Database:** `transactions` (user, fund, goal, date, amount, units, type), `holdings` (derived/materialised per user–fund). *As built:* holdings per user, goal and fund (unique with NULLS NOT DISTINCT; NULL goal = unassigned), with FIFO cost and realised gain; transactions also store the NAV used; deleting a goal keeps its transactions as unassigned (ADR-012).
 - **Backend:** XIRR via Newton-Raphson (tested against Excel's XIRR), on-track/off-track per goal, rebalancing alerts when allocation drifts beyond a threshold.
 - **Frontend:** add-transaction form, holdings table, goal progress vs plan chart, alerts banner.
 - **Viva focus:** XIRR vs CAGR; Newton-Raphson convergence; derived vs stored data (why/when to materialise holdings); transactions and consistency.
