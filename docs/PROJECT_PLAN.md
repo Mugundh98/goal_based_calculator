@@ -237,7 +237,15 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
 ### Phase 13 – Deployment  · `phase-13-deploy` · `v1.0.0`
 
 - Frontend → Vercel; backend → Render; database → a free managed PostgreSQL with pgvector (e.g. Neon). Check current free-tier terms when deploying.
-- Environment variables set in each platform; CORS restricted to the frontend domain; database migrations run on deploy; seed demo user + data for the viva.
+- Environment variables set in each platform; CORS restricted to the frontend domain; database migrations run on deploy; seed demo user + data for the viva. *As built:*
+  - Neon, because Render's free PostgreSQL expires after 30 days.
+  - The API runs as a Docker image, which runs `alembic upgrade head` on start.
+  - Reference data is copied from the local database with `python -m app.deploy copy-data`; the demo account comes from `demo-user [--reset]`.
+  - One simulation runs at a time to fit 512 MB.
+  - The frontend shows a "waking up" screen while the API starts.
+  - The daily data refresh runs on GitHub Actions.
+  - Render deploys only after CI passes.
+  - Accounts and secrets are set up by the owner following `docs/deployment.md` (ADR-016).
 
 ### Phase 14 – Report and presentation
 

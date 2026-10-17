@@ -14,6 +14,7 @@ MCA 4th-semester project, Andhra University CDOE.
 | [Architecture](docs/architecture.md) | Components and how they connect |
 | [Database](docs/database.md) | ER diagram, table dictionary, migrations |
 | [API](docs/api.md) | Endpoint list (full spec at `/docs` when running) |
+| [Deployment](docs/deployment.md) | Vercel + Render + Neon, step by step |
 | [Decisions](docs/decisions/) | Architecture decision records |
 | [Changelog](CHANGELOG.md) | Changes per release |
 
@@ -116,4 +117,20 @@ uv run python -m app.evaluation ml        # ML models against naive baselines
 uv run python -m app.evaluation returns   # chance of success under the 4 return models
 uv run python -m app.evaluation chatbot   # 102 questions against the live assistant (Gemini key)
 uv run python -m app.evaluation uat       # results table from the UAT feedback forms
+```
+
+## Deployment
+
+The frontend is deployed to Vercel, the API to Render (Docker, free plan) and the database to Neon (PostgreSQL 16 + pgvector). All three are free. The configuration is in the repository: `render.yaml`, `backend/Dockerfile`, `frontend/vercel.json` and `.github/workflows/data-refresh.yml`. Step-by-step guide: [docs/deployment.md](docs/deployment.md).
+
+```bash
+cd backend
+uv run python -m app.deploy copy-data --target "<Neon URL>"   # reference data, once
+uv run python -m app.deploy demo-user --reset                 # demo account (DATABASE_URL = Neon)
+```
+
+To try the production image locally:
+
+```bash
+docker build -t goalwise-api backend
 ```

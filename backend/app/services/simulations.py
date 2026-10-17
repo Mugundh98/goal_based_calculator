@@ -38,6 +38,7 @@ from app.services.goals import risk_category
 from app.simulation import engine
 from app.simulation.allocation import equity_share_for_return, return_for_equity_share
 from app.simulation.history import MIN_HISTORY_MONTHS, MarketHistory, align
+from app.simulation.limits import simulation_slot
 from app.simulation.models import MODEL_NAMES, ModelName, NormalModel, ReturnModel, fit_model
 
 PERCENT = 100
@@ -266,7 +267,8 @@ def _run_model(
 ) -> tuple[engine.SimulationOutcome, ReturnModel, int]:
     started = time.perf_counter()
     model = return_model(model_name, history, equity_share)
-    outcome = engine.run(inputs, model, paths=paths, seed=seed)
+    with simulation_slot():
+        outcome = engine.run(inputs, model, paths=paths, seed=seed)
     return outcome, model, round((time.perf_counter() - started) * 1000)
 
 

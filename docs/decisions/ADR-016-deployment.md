@@ -1,0 +1,66 @@
+# ADR-016: Deployment – Vercel, a Docker API on Render, PostgreSQL on Neon
+
+**Status:** Accepted · **Date:** 2026-10-18 · **Phase:** 13
+
+## Context
+
+GoalWise must be reachable on the internet for the viva and for user acceptance testing, at no cost. The pieces are:
+
+- a static React build;
+- a FastAPI backend that imports pandas, SciPy, statsmodels, arch, hmmlearn, LightGBM and ReportLab, and runs 10,000-path simulations in memory;
+- PostgreSQL with pgvector, holding 2.5 million NAV rows, the ML outputs and the knowledge-base embeddings;
+- jobs that refresh the market data every day.
+
+The project plan named Vercel, Render and "a free managed PostgreSQL with pgvector, e.g. Neon", and asked for the current free-tier terms to be checked before deploying.
+
+## Options considered
+
+| Question | Options | Chosen | Why |
+|---|---|---|---|
+| Database | Render PostgreSQL; Supabase; **Neon** | **Neon Free** (1 GB, pgvector, Singapore) | Render's free database expires after 30 days. Neon has no time limit, includes pgvector, and sleeps when idle without losing data. The data is ~190 MB of 1 GB. |
+| API build on Render | Native Python runtime; **Docker** | **Docker** (`python:3.12-slim`, uv 0.13.0, `uv sync --frozen --no-dev`, `libgomp1`) | Same lockfile as development and CI. The OpenMP library LightGBM needs is installed explicitly. The image runs the same way locally, which is how it was tested. |
+| Migrations | Manual; release command (paid); **on start** | **`alembic upgrade head` before uvicorn in the container command** | Free services have no pre-deploy command. Upgrading an up-to-date database is a no-op taking milliseconds. |
+| Reference data on the server | Run the pipeline there; pg_dump/psql; **a COPY script** | **`python -m app.deploy copy-data --target URL`** | A server rebuild means a 35-minute download plus model training, which a 512 MB, 0.1 CPU service cannot do. A script needs no PostgreSQL client tools on Windows. It checks the migration, refuses to overwrite, never copies user data, and moves the id sequences forward. |
+| Demo data | SQL dump of a user; **seed through the services** | **`python -m app.deploy demo-user [--reset]`**, using the same service functions as the API | Holdings, XIRR and recommendations are derived exactly as for a real user. Dates are relative to today, so the demo always looks current. A reset is one command. |
+| Memory (512 MB) | Smaller simulations; a paid plan; **limit concurrency** | **At most `SIMULATION_CONCURRENCY` runs at once (1 on Render), plus `MALLOC_ARENA_MAX=2`** | Measured in the container capped at 512 MB: idle 200–250 MB; one worst-case retirement simulation peaks at 374 MB; two at once were killed (out of memory). With the limit, three concurrent requests peak at 503 MB, and at 445 MB with two malloc arenas. Results stay identical (10,000 paths). |
+| Sleeping API (15 idle minutes) | Keep-alive pings; **tell the user** | **`ServerGate`: polls `/api/health` before rendering; after 1.5 s shows "Waking up the server…"; after 2 minutes, a retry button** | Keep-alive pings would use the 750 free hours and keep Neon awake (its 100 compute-hours). Requests made during a cold start would time out with confusing errors. |
+| Scheduled jobs | In-process APScheduler; Render cron (paid); **GitHub Actions** | **`data-refresh.yml` at 00:00 IST**, off until a secret and a variable are set | A sleeping service misses its schedule. GitHub's scheduler is free, and the job uses the same CLI as local runs. The CLI now exits with an error when a job fails, so failures show in GitHub. |
+| Database URL | Require SQLAlchemy's form; **normalise** | **`postgres://` and `postgresql://` become `postgresql+psycopg://`** | Neon and Render hand out the plain forms. Pasting them unchanged is one less way to get it wrong. |
+| Neon connection | Pooled (PgBouncer); **direct** | **Direct connection string** | psycopg prepares repeated statements, which transaction-mode pooling does not support. One uvicorn worker needs only a few connections. |
+| CORS | `*`; **exact origins + optional regex** | **`CORS_ORIGINS` plus `CORS_ORIGIN_REGEX`** for Vercel previews | Only the deployed frontend may call the API from a browser. The regex must match the whole origin, which a test checks against a look-alike domain. |
+| Deploy trigger | Every push; **after CI passes** | **`autoDeployTrigger: checksPass`** | A commit that fails tests never reaches the server. |
+| Gemini models in production | Flash; **Flash-Lite** | **`gemini-3.5-flash-lite`, fallback `gemini-3.1-flash-lite`** | The free tier allows about 20 requests a day per model, and one question can take several. These are the models the Phase 12 evaluation measured. |
+
+## Decision
+
+The deployment is defined by files in the repository:
+
+- `backend/Dockerfile` and `.dockerignore`;
+- `render.yaml`, a blueprint for a free Docker web service in Singapore, with secrets marked `sync: false` and the JWT secret generated by Render;
+- `frontend/vercel.json`, with the SPA rewrite, asset caching and security headers;
+- `.github/workflows/data-refresh.yml`.
+
+The backend adds:
+
+- `app/deploy/` (`copy-data`, `demo-user`);
+- `app/simulation/limits.py`;
+- the settings `DATABASE_CONNECT_TIMEOUT`, `CORS_ORIGIN_REGEX` and `SIMULATION_CONCURRENCY`.
+
+The frontend adds `ServerGate`. `docs/deployment.md` gives the steps the account owner follows.
+
+## Consequences
+
+- **Good:** the whole stack costs nothing, and every setting lives in version control.
+  - The production image was built and run locally against an empty database, using the `postgres://` URL form, with a 512 MB cap. Checks:
+    - migrations ran on start;
+    - copying the data took 90 seconds for 2.58 million rows;
+    - the demo account was seeded inside the container;
+    - the production frontend build called it cross-origin.
+  - Deploys happen only after CI passes.
+- **Limits:**
+  - The first request after 15 idle minutes waits up to a minute.
+  - Simulations queue one at a time.
+  - The free Gemini quota allows only a handful of assistant questions a day.
+  - Neon's 100 compute-hours a month allow light use only.
+  - ML training and scoring stay on the developer's machine; new predictions are copied with `copy-data --replace`.
+- **Accounts:** creating the Neon, Render and Vercel accounts and entering the secrets is done by the project owner, following `docs/deployment.md`. None of it is automated with stored credentials.
