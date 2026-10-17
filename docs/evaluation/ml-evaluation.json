@@ -189,6 +189,7 @@
       0.0305
     ],
     "years_model_beats_momentum": 3,
+    "paired_t": -0.2613984491317486,
     "leaky_random_split": {
       "rows": 81007,
       "rank_ic": 0.241,

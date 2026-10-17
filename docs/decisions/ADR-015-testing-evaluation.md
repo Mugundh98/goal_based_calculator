@@ -29,7 +29,7 @@ CI runs ruff, the backend tests with coverage (≥ 90%), the frontend linter, Vi
 
 ## Consequences
 
-- The evaluation found two real bugs that the unit tests had missed: a crash in the assistant's simulation tool (since 0.10.0) and a login redirect race (since Phase 1). Both are fixed, with regression tests.
-- Coverage is reported honestly: backend 94% (branches included); frontend unit coverage is low by design, because pages are covered end to end.
+- Testing and evaluation found bugs the unit tests had missed: a crash in the assistant's simulation tool (since 0.10.0), a goal-status tool result a smaller model misread, and a login redirect race (since Phase 1). All are fixed, with regression tests.
+- Coverage is reported honestly: backend 93% of lines and 83% of branches; frontend unit coverage is low by design, because pages are covered end to end.
 - The chatbot numbers describe the lite models. Re-running on the production model needs a paid tier (or many days of free quota).
 - UAT results depend on the student running the sessions; until then `uat-results.md` says there are no responses.

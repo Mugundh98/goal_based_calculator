@@ -87,10 +87,33 @@ MCA 4th-semester project, Andhra University CDOE.
 
 ## Tests
 
-```bash
-cd backend && uv run pytest -v
-```
+Backend (pytest, with branch coverage; CI fails below 90%):
 
 ```bash
-cd frontend && npm run lint && npm run build
+cd backend && uv run pytest --cov
+```
+
+Frontend unit and component tests (Vitest), lint and build:
+
+```bash
+cd frontend && npm test && npm run lint && npm run build
+```
+
+End-to-end tests (Playwright drives Chromium through the real app; it starts the API and the
+dev server if they are not running; first time: `npx playwright install chromium`):
+
+```bash
+cd frontend && npm run e2e
+```
+
+## Evaluation
+
+Reports go to `docs/evaluation/` (Markdown for the report, JSON with the raw numbers):
+
+```bash
+cd backend
+uv run python -m app.evaluation ml        # ML models against naive baselines
+uv run python -m app.evaluation returns   # chance of success under the 4 return models
+uv run python -m app.evaluation chatbot   # 102 questions against the live assistant (Gemini key)
+uv run python -m app.evaluation uat       # results table from the UAT feedback forms
 ```

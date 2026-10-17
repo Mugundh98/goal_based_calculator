@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 11._
+_Living document – updated at the end of every phase. Last updated: Phase 12._
 
 ## Overview
 
@@ -154,6 +154,19 @@ flowchart LR
 
 The PDF is rendered on the server from the same services as the pages. Admin routes check the role from the database on every request; administrators are created from the command line. Key actions are recorded with user, entity, details and IP in an append-only table. Details: `docs/phases/11-reports-admin.md`, ADR-014.
 
+### Testing and evaluation (Phase 12)
+
+```mermaid
+flowchart LR
+    PUSH[git push] --> B[CI backend<br/>ruff, pytest + branch coverage ≥ 90%]
+    PUSH --> F[CI frontend<br/>oxlint, Vitest, build]
+    B --> E[CI e2e<br/>PostgreSQL + API + Vite, Playwright Chromium]
+    F --> E
+    EV[python -m app.evaluation] --> R[(docs/evaluation/*.md, *.json)]
+```
+
+578 backend tests (93% of lines, 83% of branches), 52 frontend tests and 7 end-to-end flows run on every push. The evaluation scripts report the ML models against naive baselines, the four return models on sample goals, a 102-question assistant evaluation and UAT results. Details: `docs/phases/12-evaluation.md`, ADR-015.
+
 ## Components built so far
 
 | Component | Phase | Status |
@@ -185,6 +198,7 @@ The PDF is rendered on the server from the same services as the pages. Admin rou
 | Assistant page (conversations, suggestions, streamed answers, tool chips, inline charts, safe Markdown) | 10 | Done |
 | Audit log (append-only table, `Audit` dependency, 22 actions); plan PDF (`reports/`, ReportLab); admin API and `make-admin` command | 11 | Done |
 | Download my plan button; admin dashboard (overview, users, audit log, data jobs, models) behind `AdminRoute` | 11 | Done |
+| Coverage in CI, Vitest component tests, Playwright end-to-end job; `evaluation/` (ML, return models, chatbot, UAT) | 12 | Done |
 
 ## Authentication flow
 

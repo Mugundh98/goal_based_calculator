@@ -1,0 +1,536 @@
+{
+  "summary": {
+    "Correct-tool rate": "20/21 (95.2%)",
+    "Numeric accuracy": "11/11 (100.0%)",
+    "Required facts mentioned": "10/10 (100.0%)",
+    "Out-of-scope refusal rate": "-",
+    "Goal saved only after confirmation": "-",
+    "Answers with untraceable numbers": "9/21 (42.9%)",
+    "Explanations contradicting the reference, with RAG": "-",
+    "Explanations contradicting the reference, without RAG": "-",
+    "Explanations with untraceable numbers, with / without RAG": "0 / 0 of 0"
+  },
+  "references": {
+    "edu_target": 4477119.24,
+    "car_target": 898880.0,
+    "edu_cost_today": 2500000.0,
+    "edu_sip": 15000.0,
+    "car_required_sip_plan": 34879.0,
+    "car_required_sip_tracked": 20946.0,
+    "edu_chance": 98.4,
+    "car_chance": 16.8,
+    "car_chance_sip25000": 100.0,
+    "edu_chance_sip20000": 99.9,
+    "edu_chance_equity40": 99.2,
+    "car_chance_2029": 99.9,
+    "car_sip90": 22192.0,
+    "car_p10": 843945.41,
+    "edu_p50": 6982194.59,
+    "rec_edu_equity": 60.0,
+    "rec_car_equity": 6.67,
+    "rec_edu_return": 10.68,
+    "rec_edu_midsmall": 18.37,
+    "portfolio_value": 1842551.49,
+    "portfolio_cost": 1406055.99,
+    "portfolio_xirr": 9.6,
+    "portfolio_gain": 436495.5,
+    "edu_xirr": 10.85,
+    "edu_value": 1528926.15,
+    "surplus": 80000.0,
+    "risk_score": 54,
+    "risk_category": "moderate",
+    "fund_hdfc_mid_1y": 1.5938,
+    "fund_hdfc_mid_3y": 15.4994,
+    "fund_hdfc_mid_5y": 16.4472,
+    "fund_hdfc_mid_vol": 15.5492,
+    "fund_hdfc_mid_dd": 16.7584,
+    "fund_nippon_large_1y": -6.4413,
+    "fund_nippon_large_3y": 9.9992,
+    "fund_nippon_large_5y": 11.1879,
+    "fund_icici_bond_sharpe": 0.8063,
+    "fund_ppfas_5y": 10.3061
+  },
+  "results": [
+    {
+      "id": "G01",
+      "category": "goals",
+      "question": "What goals do I have?",
+      "answer": "You have two saved goals:\n\n1. **New car** (Goal ID: 30)\n   - **Target Year:** 2028 (in 2 years)\n   - **Cost in Today's Rupees:** ₹8,00,000 (Inflated target: ₹8,98,880)\n   - **Current Monthly SIP:** ₹20,000\n   - **Status:** Currently off track (funded at 97.2%, with a shortfall of ₹24,368).\n\n2. **Daughter's education** (Goal ID: 29)\n   - **Target Year:** 2036 (in 10 years)\n   - **Cost in Today's Rupees:** ₹25,00,000 (Inflated target: ₹44,77,119)\n   - **Current Monthly SIP:** ₹15,000\n   - **Status:** On track (fully funded, with no shortfall).",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 3.9,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "G02",
+      "category": "goals",
+      "question": "List my financial goals with their target years.",
+      "answer": "Here are your financial goals and their target years:\n\n- **New car** (Goal ID: 30) – Target Year: 2028\n- **Daughter's education** (Goal ID: 29) – Target Year: 2036",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 3.3,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "G03",
+      "category": "goals",
+      "question": "How much will my daughter's education cost by the time it is due, after inflation?",
+      "answer": "For your goal **\"Daughter's education\"** (due in 2036, with a cost of ₹25,00,000 in today's rupees and a 6% inflation rate), the inflated target cost will be **₹44,77,119**.",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 2.8,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "edu_target": 4477119.24
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "G04",
+      "category": "goals",
+      "question": "What is the inflated target for my car goal?",
+      "answer": "For your \"New car\" goal (target year 2028), the inflated target is **₹8,98,880** (based on a cost of ₹8,00,000 in today's rupees and a 6% annual inflation rate).",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 2.8,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "car_target": 898880.0
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "G05",
+      "category": "goals",
+      "question": "How many years are left for the education goal?",
+      "answer": "There are **10 years** left for your \"Daughter's education\" goal (target year 2036).",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 2.1,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "G06",
+      "category": "goals",
+      "question": "Is my car goal on track?",
+      "answer": "No, your \"New car\" goal is currently **not on track**. \n\nHere are the details from your portfolio:\n* **Target Year:** 2028 (2 years to go)\n* **Inflated Target:** ₹8,98,880 (based on a ₹8,00,000 cost today and 6% inflation)\n* **Current Invested Value:** ₹3,13,625\n* **Monthly SIP:** ₹20,000\n* **Projected Value:** ₹8,74,512 (leaving a shortfall of ₹24,368)\n* **Required Monthly SIP:** ₹20,946 (you are currently falling short by ₹946 a month)\n* **Status:** Behind plan by ₹38,483, and a rebalance is needed.\n\n*Note: Results are estimates based on past data and assumptions, not guaranteed returns.*",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [
+        "946"
+      ],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 3.2,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "G07",
+      "category": "goals",
+      "question": "Am I on track for my daughter's education?",
+      "answer": "Yes, you are on track for your daughter's education goal (\"Daughter's education\", goal id 29). \n\nHere are the key details from your plan:\n- **Target Year:** 2036\n- **Cost in today's rupees:** ₹25,000,000 *(₹25 lakh)*\n- **Inflated target:** ₹44,77,119\n- **Current invested value:** ₹15,28,926\n- **Monthly SIP:** ₹15,000\n- **Status:** On track (ahead of plan by ₹40,344)\n\n*Note: This is an educational planning tool, not personal investment advice. Results are estimates based on past data and assumptions.*",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [
+        "25,000,000"
+      ],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 3.1,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "G08",
+      "category": "goals",
+      "question": "What monthly SIP do I need for the car goal?",
+      "answer": "For your \"New car\" goal (target year 2028), the required monthly SIP is **₹20,946** (you are currently investing ₹20,000 per month). \n\nHere are the key details for the goal:\n* **Cost in today's rupees:** ₹8,00,000\n* **Inflated target (in 2028):** ₹8,98,880\n* **Current savings:** ₹3,13,625\n* **Shortfall:** ₹24,368\n\n*(Note: These figures are estimates based on past data and assumptions, not guaranteed returns.)*",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 2.3,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "car_required_sip_tracked": 20946.0,
+        "car_required_sip_plan": 34879.0
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "G09",
+      "category": "goals",
+      "question": "How much am I investing every month for my daughter's education right now?",
+      "answer": "You are currently investing **₹15,000** per month through your SIP for your \"Daughter's education\" goal (goal ID 29).",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 2.7,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "edu_sip": 15000.0
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "G10",
+      "category": "goals",
+      "question": "Which of my goals needs attention first?",
+      "answer": "Your **New car** goal needs attention first, as it is currently **not on track**. \n\nHere are the details of your goals:\n\n*   **New car** (Target year: 2028 | Cost today: ₹8,00,000):\n    *   **Status:** Not on track (shortfall of ₹24,368).\n    *   **Current progress:** Funded at 97.2%, with a current monthly SIP of ₹20,000.\n    *   **Action needed:** A required monthly SIP of ₹20,946 to bridge the gap, and rebalancing is needed.\n\n*   **Daughter's education** (Target year: 2036 | Cost today: ₹25,00,000):\n    *   **Status:** On track (fully funded relative to plan).\n    *   **Current progress:** Funded at 100%, with a monthly SIP of ₹15,000. Rebalancing is recommended.\n\n*(Note: These results are estimates based on past data and assumptions, not guaranteed returns.)*",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 2.6,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "G11",
+      "category": "goals",
+      "question": "my goals?? quick summary pls",
+      "answer": "Here is a quick summary of your saved goals:\n\n1. **Daughter's Education** (Target: 2036)\n   - **Cost in today's money:** ₹25 lakh (Inflated target: ₹44.77 lakh)\n   - **Current status:** On track (100% funded)\n   - **Invested value:** ₹15.29 lakh (Monthly SIP: ₹15,000)\n   - **Projected value:** ₹69.88 lakh (XIRR: 10.85%)\n\n2. **New Car** (Target: 2028)\n   - **Cost in today's money:** ₹8 lakh (Inflated target: ₹8.99 lakh)\n   - **Current status:** Not on track (97.2% funded, short by ₹24,368)\n   - **Invested value:** ₹3.14 lakh (Monthly SIP: ₹20,000)\n   - **Projected value:** ₹8.75 lakh (Required SIP: ₹20,946)\n\n*Note: Rebalancing is needed for both goals.*",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 3.3,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "G12",
+      "category": "goals",
+      "question": "What does my education goal cost in today's money?",
+      "answer": "Your education goal (\"Daughter's education\") costs **₹25.0 lakh** in today's money. \n\nDue to inflation (assumed at 6% a year), the target amount when you need it in 2036 will be ₹44,77,119.24.",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 2.5,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "edu_cost_today": 2500000.0
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "C08",
+      "category": "calculator",
+      "question": "If I put ₹20,000 a month for 15 years, how much will a ₹60 lakh goal (today's money) be funded? Give the projected value.",
+      "answer": "Based on your plan, here are the details for your ₹60 lakh goal (needed in 15 years, by 2041):\n\n* **Inflated Target:** ₹1,43,79,349 (factoring in 6% annual inflation)\n* **Projected Value:** ₹80,32,424 (assuming a 10% expected annual return based on your risk profile)\n* **Goal Funded:** **55.8%** of the target amount\n* **Shortfall:** ₹63,46,925\n* **Required Monthly SIP:** ₹35,804 (to fully fund the target)\n\nSince your current monthly SIP is ₹20,000, you will have a shortfall of ₹63,46,925 by the end of 15 years. To close this gap, you would need to increase your monthly SIP to ₹35,804 or consider a step-up SIP. \n\n*(Note: These figures are estimates based on assumed returns and inflation, not a guaranteed return.)*",
+      "tools": [
+        [
+          "goal_calculator",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 3.4,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "calc_projected_value": 8032424.36
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "C12",
+      "category": "calculator",
+      "question": "What SIP gets me ₹2 crore in 25 years assuming 12% return and 6% inflation?",
+      "answer": "To reach ₹2 crore in today's money in 25 years (by the year 2051), assuming 12% annual return and 6% annual inflation:\n\n* **Inflated Target:** Because of 6% inflation, the actual amount you will need in 25 years is **₹8.58 crore** (₹8,58,37,414).\n* **Required Monthly SIP:** You will need a monthly SIP of **₹50,428**.\n\n*Note: This is an educational planning estimate based on past data and assumptions; mutual fund investments are subject to market risks, and actual returns may vary.*",
+      "tools": [
+        [
+          "goal_calculator",
+          "ok"
+        ]
+      ],
+      "ungrounded": [
+        "2051"
+      ],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 3.2,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "calc_required_sip": 50428.0
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "R02",
+      "category": "recommendation",
+      "question": "How much equity should my car goal have?",
+      "answer": "For your \"New car\" goal (target year 2028), the recommended equity allocation is **6.67%** (all in large-cap equity). \n\nHere is why:\n* **Time horizon:** With only 2 years left until the goal, a glide path rule lowers the equity share so that market drops just before you need the money won't hurt your savings.\n* **No mid or small caps:** Mid and small-cap funds can fall harder and take years to recover, which a short-term goal cannot risk.\n* **Debt portion:** The remaining 93.33% is allocated to debt (23.33% in longer-term bonds and 70% in short-term debt) to keep your money stable as the target date approaches.\n\n*(Note: These figures are estimates based on past data and assumptions, not a guarantee of future returns.)*",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ],
+        [
+          "get_recommendation",
+          "ok"
+        ]
+      ],
+      "ungrounded": [
+        "93.33%"
+      ],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 4.6,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "rec_car_equity": 6.67
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "R05",
+      "category": "recommendation",
+      "question": "Why is the car goal mostly in debt?",
+      "answer": "The car goal is mostly in debt (about 93.3%) because the target year is close—just 2 years away (2028). \n\nAccording to **Asset allocation and diversification - Glide path**, GoalWise reduces risk as a goal approaches because there is less time to recover from a market fall. For this goal, the glide path sets equity at 6.7% and the rest in short-term debt and longer-term bonds, ensuring the money is safe and ready when you need to buy the car.",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ],
+        [
+          "get_recommendation",
+          "ok"
+        ],
+        [
+          "explain_term",
+          "ok"
+        ]
+      ],
+      "ungrounded": [
+        "93.3%"
+      ],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 4.8,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "R08",
+      "category": "recommendation",
+      "question": "Give me the recommended portfolio for each of my goals.",
+      "answer": "Here are the recommended asset allocations and funds for your two goals, based on your moderate risk profile:\n\n### 1. New car (Target year: 2028 | 2 years away)\n* **Allocation:** 6.7% Equity (Large-cap) | 93.3% Debt (23.3% Longer-term bonds, 70% Short-term debt)\n* **Expected return:** 7.1% a year | **Volatility:** 1.4%\n* **Recommended funds:**\n  * **Large-cap equity:** quant Large Cap Fund (6.7%)\n  * **Longer-term bonds:** Franklin India Corporate Bond Fund (11.7%), UTI Banking & PSU Debt Fund (11.7%)\n  * **Short-term debt:** Axis Liquid Fund (35%), Sundaram Liquid Fund (35%)\n* **Why:** With only 2 years left, the glide rule reduces equity to 6.7% and keeps most of the money in short-term debt so it stays safe from market swings.\n\n---\n\n### 2. Daughter's education (Target year: 2036 | 10 years away)\n* **Allocation:** 60% Equity (41.6% Large-cap, 18.4% Mid & small-cap) | 40% Debt (Longer-term bonds)\n* **Expected return:** 10.7% a year | **Volatility:** 9.8%\n* **Recommended funds:**\n  * **Large-cap equity:** quant Large Cap Fund (20.8%), Taurus Large Cap Fund (20.8%)\n  * **Mid & small-cap equity:** BANK OF INDIA SMALL CAP FUND (9.2%), HSBC Midcap Fund (9.2%)\n  * **Longer-term bonds:** Franklin India Corporate Bond Fund (20%), UTI Banking & PSU Debt Fund (20%)\n* **Why:** With 10 years to go, your moderate risk profile allows 60% in equity (including mid and small caps for higher growth) and 40% in longer-term bonds to build wealth over the longer horizon.",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ],
+        [
+          "get_recommendation",
+          "ok"
+        ],
+        [
+          "get_recommendation",
+          "ok"
+        ]
+      ],
+      "ungrounded": [
+        "93.3%"
+      ],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 4.6,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "P09",
+      "category": "portfolio",
+      "question": "How much is my education goal's portfolio worth?",
+      "answer": "Your education goal (\"Daughter's education\", ID 29) is currently worth **₹15,28,926.15**, with an invested cost of ₹11,06,055.99. It is currently on track.",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ]
+      ],
+      "ungrounded": [],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 3.0,
+      "attempts": 1,
+      "tool_ok": false,
+      "expected": {
+        "edu_value": 1528926.15
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "P10",
+      "category": "portfolio",
+      "question": "Is the car money invested sensibly for a goal two years away?",
+      "answer": "No, the current setup for your **New car** goal is not quite right for a target just two years away:\n\n* **Asset Allocation:** Equity currently makes up **100%** of this goal, whereas the recommended allocation is just **7%** equity and **93%** debt. \n* **The Risk:** Having a short-term goal in 100% equity leaves your money exposed to market swings right when you need to withdraw it.\n* **Goal Status:** The goal is currently **off track**. At a 7% expected return, your current holdings and ₹20,000 monthly SIP are projected to reach ₹8,74,512 against an inflated target of ₹8,98,880 (leaving a shortfall of ₹24,368). Increasing your monthly SIP to **₹20,946** would close the gap.\n\n### Recommendation\nConsider rebalancing the New car goal to shift the majority of the funds into short-term debt and safer bonds, as suggested in your goal's asset recommendation, to protect your capital as you get closer to 2028.",
+      "tools": [
+        [
+          "list_goals",
+          "ok"
+        ],
+        [
+          "get_portfolio_status",
+          "ok"
+        ],
+        [
+          "get_recommendation",
+          "ok"
+        ]
+      ],
+      "ungrounded": [
+        "93%"
+      ],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 4.7,
+      "attempts": 1,
+      "tool_ok": true,
+      "text_ok": true
+    },
+    {
+      "id": "K02",
+      "category": "risk_profile",
+      "question": "How much money do I have left to invest each month?",
+      "answer": "Based on your financial profile, your monthly income is ₹1,50,000 and your monthly expenses and EMIs total ₹70,000 (₹60,000 expenses plus ₹10,000 EMI), leaving you with a monthly surplus of **₹80,000** available to invest.",
+      "tools": [
+        [
+          "get_risk_profile",
+          "ok"
+        ]
+      ],
+      "ungrounded": [
+        "70,000"
+      ],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 2.1,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "surplus": 80000.0
+      },
+      "numbers_ok": true
+    },
+    {
+      "id": "K04",
+      "category": "risk_profile",
+      "question": "Given my income and expenses, can I afford ₹30,000 a month in SIPs?",
+      "answer": "Based on your financial profile, your monthly income is ₹1,50,000 and your total outgoings—including monthly expenses (₹60,000) and EMIs (₹10,000)—come to ₹70,000. \n\nThis leaves you with a monthly surplus of ₹80,000. An SIP of ₹30,000 would take up about 37.5% of your available surplus, leaving you with ₹50,000 each month for other savings, buffer, or discretionary spending. \n\nFinancially, your income supports a ₹30,000 monthly SIP, provided it fits into your overall goal plan and you maintain an adequate emergency fund.",
+      "tools": [
+        [
+          "get_risk_profile",
+          "ok"
+        ]
+      ],
+      "ungrounded": [
+        "70,000",
+        "37.5%",
+        "50,000"
+      ],
+      "model": "gemini-3.5-flash-lite",
+      "error": null,
+      "seconds": 2.7,
+      "attempts": 1,
+      "tool_ok": true,
+      "expected": {
+        "surplus": 80000.0
+      },
+      "numbers_ok": true
+    }
+  ]
+}

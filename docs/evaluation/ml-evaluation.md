@@ -1,6 +1,6 @@
 # ML evaluation
 
-_Generated 2026-10-17 from the validation results stored with each active model (`ml_models.metrics`)._
+_Generated 2026-10-18 from the validation results stored with each active model (`ml_models.metrics`)._
 
 ## Fund ranker (v2, LightGBM multiclass (gradient-boosted trees))
 
@@ -32,15 +32,16 @@ Chance level: a random pick lands in the top quartile 25% of the time.
 | 2025 | 8110 | 0.166 | 0.136 | 0.007 | 0.325 | 0.301 | 0.244 |
 
 The model beat last year's top funds on rank correlation in **3 of 5** years;
-mean difference -0.008 (standard deviation 0.068 across years). With five
-years the difference is not statistically distinguishable from zero: **the model is about as
-good as momentum, and both are clearly better than chance.**
+mean difference -0.008 (standard deviation 0.068 across years), paired
+t = -0.26 with 4 degrees of freedom; |t| would have to exceed 2.78 for
+significance at 5%. **The model is about as good as momentum, and both are clearly better than
+chance.**
 
 ### Look-ahead check
 
 A shuffled 5-fold split (which lets the model train on months after the ones it is tested on)
-gives rank correlation 0.241 against 0.2477
-walk-forward. The chosen, deliberately shallow model scores the same either way: it cannot
+gives rank correlation 0.241 against
+0.248 walk-forward. The chosen, deliberately shallow model scores the same either way: it cannot
 memorise individual funds across overlapping 12-month targets, which is evidence that it does
 not over-fit. (A more flexible model tried in Phase 7 scored 0.433 shuffled but 0.158
 walk-forward: that gap is the look-ahead bias the time-ordered split exposes.)

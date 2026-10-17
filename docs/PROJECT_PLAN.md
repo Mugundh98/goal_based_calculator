@@ -232,7 +232,7 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
 - **ML evaluation report:** walk-forward results, comparison with a naive baseline ("last year's top funds").
 - **Return-model comparison:** success probabilities under the 4 models for sample goals.
 - **Chatbot evaluation:** ~100-question test set → correct-tool rate, numeric accuracy, out-of-scope refusal rate, hallucination rate with/without RAG.
-- **UAT:** 5–10 users, feedback form, results table.
+- **UAT:** 5–10 users, feedback form, results table. *As built:* backend branch coverage with a 90% floor in CI; 52 Vitest tests and 7 Playwright flows (a third CI job); `python -m app.evaluation ml|returns|chatbot|uat`; the chatbot evaluation ran on the Flash-Lite models because the free tier allows 20 requests a day per model; the UAT kit (plan, SUS form, response sheet, scorer) is ready for the sessions (ADR-015).
 
 ### Phase 13 – Deployment  · `phase-13-deploy` · `v1.0.0`
 

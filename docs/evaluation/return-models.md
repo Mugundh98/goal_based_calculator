@@ -1,6 +1,6 @@
 # Return-model comparison
 
-_Generated 2026-10-17. 10,000 paths per model, same seed; market data
+_Generated 2026-10-18. 10,000 paths per model, same seed; market data
 2013-02-01 to 2026-09-01
 (164 months)._
 
