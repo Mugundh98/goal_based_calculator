@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    admin,
     auth,
     chat,
     funds,
@@ -13,6 +14,7 @@ from app.api.routes import (
     portfolio,
     profile,
     recommendations,
+    reports,
     retirement,
     risk,
     simulations,
@@ -32,3 +34,5 @@ api_router.include_router(funds.router)
 api_router.include_router(market.router)
 api_router.include_router(ml.router)
 api_router.include_router(chat.router)
+api_router.include_router(reports.router)
+api_router.include_router(admin.router)

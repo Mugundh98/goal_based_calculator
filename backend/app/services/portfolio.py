@@ -19,6 +19,7 @@ from sqlalchemy import ColumnElement, delete, select, text
 from sqlalchemy.orm import Session, joinedload
 
 from app.finance import tvm
+from app.finance.formatting import inr
 from app.finance.goal_plan import GoalInputs, project_goal
 from app.finance.nav_adjust import adjust_series
 from app.finance.xirr import xirr
@@ -529,18 +530,6 @@ def _goal_view(
         equity_target=round(drift.equity_target * PERCENT, 1) if drift else None,
     )
     return GoalView(status, drift, recommendation, rate, as_of)
-
-
-def inr(amount: float) -> str:
-    """₹8,74,512: Indian digit grouping (the last three digits, then pairs), as the UI shows."""
-    digits = str(abs(round(amount)))
-    head, tail = digits[:-3], digits[-3:]
-    pairs = []
-    while len(head) > 2:
-        head, pair = head[:-2], head[-2:]
-        pairs.insert(0, pair)
-    grouped = ",".join(([head] if head else []) + pairs + [tail])
-    return f"{'−' if amount < 0 else ''}₹{grouped}"
 
 
 def _alerts(view: GoalView, today: date) -> list[Alert]:
