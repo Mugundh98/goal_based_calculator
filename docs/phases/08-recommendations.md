@@ -235,7 +235,7 @@ Other goals of the same investor:
 | `test_recommendation.py` | 19 | Glide equity (7 cases); liquidity and mid/small limits glide; **every constraint holds for every goal** (3 profiles × 7 horizons); more risk aversion → fewer mid/small; **optimiser = closed-form two-asset solution**; due goal and emergency fund → all short-term; portfolio return and volatility by hand; covariance estimated from simulated returns; **frontier increasing, ends at the highest-return sleeve, nothing recommended lies above it**; best-ranked funds, one per fund house, sleeve split; tiny sleeves folded, small sleeves one fund, missing sleeve noted; Sharpe fallback; reasons (long goal, near goal) |
 | `test_recommendations_api.py` | 9 | Login and own goal; 409 without market data; long goal (sums, glide, limits, Sharpe fallback, reasons, capital market, frontier, goal return); near goal all short-term; emergency fund liquid; picks follow a trained ranker (order, reason, notes); **stored history: newest first, latest, an old one reads back identical**; 404s; goal deletion cascades |
 | Earlier phases | 436 | Unchanged |
-| **Total** | **464** | **All passed** |
+| **Total** | **464** | **All passed** (local, ~130 s; GitHub Actions run #28: passed in 1 min 4 s) |
 
 **Manual test in the browser** (2026-10-17, real data):
 
