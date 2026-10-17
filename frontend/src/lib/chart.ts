@@ -22,3 +22,11 @@ export function coveringTicks(min: number, max: number, count = 5): number[] {
 // Categorical palette in fixed order (cluster 0 = least volatile), checked for colour-vision
 // deficiency with the dataviz palette validator; a white ring separates overlapping dots.
 export const CLUSTER_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948']
+
+/** Allocation sleeves in fixed order, coloured by the same palette (never by rank). */
+export const SLEEVE_COLORS: Record<string, string> = {
+  large_cap: CLUSTER_COLORS[0],
+  mid_small_cap: CLUSTER_COLORS[1],
+  long_debt: CLUSTER_COLORS[2],
+  short_debt: CLUSTER_COLORS[3],
+}

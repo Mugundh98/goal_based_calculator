@@ -168,6 +168,13 @@ function GoalCard({ goal, onEdit }: { goal: Goal; onEdit: () => void }) {
         >
           Simulate
         </Link>
+        <Link
+          to={`/goals/${goal.id}/recommend`}
+          className={`${buttonClass} border border-emerald-600 bg-white text-emerald-700 hover:bg-emerald-50`}
+          aria-label={`Recommendation for ${goal.name}`}
+        >
+          Recommend
+        </Link>
         {planned ? (
           <Link to="/retirement" className={`${buttonClass} border border-slate-300 bg-white hover:bg-slate-50`}>
             Open planner

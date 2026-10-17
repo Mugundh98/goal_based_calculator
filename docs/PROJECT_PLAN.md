@@ -197,7 +197,7 @@ Each phase lists what is added to each layer, how the layers connect, and the qu
 ### Phase 8 – Recommendations  · `phase-08-recommendations` · `v0.8.0`
 
 - **Backend:** allocation per goal from risk category + years to goal (glide rule) and mean-variance optimisation; fund picks from the predicted top quartile within the right categories; reasons attached.
-- **Database:** `recommendations` (goal_id, allocation JSON, funds JSON, reasons, created_at).
+- **Database:** `recommendations` (goal_id, allocation JSON, funds JSON, reasons, created_at). *As built:* also `as_of`, risk category, horizon, expected return and volatility as columns and an `inputs` JSON (capital market, frontier, rules, model version); four sleeves, no gold/international (no long fund history) (ADR-011).
 - **Frontend:** per-goal recommendation panel; simulation re-run with the recommended allocation.
 - **Viva focus:** Markowitz efficient frontier; constraints in optimisation; why recommendations are stored (audit, history).
 

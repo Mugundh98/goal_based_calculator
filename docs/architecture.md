@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 7._
+_Living document – updated at the end of every phase. Last updated: Phase 8._
 
 ## Overview
 
@@ -97,6 +97,21 @@ flowchart LR
 
 Training is offline and versioned (one active version per model, enforced by a partial unique index); a daily job scores the latest month; the API only reads stored predictions. Features use only data up to each month-end (tested), validation is purged walk-forward against momentum and random baselines, explanations are exact tree SHAP values. Face-value changes in NAV histories are adjusted out (`app/finance/nav_adjust.py`). Details: `docs/phases/07-ml.md`, ADR-010.
 
+### Recommendations (Phase 8)
+
+```mermaid
+flowchart LR
+    UI[RecommendationPage] -->|POST /api/goals/id/recommendations| SV[services/recommendations.py]
+    SV -->|sleeve medians, cached| H[(nav_history)]
+    SV --> AL[recommendation/allocation.py<br/>glide, liquidity, mean-variance, frontier]
+    SV -->|ranked candidates| P[(fund_predictions)]
+    SV --> SE[recommendation/selection.py]
+    SV --> DB[(recommendations)]
+    UI -->|?equity=| SIM[Phase 5 simulation]
+```
+
+Rules set the equity share (risk category × glide from 10 years to 1), the mid/small limit and the short-term minimum; a constrained mean-variance optimisation (SLSQP) splits four sleeves using assumed returns and measured covariances; funds come from the Phase 7 ranker. Every recommendation is stored with its inputs. Details: `docs/phases/08-recommendations.md`, ADR-011.
+
 ## Components built so far
 
 | Component | Phase | Status |
@@ -120,6 +135,8 @@ Training is offline and versioned (one active version per model, enforced by a p
 | Retirement wizard, plan page (chance the money lasts, lifetime fan chart, survival chart, certainty, 4% rule), dashboard step | 6 | Done |
 | `ml/`: peer groups, past-only features, LightGBM ranker with walk-forward validation and SHAP, K-Means clusters, SARIMA CPI forecast, registry, scoring job; `ml_models`, `fund_predictions`, `fund_clusters` | 7 | Done |
 | Insights page (rankings with reasons, cluster scatter, inflation outlook, reliability), fund-page model card | 7 | Done |
+| `recommendation/`: glide-path allocation, constrained mean-variance optimiser, efficient frontier, fund selection with reasons; `recommendations` | 8 | Done |
+| Recommendation page (allocation, reasons, frontier, funds, history, simulate this allocation) | 8 | Done |
 
 ## Authentication flow
 
@@ -149,7 +166,7 @@ Training is offline and versioned (one active version per model, enforced by a p
 | Model | `app/models/` | SQLAlchemy ORM tables |
 | Core | `app/core/` | Settings, DB engine/session, security |
 | Pipeline | `app/data_pipeline/` | Source parsers, bulk upserts, jobs, scheduler, CLI (Phase 4) |
-| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4), `app/simulation/` (Phase 5), `app/ml/` (Phase 7: pure modules plus `dataset`, `registry`, `scoring` for data access); later `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
+| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4), `app/simulation/` (Phase 5), `app/ml/` (Phase 7: pure modules plus `dataset`, `registry`, `scoring` for data access), `app/recommendation/` (Phase 8); later `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
 
 ## Environments
 

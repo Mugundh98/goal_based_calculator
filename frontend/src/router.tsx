@@ -10,6 +10,7 @@ import { GoalsPage } from './pages/GoalsPage'
 import { InsightsPage } from './pages/InsightsPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { RecommendationPage } from './pages/RecommendationPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { RetirementPage } from './pages/RetirementPage'
 import { RiskQuestionnairePage } from './pages/RiskQuestionnairePage'
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
           { path: '/risk/questionnaire', element: <RiskQuestionnairePage /> },
           { path: '/goals', element: <GoalsPage /> },
           { path: '/goals/:goalId/simulate', element: <GoalSimulationPage /> },
+          { path: '/goals/:goalId/recommend', element: <RecommendationPage /> },
           { path: '/retirement', element: <RetirementPage /> },
           { path: '/funds', element: <FundsPage /> },
           { path: '/funds/:fundId', element: <FundDetailPage /> },
