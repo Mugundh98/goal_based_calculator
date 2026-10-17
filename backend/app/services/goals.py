@@ -87,5 +87,12 @@ def update_goal(db: Session, goal: Goal, data: GoalInput) -> Goal:
 
 
 def delete_goal(db: Session, goal: Goal) -> None:
+    """Its transactions are kept as unassigned (ON DELETE SET NULL) and its holdings go
+    (CASCADE); the holdings are rebuilt in the same transaction so they still match."""
+    from app.services.portfolio import rebuild_user  # imported here: portfolio imports goals
+
+    user_id = goal.user_id
     db.delete(goal)
+    db.flush()
+    rebuild_user(db, user_id)
     db.commit()

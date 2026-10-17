@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 
+import { PortfolioAlerts } from '../components/PortfolioAlerts'
 import { ButtonLink, Card, CategoryBadge } from '../components/ui'
 import { useGoals } from '../hooks/useGoals'
+import { usePortfolio } from '../hooks/usePortfolio'
 import { useProfile } from '../hooks/useProfile'
 import { useRetirementPlan } from '../hooks/useRetirement'
 import { useLatestAssessment } from '../hooks/useRisk'
-import { formatINR, formatLakhCrore } from '../lib/format'
+import { formatINR, formatLakhCrore, formatReturn } from '../lib/format'
 import { useAuth } from '../store/authContext'
 
 function Step({
@@ -51,6 +53,7 @@ export function DashboardPage() {
   const latest = useLatestAssessment()
   const goals = useGoals()
   const retirement = useRetirementPlan()
+  const portfolio = usePortfolio()
   if (!user) return null
 
   const firstName = user.full_name.split(' ')[0]
@@ -63,6 +66,9 @@ export function DashboardPage() {
         <h1 className="text-2xl font-semibold">Welcome, {firstName}</h1>
         <p className="text-slate-600">Complete these steps to start planning your goals.</p>
       </div>
+
+      {/* Only the warnings here; the portfolio page lists the rest. */}
+      <PortfolioAlerts alerts={portfolio.data?.alerts.filter((a) => a.severity === 'warning') ?? []} />
 
       <div className="space-y-4">
         <Step number={1} title="Financial profile" done={hasProfile}>
@@ -148,6 +154,27 @@ export function DashboardPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>Work out the corpus you need to retire and how long it will last.</span>
               {hasProfile && <ButtonLink to="/retirement">Start</ButtonLink>}
+            </div>
+          )}
+        </Step>
+
+        <Step number={5} title="Track your investments" done={Boolean(portfolio.data?.holdings.length)}>
+          {portfolio.isPending ? (
+            <Checking />
+          ) : portfolio.data?.holdings.length ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>
+                Worth {formatLakhCrore(portfolio.data.totals.value)} · invested {formatLakhCrore(portfolio.data.totals.cost)}
+                {portfolio.data.totals.xirr !== null && ` · XIRR ${formatReturn(portfolio.data.totals.xirr)}`}
+              </span>
+              <ButtonLink to="/portfolio" variant="secondary">
+                View
+              </ButtonLink>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>Record your purchases and SIPs to see your real return and each goal&apos;s progress.</span>
+              <ButtonLink to="/portfolio">Start</ButtonLink>
             </div>
           )}
         </Step>

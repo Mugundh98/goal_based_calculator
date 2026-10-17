@@ -29,4 +29,7 @@ export const SLEEVE_COLORS: Record<string, string> = {
   mid_small_cap: CLUSTER_COLORS[1],
   long_debt: CLUSTER_COLORS[2],
   short_debt: CLUSTER_COLORS[3],
+  // Rows of the Phase 9 rebalancing table that no recommendation uses.
+  other_equity: CLUSTER_COLORS[4],
+  other: CLUSTER_COLORS[6],
 }

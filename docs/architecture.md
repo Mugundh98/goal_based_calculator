@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 8._
+_Living document – updated at the end of every phase. Last updated: Phase 9._
 
 ## Overview
 
@@ -112,6 +112,21 @@ flowchart LR
 
 Rules set the equity share (risk category × glide from 10 years to 1), the mid/small limit and the short-term minimum; a constrained mean-variance optimisation (SLSQP) splits four sleeves using assumed returns and measured covariances; funds come from the Phase 7 ranker. Every recommendation is stored with its inputs. Details: `docs/phases/08-recommendations.md`, ADR-011.
 
+### Portfolio tracker (Phase 9)
+
+```mermaid
+flowchart LR
+    UI[PortfolioPage, GoalProgressPage] -->|/api/portfolio| SV[services/portfolio.py]
+    SV -->|insert or delete + rebuild, one DB transaction, advisory lock| TX[(transactions, holdings)]
+    SV --> LD[portfolio/ledger.py<br/>FIFO]
+    SV --> XR[finance/xirr.py<br/>Newton-Raphson]
+    SV --> TR[portfolio/tracking.py<br/>sleeves, drift]
+    SV -->|NAV on a date| NH[(nav_history)]
+    SV -->|latest| RC[(recommendations)]
+```
+
+Transactions are the source of truth; holdings are derived (FIFO, units restated across face-value changes) and materialised, rebuilt in the same database transaction as each change. Values, XIRR, goal status (Phase 3 projection from today's value) and drift from the latest recommendation (5-point band) are computed on read. Details: `docs/phases/09-portfolio.md`, ADR-012.
+
 ## Components built so far
 
 | Component | Phase | Status |
@@ -137,6 +152,8 @@ Rules set the equity share (risk category × glide from 10 years to 1), the mid/
 | Insights page (rankings with reasons, cluster scatter, inflation outlook, reliability), fund-page model card | 7 | Done |
 | `recommendation/`: glide-path allocation, constrained mean-variance optimiser, efficient frontier, fund selection with reasons; `recommendations` | 8 | Done |
 | Recommendation page (allocation, reasons, frontier, funds, history, simulate this allocation) | 8 | Done |
+| `finance/xirr.py`, `portfolio/` (FIFO ledger, sleeves, drift); portfolio service and routes; `transactions`, `holdings` | 9 | Done |
+| Portfolio page (summary, alerts, goal status, holdings, transactions), transaction form, goal progress page (value vs plan, projection, rebalancing), dashboard step | 9 | Done |
 
 ## Authentication flow
 
@@ -166,7 +183,7 @@ Rules set the equity share (risk category × glide from 10 years to 1), the mid/
 | Model | `app/models/` | SQLAlchemy ORM tables |
 | Core | `app/core/` | Settings, DB engine/session, security |
 | Pipeline | `app/data_pipeline/` | Source parsers, bulk upserts, jobs, scheduler, CLI (Phase 4) |
-| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4), `app/simulation/` (Phase 5), `app/ml/` (Phase 7: pure modules plus `dataset`, `registry`, `scoring` for data access), `app/recommendation/` (Phase 8); later `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
+| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4), `app/simulation/` (Phase 5), `app/ml/` (Phase 7: pure modules plus `dataset`, `registry`, `scoring` for data access), `app/recommendation/` (Phase 8), `app/portfolio/` (Phase 9); later `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
 
 ## Environments
 

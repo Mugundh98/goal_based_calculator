@@ -23,7 +23,12 @@ export function useSaveGoal() {
   return useMutation({
     mutationFn: ({ id, input }: { id: number | null; input: GoalInput }) =>
       id === null ? createGoal(input) : updateGoal(id, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsKey }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: goalsKey }),
+        // A goal's SIP, target and return drive its portfolio status.
+        queryClient.invalidateQueries({ queryKey: ['portfolio'] }),
+      ]),
   })
 }
 
@@ -36,6 +41,8 @@ export function useDeleteGoal() {
         queryClient.invalidateQueries({ queryKey: goalsKey }),
         // Deleting the retirement goal deletes the retirement plan too.
         queryClient.invalidateQueries({ queryKey: ['retirement'] }),
+        // Its transactions are kept as unassigned.
+        queryClient.invalidateQueries({ queryKey: ['portfolio'] }),
       ]),
   })
 }

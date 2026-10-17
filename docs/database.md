@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 8._
+_Living document – updated whenever a migration is added. Last updated: Phase 9._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -16,6 +16,12 @@ erDiagram
     USERS ||--o| RETIREMENT_PLANS : "has 0..1"
     GOALS ||--o| RETIREMENT_PLANS : "savings phase of"
     GOALS ||--o{ RECOMMENDATIONS : "has 0..* (history)"
+    USERS ||--o{ TRANSACTIONS : "made"
+    GOALS |o--o{ TRANSACTIONS : "for (NULL = unassigned)"
+    FUNDS ||--o{ TRANSACTIONS : "in"
+    USERS ||--o{ HOLDINGS : "holds (derived)"
+    GOALS |o--o{ HOLDINGS : "for"
+    FUNDS ||--o{ HOLDINGS : "of"
     ML_MODELS ||--o{ FUND_PREDICTIONS : "produced"
     ML_MODELS ||--o{ FUND_CLUSTERS : "produced"
     FUNDS ||--o{ FUND_PREDICTIONS : "about"
@@ -70,6 +76,31 @@ erDiagram
         numeric monthly_sip
         numeric step_up_rate "%"
         timestamptz created_at
+        timestamptz updated_at
+    }
+    TRANSACTIONS {
+        int id PK
+        int user_id FK
+        int goal_id FK "NULL = unassigned"
+        int fund_id FK
+        varchar txn_type "buy | sell"
+        date txn_date
+        numeric amount
+        numeric units
+        numeric nav
+        varchar note
+        timestamptz created_at
+    }
+    HOLDINGS {
+        int id PK
+        int user_id FK
+        int goal_id FK "UK with user, fund"
+        int fund_id FK
+        numeric units "current units"
+        numeric cost "FIFO"
+        numeric realised_gain
+        date first_date
+        date last_date
         timestamptz updated_at
     }
     RECOMMENDATIONS {
@@ -223,6 +254,41 @@ erDiagram
 Conventions: money is `NUMERIC(14,2)`; percentages are `NUMERIC(5,2)` (6.00 = 6%); derived values such as goal projections are computed on read, not stored; timestamps are `timestamptz`; every user-owned table references `users.id` with `ON DELETE CASCADE`; allowed values are enforced with CHECK constraints named `ck_<table>_<rule>`. Market data (Phase 4): time series use a **composite natural primary key** (entity + date) instead of a surrogate id; NAVs are `NUMERIC(18,8)` (AMFI publishes up to 8 decimals); fund metrics are stored as `double precision` because they are derived statistics recomputed nightly (ADR-007). Simulations (Phase 5): a saved run is a **snapshot** (random, depends on market data that changes daily), so its output is stored, unlike goal projections; the question (`simulations`) and the bulky answer (`simulation_results`) are split one-to-one (ADR-008).
 
 ## Table dictionary
+
+### `transactions` (Phase 9) – purchases and redemptions, the source of truth
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `user_id` | integer | FK `users.id` ON DELETE CASCADE; index `ix_transactions_user_date (user_id, txn_date)` | |
+| `goal_id` | integer | FK `goals.id` ON DELETE SET NULL; index | NULL = not assigned (also after the goal is deleted) |
+| `fund_id` | integer | FK `funds.id` ON DELETE RESTRICT; index | |
+| `txn_type` | varchar(4) | CHECK (buy, sell) | |
+| `txn_date` | date | NOT NULL | |
+| `amount` | numeric(14,2) | CHECK > 0 | Rupees paid or received |
+| `units` | numeric(18,4) | CHECK > 0 | As on the statement (after 0.005% stamp duty for purchases from July 2020) |
+| `nav` | numeric(18,8) | CHECK > 0 | NAV used (latest on or before the date, at most a week earlier) |
+| `note` | varchar(200) | | "SIP" for generated instalments |
+| `created_at` | timestamptz | default now() | |
+
+Insert and delete only; a mistake is deleted and entered again.
+
+### `holdings` (Phase 9) – derived from `transactions`, materialised
+
+| Column | Type | Constraint | Meaning |
+|---|---|---|---|
+| `id` | integer | PK | |
+| `user_id` | integer | FK `users.id` ON DELETE CASCADE; index | |
+| `goal_id` | integer | FK `goals.id` ON DELETE CASCADE | NULL = unassigned |
+| `fund_id` | integer | FK `funds.id` ON DELETE RESTRICT | |
+| | | UNIQUE `uq_holdings_user_goal_fund (user_id, goal_id, fund_id)` NULLS NOT DISTINCT | One position per fund per goal |
+| `units` | numeric(20,6) | CHECK ≥ 0 | In the fund's current units (restated across face-value changes) |
+| `cost` | numeric(14,2) | CHECK ≥ 0 | FIFO cost of the units held |
+| `realised_gain` | numeric(14,2) | default 0 | Booked by redemptions |
+| `first_date`, `last_date` | date | NOT NULL | First and last transaction |
+| `updated_at` | timestamptz | default now() | |
+
+Rebuilt for the affected (user, goal, fund) in the same database transaction as every insert or delete of a transaction (under a per-user advisory lock); deleting a goal rebuilds all the user's holdings. The market value is computed when read.
 
 ### `recommendations` (Phase 8) – stored snapshots, many per goal
 
@@ -469,6 +535,7 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `0007` | 6 | Create `retirement_plans` |
 | `0008` | 7 | Create `ml_models`, `fund_predictions`, `fund_clusters` |
 | `0009` | 8 | Create `recommendations` |
+| `0010` | 9 | Create `transactions` and `holdings` |
 
 ## Databases
 
