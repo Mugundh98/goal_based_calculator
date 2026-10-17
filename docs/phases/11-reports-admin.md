@@ -191,7 +191,7 @@ Each training run (Phase 7) stores a new version; a partial unique index allows 
 | `test_reports.py` | 4 | **Full plan renders every section** (text read back with pypdf; Indian grouping; no ₹; escaped goal name); empty plan; login required; **download** (PDF type, attachment, no-store, user's name and goal in the text, audited with its size) |
 | `test_admin_api.py` | 7 | **401 without login and 403 for every admin route as a normal user**; overview counts (users, logins, failed logins, goals, assistant fallbacks, unverified numbers, tool errors and average time); user search and last login; promote, demote and **deactivate (the old token stops working)**, audited; **no self-change (409)**, 404, 422; audit endpoint filters; model versions listed and **rolled back**, audited; **command line** grants and revokes admin, audited |
 | Earlier phases | 542 | Unchanged (auditing added to their routes) |
-| **Total** | **559** | **All passed** (local, ~174 s) |
+| **Total** | **559** | **All passed** (local, ~174 s; GitHub Actions run #37: passed in 1 min 26 s) |
 
 **Manual test** (2026-10-17, real data):
 
