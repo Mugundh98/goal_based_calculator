@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router'
 
 import { Layout } from './components/Layout'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
+import { AssistantPage } from './pages/AssistantPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { FundDetailPage } from './pages/FundDetailPage'
 import { FundsPage } from './pages/FundsPage'
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
           { path: '/funds', element: <FundsPage /> },
           { path: '/funds/:fundId', element: <FundDetailPage /> },
           { path: '/insights', element: <InsightsPage /> },
+          { path: '/assistant', element: <AssistantPage /> },
         ],
       },
       { path: '*', element: <Navigate to="/" replace /> },

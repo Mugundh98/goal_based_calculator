@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Empty in development (Vite proxies /api); the deployed API URL in production.
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? ''
+export const baseURL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export const api = axios.create({
   baseURL,
@@ -14,6 +14,16 @@ let onUnauthorized: (() => void) | null = null
 /** Called by the auth provider whenever the user logs in or out. */
 export function setAccessToken(token: string | null) {
   accessToken = token
+}
+
+/** The Authorization header, for requests made with fetch (streaming) instead of axios. */
+export function authHeaders(): Record<string, string> {
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+}
+
+/** For fetch callers that receive a 401. */
+export function handleUnauthorized() {
+  if (accessToken) onUnauthorized?.()
 }
 
 /** Called when the API rejects our token (expired, user deleted…). */

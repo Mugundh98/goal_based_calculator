@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "GoalWise API"
-    app_version: str = "0.9.0"
+    app_version: str = "0.10.0"
     environment: str = "development"
 
     database_url: str = "postgresql+psycopg://goalwise:goalwise@127.0.0.1:5432/goalwise"
@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     scheduler_enabled: bool = False  # run the daily jobs inside the API process
     data_cache_dir: str = "data/cache"  # downloaded NAV histories (relative to backend/)
     risk_free_rate: float = 0.06  # a year, as a fraction: Sharpe and Sortino ratios
+
+    # Conversational assistant (Phase 10). No key = the assistant is switched off.
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.5-flash"
+    gemini_fallback_model: str = "gemini-2.5-flash"  # tried once when the first is rate-limited
+    gemini_embedding_model: str = "gemini-embedding-001"
+    chat_messages_per_hour: int = 30  # per user
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     auth,
+    chat,
     funds,
     goals,
     health,
@@ -30,3 +31,4 @@ api_router.include_router(portfolio.router)
 api_router.include_router(funds.router)
 api_router.include_router(market.router)
 api_router.include_router(ml.router)
+api_router.include_router(chat.router)

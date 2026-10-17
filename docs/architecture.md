@@ -1,6 +1,6 @@
 # Architecture
 
-_Living document – updated at the end of every phase. Last updated: Phase 9._
+_Living document – updated at the end of every phase. Last updated: Phase 10._
 
 ## Overview
 
@@ -127,6 +127,21 @@ flowchart LR
 
 Transactions are the source of truth; holdings are derived (FIFO, units restated across face-value changes) and materialised, rebuilt in the same database transaction as each change. Values, XIRR, goal status (Phase 3 projection from today's value) and drift from the latest recommendation (5-point band) are computed on read. Details: `docs/phases/09-portfolio.md`, ADR-012.
 
+### Conversational assistant (Phase 10)
+
+```mermaid
+flowchart LR
+    UI[AssistantPage] -->|POST question, SSE stream back| RT[routes/chat.py]
+    RT --> OR[chatbot/orchestrator.py<br/>loop, audit, grounding]
+    OR <-->|declarations, function calls, text| GM[Gemini<br/>llm.py]
+    OR --> TL[chatbot/tools.py<br/>10 tools, this user only]
+    TL --> SV[goals, simulations, recommendations,<br/>portfolio, funds, risk services]
+    TL --> RG[chatbot/rag.py] -->|cosine search| KB[(kb_chunks<br/>vector 768, HNSW)]
+    OR --> DB[(chat_messages, tool_calls)]
+```
+
+The model chooses tools; the server runs them with the logged-in user's permissions and logs every call; explanations come from the pgvector knowledge base; a grounding check flags numbers not found in tool results; creating a goal needs a confirmed preview; a fallback model and fallback messages handle rate limits. Details: `docs/phases/10-chatbot.md`, ADR-013.
+
 ## Components built so far
 
 | Component | Phase | Status |
@@ -154,6 +169,8 @@ Transactions are the source of truth; holdings are derived (FIFO, units restated
 | Recommendation page (allocation, reasons, frontier, funds, history, simulate this allocation) | 8 | Done |
 | `finance/xirr.py`, `portfolio/` (FIFO ledger, sleeves, drift); portfolio service and routes; `transactions`, `holdings` | 9 | Done |
 | Portfolio page (summary, alerts, goal status, holdings, transactions), transaction form, goal progress page (value vs plan, projection, rebalancing), dashboard step | 9 | Done |
+| `chatbot/`: Gemini adapter with fallback, 10 tools over the services, RAG over pgvector (20 articles), orchestrator with audit and grounding check, SSE endpoints; chat and knowledge-base tables | 10 | Done |
+| Assistant page (conversations, suggestions, streamed answers, tool chips, inline charts, safe Markdown) | 10 | Done |
 
 ## Authentication flow
 
@@ -183,7 +200,7 @@ Transactions are the source of truth; holdings are derived (FIFO, units restated
 | Model | `app/models/` | SQLAlchemy ORM tables |
 | Core | `app/core/` | Settings, DB engine/session, security |
 | Pipeline | `app/data_pipeline/` | Source parsers, bulk upserts, jobs, scheduler, CLI (Phase 4) |
-| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4), `app/simulation/` (Phase 5), `app/ml/` (Phase 7: pure modules plus `dataset`, `registry`, `scoring` for data access), `app/recommendation/` (Phase 8), `app/portfolio/` (Phase 9); later `app/chatbot/` | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
+| Pure logic | `app/finance/` (risk rules from Phase 2, TVM formulas and goal projections from Phase 3, fund metrics from Phase 4), `app/simulation/` (Phase 5), `app/ml/` (Phase 7: pure modules plus `dataset`, `registry`, `scoring` for data access), `app/recommendation/` (Phase 8), `app/portfolio/` (Phase 9), `app/chatbot/` (Phase 10: pure `grounding`, `prompts`, chunking; `llm` wraps Gemini; `tools`, `rag`, `orchestrator` use services and the database) | No database or HTTP code; unit-tested directly; reusable by routes and the chatbot |
 
 ## Environments
 

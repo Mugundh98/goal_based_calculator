@@ -18,6 +18,8 @@ class SimulationOverrides(BaseModel):
     """What-if changes to a goal for one run; anything left out comes from the saved goal."""
 
     monthly_sip: MoneyIn | None = None
+    # Phase 10: start from a different amount, e.g. the goal's recorded investments.
+    current_savings: MoneyIn | None = None
     step_up_rate: PercentIn(50) | None = None
     target_year: int | None = None
     # Share of the goal's money in equity, %; also sets the expected return (13% / 7% blend).

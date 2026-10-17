@@ -203,7 +203,9 @@ def resolve_inputs(
         years=years,
         inflation_rate=float(goal.inflation_rate) / PERCENT,
         expected_return=annual_return,
-        current_savings=float(goal.current_savings),
+        current_savings=float(
+            goal.current_savings if overrides.current_savings is None else overrides.current_savings
+        ),
         monthly_sip=float(sip),
         step_up_rate=float(step_up) / PERCENT,
     )
