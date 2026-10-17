@@ -15,6 +15,8 @@ def main() -> int:
     chatbot = commands.add_parser("chatbot", help="question set against the live assistant")
     chatbot.add_argument("--limit", type=int, default=None, help="only the first N questions")
     chatbot.add_argument("--pause", type=float, default=4.0, help="seconds between questions")
+    chatbot.add_argument("--ids", default=None, help="only these question ids, e.g. G06,G07")
+    chatbot.add_argument("--name", default="chatbot-evaluation", help="report file name")
     commands.add_parser("uat", help="results table from docs/evaluation/uat/responses.csv")
     args = parser.parse_args()
 
@@ -31,8 +33,9 @@ def main() -> int:
         else:
             from app.evaluation import chatbot_eval  # needs the Gemini key
 
-            markdown, data = chatbot_eval.run(db, limit=args.limit, pause=args.pause)
-            path = report.write("chatbot-evaluation", markdown, data)
+            ids = set(args.ids.split(",")) if args.ids else None
+            markdown, data = chatbot_eval.run(db, limit=args.limit, pause=args.pause, ids=ids)
+            path = report.write(args.name, markdown, data)
     print(f"Wrote {path}")
     return 0
 

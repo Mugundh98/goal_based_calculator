@@ -52,7 +52,9 @@ def numbers_in_data(data: Any) -> Iterable[float]:
 
 
 def _matches(value: float, unit: str, sources: list[float]) -> bool:
-    for source in sources:
+    # Magnitudes only: "behind plan by ₹38,483" reports the tool's -38483 in words.
+    value = abs(value)
+    for source in (abs(s) for s in sources):
         if unit == "%":
             if abs(value - source) <= PERCENT_POINTS:
                 return True

@@ -84,6 +84,11 @@ def test_question_text_and_small_counts_do_not_need_a_source():
     assert grounding.ungrounded("In 2031 you will have ₹4 lakh", []) == ["2031", "4 lakh"]
 
 
+def test_sign_does_not_matter_for_grounding():
+    # "behind plan by ₹38,483" reports the tool's vs_plan of -38483 in words.
+    assert grounding.ungrounded("You are behind plan by ₹38,483.", [{"vs_plan": -38483.3}]) == []
+
+
 def test_numbers_inside_tool_strings_count():
     passages = {"passages": [{"text": "A stamp duty of 0.005% applies since 1 July 2020."}]}
     assert grounding.ungrounded("Stamp duty is 0.005% (since 2020).", [passages]) == []

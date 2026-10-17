@@ -240,8 +240,10 @@ def references(ctx: ToolContext, goals: dict[str, int]) -> dict[str, Any]:
         "car_target": car["inflated_target"],
         "edu_cost_today": edu["cost_in_todays_rupees"],
         "edu_sip": edu["monthly_sip"],
-        "car_required_sip_plan": car["required_monthly_sip"],
-        "car_required_sip_tracked": (car.get("recorded_investments") or {}).get("required_sip"),
+        "car_required_sip_plan": (car.get("plan_without_investments") or car)[
+            "required_monthly_sip"
+        ],
+        "car_required_sip_tracked": car["required_monthly_sip"],
         "edu_chance": sims["edu"]["chance_of_success_percent"],
         "car_chance": sims["car"]["chance_of_success_percent"],
         "car_chance_sip25000": sims["car25"]["chance_of_success_percent"],
@@ -373,13 +375,16 @@ def judge(llm: GeminiLLM, question: str, answer: str, reference: str) -> dict[st
     return {"verdict": "error", "problems": []}
 
 
-def run(db: Session, limit: int | None = None, pause: float = 4.0) -> tuple[str, dict[str, Any]]:
+def run(
+    db: Session, limit: int | None = None, pause: float = 4.0, ids: set[str] | None = None
+) -> tuple[str, dict[str, Any]]:
     llm = default_llm()
     if llm is None:
         raise SystemExit("GEMINI_API_KEY is not set (backend/.env)")
     if rag.is_empty(db):
         rag.ingest(db, llm)
-    questions = json.loads(QUESTIONS_FILE.read_text(encoding="utf-8"))[:limit]
+    questions = json.loads(QUESTIONS_FILE.read_text(encoding="utf-8"))
+    questions = [q for q in questions if ids is None or q["id"] in ids][:limit]
     today = date.today()
     user, goals = seed_user(db)
     try:
