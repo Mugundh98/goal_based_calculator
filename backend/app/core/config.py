@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     data_cache_dir: str = "data/cache"  # downloaded NAV histories (relative to backend/)
     risk_free_rate: float = 0.06  # a year, as a fraction: Sharpe and Sortino ratios
 
+    # Conversational assistant (Phase 10). No key = the assistant is switched off.
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.5-flash"
+    gemini_fallback_model: str = "gemini-2.5-flash"  # tried once when the first is rate-limited
+    gemini_embedding_model: str = "gemini-embedding-001"
+    chat_messages_per_hour: int = 30  # per user
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
