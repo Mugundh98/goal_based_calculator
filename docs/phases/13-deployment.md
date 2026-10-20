@@ -5,6 +5,7 @@
 | Branch | `phase-13-deploy` |
 | Tag | `v1.0.0` |
 | Dates | 2026-10-18 |
+| Live | Website https://goal-based-calculator-seven.vercel.app · API https://goal-based-calculator.onrender.com (deployed 21 October 2026, v1.0.1) |
 | Screenshot | `docs/screenshots/phase-13-waking.png` (the waking-up screen) |
 | Merge | Merged into `main` with a merge commit after CI passed (GitHub CLI not installed, so no PR) |
 | Synopsis objective(s) covered | A working system available on the internet: React frontend, FastAPI backend and PostgreSQL with pgvector on free cloud services, with the configuration in version control |
@@ -230,6 +231,12 @@ cd frontend && VITE_API_BASE_URL=http://127.0.0.1:8080 npm run build && npm run 
 - **Pipeline failures were invisible to a scheduler.** The CLI always exited with 0; it now exits with 1 when a job fails.
 - **The first CI run failed on lint.** A late edit to a docstring in `demo.py` made two lines longer than 100 characters. Fixed the same day. While at it, the CI runners were pinned to Ubuntu 24.04, because GitHub announced that `ubuntu-latest` moves to Ubuntu 26 the next day, and a broken CI would now also stop deployments.
 - **The first real copy reported "Copied 0 rows".** `DATABASE_URL` was still set to Neon in the terminal, so the command copied Neon's empty tables onto themselves. `copy-data` now prints both databases, and refuses when they are the same or when the source is empty. The guide passes `--source` explicitly.
+- **Going live (21 October).**
+  - Render asked for card details for the Blueprint, so the API was created as a web service with the blueprint's settings.
+  - The first website build called the placeholder text `RENDER_URL`, and a variable renamed with a different prefix is never read by Vite.
+  - A redeploy did not reach the production domain at first.
+
+  Each case is now in the troubleshooting table of `docs/deployment.md`. The live API was then checked with the demo account: portfolio, goal and retirement simulations, the PDF and the assistant's status. The site was opened in a browser: login page, no console or CORS errors.
 - **Accounts cannot be created by the assistant.** The deployment is written as a guide for the owner. Everything that can be checked without accounts was checked locally under production settings.
 
 ## 10. Viva questions and answers

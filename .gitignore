@@ -40,3 +40,6 @@ coverage.xml
 frontend/coverage/
 frontend/test-results/
 frontend/playwright-report/
+
+# Local run logs
+scripts/logs/

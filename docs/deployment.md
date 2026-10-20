@@ -20,6 +20,14 @@ flowchart LR
     L[Your computer] -.->|once: schema, reference data,<br/>demo account| N
 ```
 
+## Live deployment (21 October 2026)
+
+| Part | Address |
+|---|---|
+| Website (Vercel) | https://goal-based-calculator-seven.vercel.app |
+| API (Render) | https://goal-based-calculator.onrender.com (health: `/api/health`, docs: `/docs`) |
+| Database (Neon) | project `goalwise`, AWS Singapore, PostgreSQL with pgvector |
+
 ## 1. What the free plans give (checked 18 October 2026)
 
 | Service | Free plan | What it means for GoalWise |
@@ -178,6 +186,11 @@ Send Claude the two addresses to have these checked in a browser.
 
 | Symptom | Cause and fix |
 |---|---|
+| Render asks for card details for the Blueprint or the web service | Render sometimes asks for a card to verify the account, even for free instances, which it does not charge. The service can also be created with **New → Web Service** with the same settings as `render.yaml`: Docker, root directory `backend`, Free instance, health check `/api/health`, and the environment variables listed there. Auto-deploy after CI then needs GitHub connected under Account Settings → Git Deployment Credentials. |
+| `copy-data` says "Copied 0 rows" (before 1.0.1) or "same database" | `DATABASE_URL` in that terminal points at Neon, so the source was Neon too. Pass `--source` with the local database, as in section 3. |
+| The site loads but calls go to `…/RENDER_URL/api/…` or to vercel.app | `VITE_API_BASE_URL` holds a placeholder or is missing. Only variables whose names start with `VITE_` reach the build, so ignore any suggestion to rename it. Vercel's warning that it is visible in the browser is expected: the API address is public. Tick **Production**, then redeploy. |
+| The redeploy is done but the site has not changed | The new deployment is a **Preview**, or the variable applies only to Preview. In **Deployments**, the newest entry must show Production · Ready · Current; otherwise use **⋯ → Promote to Production**. |
+| `<project>-<team>.vercel.app` asks for a Vercel login | That address is protected by Vercel's deployment protection. Share the production domain under **Domains** instead, which is public. |
 | Console: *blocked by CORS policy* | `CORS_ORIGINS` on Render does not match the Vercel origin exactly (https, no trailing slash). Fix it and wait for the redeploy. |
 | Render log: `JWT_SECRET_KEY must be set in production` | The blueprint's generated value was removed. Add `JWT_SECRET_KEY` (any long random string) in Render → Environment. |
 | Render log: `connection to server … timeout` | Wrong Neon string, the pooled string, or Neon still waking up. Use the direct string; `DATABASE_CONNECT_TIMEOUT` is 15 seconds. |

@@ -121,6 +121,8 @@ uv run python -m app.evaluation uat       # results table from the UAT feedback 
 
 ## Deployment
 
+**Live:** https://goal-based-calculator-seven.vercel.app. The API is at https://goal-based-calculator.onrender.com, with interactive docs at `/docs`. The free API sleeps after 15 idle minutes, so the first visit after a break shows "Waking up the server…" for up to a minute.
+
 The frontend is deployed to Vercel, the API to Render (Docker, free plan) and the database to Neon (PostgreSQL 16 + pgvector). All three are free. The configuration is in the repository: `render.yaml`, `backend/Dockerfile`, `frontend/vercel.json` and `.github/workflows/data-refresh.yml`. Step-by-step guide: [docs/deployment.md](docs/deployment.md).
 
 ```bash
