@@ -43,6 +43,12 @@ def connect(url: str, timeout: int = 30) -> psycopg.Connection:
     return psycopg.connect(libpq_url(url), connect_timeout=timeout)
 
 
+def describe(conn: psycopg.Connection) -> str:
+    """host:port/database, without the password: says which database a connection reaches."""
+    info = conn.info
+    return f"{info.host}:{info.port}/{info.dbname}"
+
+
 def _revision(conn: psycopg.Connection) -> str | None:
     try:
         row = conn.execute("SELECT version_num FROM alembic_version").fetchone()
@@ -94,11 +100,23 @@ def copy_tables(
     if unknown:
         raise CopyError(f"Not reference tables: {', '.join(sorted(unknown))}")
     ordered = [t for t in REFERENCE_TABLES if t in tables]
+    if describe(source) == describe(target):
+        raise CopyError(
+            f"Source and target are the same database ({describe(source)}). The source comes "
+            "from DATABASE_URL (or --source): run the command where DATABASE_URL is your local "
+            "database, e.g. a new terminal"
+        )
     source_rev, target_rev = _revision(source), _revision(target)
     if target_rev is None:
         raise CopyError("The target has no tables yet: run `alembic upgrade head` against it first")
     if source_rev != target_rev:
         raise CopyError(f"Migration mismatch: source at {source_rev}, target at {target_rev}")
+
+    if not any(_count(source, t) for t in ordered):
+        raise CopyError(
+            f"The source ({describe(source)}) has no rows in {', '.join(ordered)}: is it the "
+            "database with your market data?"
+        )
 
     filled = [t for t in ordered if _count(target, t)]
     if filled and not replace:

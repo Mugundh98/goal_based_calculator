@@ -111,6 +111,19 @@ def test_refuses_mismatched_migrations_and_unknown_tables(source, target):
         copy_data.copy_tables(source, target)
 
 
+def test_refuses_the_same_database_or_an_empty_source(source, target, target_url):
+    # The mistake this guards against: DATABASE_URL still set to the target in the same terminal.
+    with copy_data.connect(target_url) as same:
+        with pytest.raises(copy_data.CopyError, match="same database"):
+            copy_data.copy_tables(same, target)
+    # An empty source (the target database itself has no reference rows) copies nothing.
+    test_db = _test_database_url().render_as_string(hide_password=False)
+    with copy_data.connect(target_url) as empty, copy_data.connect(test_db) as other:
+        with pytest.raises(copy_data.CopyError, match="has no rows in funds"):
+            copy_data.copy_tables(empty, other, tables=("funds",))
+    assert copy_data.describe(target).endswith("/goalwise_test_copy")
+
+
 # --- Demo account -------------------------------------------------------------------------------
 
 
