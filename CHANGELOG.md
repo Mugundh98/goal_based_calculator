@@ -2,6 +2,12 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [1.0.1] – 2026-10-21 – Deployment fix
+
+### Fixed
+
+- `copy-data` reported "Copied 0 rows" when `DATABASE_URL` pointed at the target, because it copied a database onto itself. It now prints the source and target, and refuses when they are the same database or when the source has no reference data. The deployment guide passes `--source` explicitly.
+
 ## [1.0.0] – 2026-10-18 – Phase 13: Deployment
 
 ### Added

@@ -61,13 +61,15 @@ Commands below are for **PowerShell** on Windows, run from the `backend` folder.
    - ML models, predictions and clusters;
    - the knowledge base with its embeddings.
 
-   User accounts are never copied. Open a **new** terminal, so that `DATABASE_URL` is your local database again:
+   User accounts are never copied. The command names both databases, so it works in any terminal:
 
    ```powershell
-   uv run python -m app.deploy copy-data --target "<Neon connection string>"
+   uv run python -m app.deploy copy-data --source "postgresql://goalwise:goalwise@127.0.0.1:5432/goalwise" --target "<Neon connection string>"
    ```
 
-   It streams with PostgreSQL's `COPY` and prints each table's row count. Locally this took 90 seconds; over the internet, allow 5–15 minutes. The command refuses to run in two cases:
+   It first prints `From 127.0.0.1:5432/goalwise to ep-….neon.tech:5432/neondb`; check that both are right. It streams with PostgreSQL's `COPY` and prints each table's row count. Locally this took 90 seconds; over the internet, allow 5–15 minutes. The command refuses to run in four cases:
+   - when the source and target are the same database (without `--source`, the source comes from `DATABASE_URL`, which may still point at Neon in that terminal);
+   - when the source has no reference data;
    - when the two databases are at different migrations;
    - when Neon already holds reference data. To copy again, add `--replace`.
 
@@ -95,7 +97,11 @@ One goal is off track and one has drifted from its recommended mix, so the dashb
 
 ## 5. Render: deploy the API
 
-1. Go to [render.com](https://render.com) and sign up with GitHub. Click **New → Blueprint** and pick the GoalWise repository. Render reads [`render.yaml`](../render.yaml):
+1. Go to [render.com](https://render.com) and sign up with GitHub. If you signed up with an e-mail address, connect GitHub first:
+   - Open **Account Settings → Account Security → Git Deployment Credentials → Add credential → GitHub**.
+   - Sign in to the GitHub account that owns the repository, and allow Render access to `goal_based_calculator`.
+
+   Then click **New → Blueprint** and pick the GoalWise repository. Render reads [`render.yaml`](../render.yaml):
    - a free Docker web service `goalwise-api` in Singapore;
    - built from `backend/Dockerfile`, with health checks on `/api/health`;
    - deployed from `main` once GitHub CI has passed (`autoDeployTrigger: checksPass`).

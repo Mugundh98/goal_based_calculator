@@ -35,6 +35,7 @@ def main() -> int:
         source_url = args.source or get_settings().database_url
         try:
             with copy_data.connect(source_url) as source, copy_data.connect(args.target) as target:
+                print(f"From {copy_data.describe(source)} to {copy_data.describe(target)}")
                 copied = copy_data.copy_tables(
                     source,
                     target,

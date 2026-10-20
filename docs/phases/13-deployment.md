@@ -74,7 +74,7 @@ No schema changes; still at migration `0012`.
 | `app/core/config.py` | `database_url` validator (`postgres://`, `postgresql://` → `postgresql+psycopg://`); `database_connect_timeout`; `cors_origin_regex`; `simulation_concurrency` (≥ 1) |
 | `app/core/database.py`, `app/main.py` | Connect timeout from the settings; `allow_origin_regex` for CORS |
 | `app/simulation/limits.py` | `simulation_slot()`: a process-wide `BoundedSemaphore(SIMULATION_CONCURRENCY)` around `engine.run` (goal simulations, comparisons, the assistant's tool) and the lifetime retirement run |
-| `app/deploy/copy_data.py` | `REFERENCE_TABLES` in foreign-key order; `copy_tables(source, target, tables, replace)`. Checks the migration revision and the columns, refuses a filled target unless `replace` (then `DELETE`, which fails if user data still refers to a fund), streams `COPY … TO STDOUT` into `COPY … FROM STDIN`, then moves each id sequence past the copied ids |
+| `app/deploy/copy_data.py` | `REFERENCE_TABLES` in foreign-key order; `copy_tables(source, target, tables, replace)`. Refuses copying a database onto itself or from an empty source, checks the migration revision and the columns, refuses a filled target unless `replace` (then `DELETE`, which fails if user data still refers to a fund), streams `COPY … TO STDOUT` into `COPY … FROM STDIN`, then moves each id sequence past the copied ids |
 | `app/deploy/demo.py` | `create_demo_user(db, email, password, name, reset)`. Password checked by the sign-up schema. Profile, moderate risk profile, education/car/house goals, retirement plan, SIPs and lump sums in four real funds dated relative to today, a recommendation per goal |
 | `app/deploy/__main__.py` | `python -m app.deploy copy-data --target URL [--source] [--table …] [--replace]` and `demo-user [--email] [--name] [--reset]` (password from `DEMO_PASSWORD`, else generated and printed once) |
 | `app/data_pipeline/__main__.py` | Exits with status 1 when a job fails, so scheduled runs show as failed |
@@ -229,6 +229,7 @@ cd frontend && VITE_API_BASE_URL=http://127.0.0.1:8080 npm run build && npm run 
 - **Hosted URLs use `postgres://`, which SQLAlchemy rejects.** The settings now rewrite it.
 - **Pipeline failures were invisible to a scheduler.** The CLI always exited with 0; it now exits with 1 when a job fails.
 - **The first CI run failed on lint.** A late edit to a docstring in `demo.py` made two lines longer than 100 characters. Fixed the same day. While at it, the CI runners were pinned to Ubuntu 24.04, because GitHub announced that `ubuntu-latest` moves to Ubuntu 26 the next day, and a broken CI would now also stop deployments.
+- **The first real copy reported "Copied 0 rows".** `DATABASE_URL` was still set to Neon in the terminal, so the command copied Neon's empty tables onto themselves. `copy-data` now prints both databases, and refuses when they are the same or when the source is empty. The guide passes `--source` explicitly.
 - **Accounts cannot be created by the assistant.** The deployment is written as a guide for the owner. Everything that can be checked without accounts was checked locally under production settings.
 
 ## 10. Viva questions and answers
