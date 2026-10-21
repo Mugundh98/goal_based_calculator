@@ -2,6 +2,20 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [1.2.0] – 2026-10-21 – Account page, forgot password, wake-up countdown
+
+### Added
+
+- **Account page** (click your name in the menu): e-mail (shown, not editable), change your name, change your password (current password needed), set or change your security question.
+- **"Forgot password?"** on the login page, without e-mail:
+  - enter your e-mail, answer your security question and choose a new password;
+  - answers ignore capitals and extra spaces and are stored hashed;
+  - five wrong answers in an hour lock resets for that address;
+  - unknown addresses get a stand-in question, so accounts cannot be discovered.
+- Sign-up asks for a security question and answer.
+- The **"Waking up the server" screen counts down** the usual minute with a progress bar, then says it is nearly there.
+- Migration `0014` (`users.security_question`, `users.security_answer_hash`); ADR-018; 6 backend tests and 1 frontend test.
+
 ## [1.1.0] – 2026-10-21 – First user feedback
 
 ### Added

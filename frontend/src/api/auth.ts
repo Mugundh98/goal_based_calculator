@@ -7,6 +7,7 @@ export interface User {
   full_name: string
   role: 'user' | 'admin'
   created_at: string
+  security_question: string | null // for "forgot password"; never the answer
 }
 
 // Mirrors Token in backend/app/schemas/auth.py
@@ -20,6 +21,8 @@ export interface RegisterInput {
   email: string
   password: string
   full_name: string
+  security_question?: string
+  security_answer?: string
 }
 
 export async function registerUser(input: RegisterInput): Promise<User> {
@@ -37,4 +40,36 @@ export async function loginUser(email: string, password: string): Promise<TokenR
 export async function getMe(): Promise<User> {
   const { data } = await api.get<User>('/api/auth/me')
   return data
+}
+
+// --- The account page and "forgot password" (1.2) -------------------------------------------
+
+export async function updateName(full_name: string): Promise<User> {
+  const { data } = await api.patch<User>('/api/auth/me', { full_name })
+  return data
+}
+
+export async function changePassword(current_password: string, new_password: string): Promise<void> {
+  await api.put('/api/auth/password', { current_password, new_password })
+}
+
+export async function getSecurityQuestions(): Promise<string[]> {
+  const { data } = await api.get<string[]>('/api/auth/security-questions')
+  return data
+}
+
+export async function setSecurityQuestion(input: { current_password: string; question: string; answer: string }): Promise<User> {
+  const { data } = await api.put<User>('/api/auth/security-question', input)
+  return data
+}
+
+/** Step 1 of "forgot password": the question to answer (a stand-in one for unknown addresses). */
+export async function forgotPasswordQuestion(email: string): Promise<string> {
+  const { data } = await api.post<{ question: string }>('/api/auth/forgot-password/question', { email })
+  return data.question
+}
+
+/** Step 2: a new password if the answer matches (400 if not, 429 after five wrong answers). */
+export async function resetPassword(input: { email: string; answer: string; new_password: string }): Promise<void> {
+  await api.post('/api/auth/forgot-password/reset', input)
 }

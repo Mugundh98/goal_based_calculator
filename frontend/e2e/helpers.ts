@@ -11,6 +11,8 @@ export async function signUp(page: Page, name = 'Priya Tester'): Promise<string>
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
   await page.getByLabel('Confirm password').fill(PASSWORD)
+  await page.getByLabel('Security question').selectOption({ label: 'In which city were you born?' })
+  await page.getByLabel('Answer').fill('Visakhapatnam')
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL(/\/dashboard$/)
   await expect(page.getByRole('heading', { name: `Welcome, ${name.split(' ')[0]}` })).toBeVisible()

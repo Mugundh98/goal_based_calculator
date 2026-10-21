@@ -48,3 +48,22 @@ describe('ServerGate', () => {
     expect(await screen.findByText('app')).toBeInTheDocument()
   })
 })
+
+describe('ServerGate countdown', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('counts down the usual minute, then says it is nearly there', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(down))
+    render(
+      <ServerGate apiBase="https://api.example.com" noticeAfterMs={0} retryEveryMs={1000} expectedSeconds={60}>
+        app
+      </ServerGate>,
+    )
+    expect(await screen.findByText(/Ready in about (60|59) seconds/)).toBeInTheDocument()
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(screen.getByText(/Ready in about (31|30|29) seconds/)).toBeInTheDocument()
+    await vi.advanceTimersByTimeAsync(31_000)
+    expect(screen.getByText(/Almost there/)).toBeInTheDocument()
+  })
+})
