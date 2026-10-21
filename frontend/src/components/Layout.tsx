@@ -50,7 +50,9 @@ export function Layout() {
                     Admin
                   </NavLink>
                 )}
-                <span className="hidden text-sm text-slate-500 sm:inline">{user.full_name}</span>
+                <NavLink to="/account" className={navLink} title="Your account: name, password, security question">
+                  {user.full_name}
+                </NavLink>
                 <button
                   type="button"
                   onClick={logout}

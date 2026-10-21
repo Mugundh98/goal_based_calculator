@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: v1.1 (migration 0013)._
+_Living document – updated whenever a migration is added. Last updated: v1.2 (migration 0014)._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -642,6 +642,8 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `full_name` | varchar(120) | NOT NULL | Display name |
 | `role` | varchar(20) | NOT NULL, default `'user'`, CHECK `ck_users_role` | `user` or `admin` |
 | `is_active` | boolean | NOT NULL, default `true` | Disabled accounts cannot log in |
+| `security_question` | varchar(200) | NULL allowed | 1.2: one of the listed questions, for "forgot password"; NULL until set |
+| `security_answer_hash` | varchar(255) | NULL allowed | 1.2: Argon2id hash of the answer, lower-cased with spaces collapsed |
 | `created_at` | timestamptz | NOT NULL, default `now()` | Creation time |
 | `updated_at` | timestamptz | NOT NULL, default `now()` | Last update time |
 
@@ -668,6 +670,7 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `0011` | 10 | Create `chat_sessions`, `chat_messages`, `tool_calls`, `kb_documents`, `kb_chunks` (vector(768), HNSW index) |
 | `0012` | 11 | Create `audit_log` with its indexes and the append-only trigger |
 | `0013` | 1.1 | `funds.owner_user_id` and nullable `scheme_code` (funds added by hand); `transactions.fund_id` and `holdings.fund_id` ON DELETE NO ACTION instead of RESTRICT (checked at the end of the statement, so deleting a user with their own funds works) |
+| `0014` | 1.2 | `users.security_question`, `users.security_answer_hash` |
 
 ## Databases
 

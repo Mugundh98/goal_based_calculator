@@ -23,6 +23,10 @@ class User(TimestampMixin, Base):
     full_name: Mapped[str] = mapped_column(String(120))
     role: Mapped[str] = mapped_column(String(20), default="user", server_default="user")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    # For "forgot password" (1.2): one of SECURITY_QUESTIONS and a hash of the normalised answer.
+    # NULL for accounts made before 1.2 until the user sets one on the account page.
+    security_question: Mapped[str | None] = mapped_column(String(200))
+    security_answer_hash: Mapped[str | None] = mapped_column(String(255))
 
     # One-to-one: each user has at most one financial profile.
     profile: Mapped["FinancialProfile | None"] = relationship(

@@ -2,9 +2,11 @@ import { createBrowserRouter, Navigate } from 'react-router'
 
 import { Layout } from './components/Layout'
 import { AdminRoute, GuestRoute, ProtectedRoute } from './components/RouteGuards'
+import { AccountPage } from './pages/AccountPage'
 import { AdminPage } from './pages/AdminPage'
 import { AssistantPage } from './pages/AssistantPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { FundDetailPage } from './pages/FundDetailPage'
 import { FundsPage } from './pages/FundsPage'
 import { GoalProgressPage } from './pages/GoalProgressPage'
@@ -32,12 +34,14 @@ export const router = createBrowserRouter([
         children: [
           { path: '/login', element: <LoginPage /> },
           { path: '/register', element: <RegisterPage /> },
+          { path: '/forgot-password', element: <ForgotPasswordPage /> },
         ],
       },
       {
         element: <ProtectedRoute />,
         children: [
           { path: '/dashboard', element: <DashboardPage /> },
+          { path: '/account', element: <AccountPage /> },
           { path: '/profile', element: <ProfilePage /> },
           { path: '/risk', element: <RiskResultPage /> },
           { path: '/risk/questionnaire', element: <RiskQuestionnairePage /> },

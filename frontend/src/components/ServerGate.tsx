@@ -13,6 +13,8 @@ interface Props {
   /** Wait between attempts, and how long to keep trying before offering a retry button. */
   retryEveryMs?: number
   giveUpAfterMs?: number
+  /** How long a wake-up usually takes (measured: under a minute); shown as a countdown. */
+  expectedSeconds?: number
 }
 
 /**
@@ -20,9 +22,17 @@ interface Props {
  * minute to wake. Before the app makes real requests (which would time out), ping the health
  * endpoint until it answers, and tell the user why they are waiting.
  */
-export function ServerGate({ children, apiBase = baseURL, noticeAfterMs = 1500, retryEveryMs = 3000, giveUpAfterMs = 120_000 }: Props) {
+export function ServerGate({
+  children,
+  apiBase = baseURL,
+  noticeAfterMs = 1500,
+  retryEveryMs = 3000,
+  giveUpAfterMs = 120_000,
+  expectedSeconds = 60,
+}: Props) {
   const [status, setStatus] = useState<Status>(apiBase ? 'checking' : 'ready')
   const [attempt, setAttempt] = useState(0)
+  const [startedAt, setStartedAt] = useState(() => Date.now())
 
   useEffect(() => {
     if (!apiBase) return
@@ -58,6 +68,7 @@ export function ServerGate({ children, apiBase = baseURL, noticeAfterMs = 1500, 
 
   const retry = useCallback(() => {
     setStatus('waking')
+    setStartedAt(Date.now())
     setAttempt((n) => n + 1)
   }, [])
 
@@ -72,6 +83,7 @@ export function ServerGate({ children, apiBase = baseURL, noticeAfterMs = 1500, 
           <>
             <div className="mx-auto my-4 h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" aria-hidden="true" />
             <p className="text-slate-700">Waking up the server…</p>
+            <Countdown startedAt={startedAt} seconds={expectedSeconds} />
             <p className="mt-2 text-sm text-slate-500">
               The demo runs on free hosting that sleeps when nobody is using it. The first visit after a break takes up to a minute.
             </p>
@@ -87,5 +99,33 @@ export function ServerGate({ children, apiBase = baseURL, noticeAfterMs = 1500, 
         )}
       </div>
     </main>
+  )
+}
+
+/** Seconds left of the usual wake-up time, with a bar; past it, a note that it is nearly there. */
+function Countdown({ startedAt, seconds }: { startedAt: number; seconds: number }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(timer)
+  }, [])
+  const left = Math.max(0, Math.ceil(seconds - (now - startedAt) / 1000))
+  const done = Math.min(100, ((seconds - left) / seconds) * 100)
+  return (
+    <div className="mt-3" aria-live="polite">
+      <div
+        className="h-2 overflow-hidden rounded-full bg-emerald-100"
+        role="progressbar"
+        aria-label="Usual wake-up time"
+        aria-valuemin={0}
+        aria-valuemax={seconds}
+        aria-valuenow={seconds - left}
+      >
+        <div className="h-full bg-emerald-500 transition-[width] duration-1000 ease-linear" style={{ width: `${done}%` }} />
+      </div>
+      <p className="mt-2 text-sm font-medium text-slate-700 tabular-nums">
+        {left > 0 ? `Ready in about ${left} second${left === 1 ? '' : 's'}` : 'Almost there – taking a little longer than usual…'}
+      </p>
+    </div>
   )
 }

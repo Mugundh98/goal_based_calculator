@@ -7,7 +7,7 @@ import { AuthContext, type AuthState } from '../store/authContext'
 import { AdminRoute, GuestRoute, ProtectedRoute } from './RouteGuards'
 
 function user(role: 'user' | 'admin'): User {
-  return { id: 1, email: 'a@example.com', full_name: 'A', role, is_active: true, created_at: '2026-10-17T00:00:00Z' } as User
+  return { id: 1, email: 'a@example.com', full_name: 'A', role, is_active: true, created_at: '2026-10-17T00:00:00Z', security_question: null } as User
 }
 
 function renderAt(path: string | { pathname: string; state: unknown }, state: Partial<AuthState>) {
