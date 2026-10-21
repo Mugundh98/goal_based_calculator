@@ -84,7 +84,7 @@ def overview(db: Session, now: datetime | None = None) -> AdminOverview:
                 db, AuditLog, AuditLog.action == "auth.login_failed", AuditLog.created_at >= week
             ),
         ),  # fmt: skip
-        funds=_count(db, Fund),
+        funds=_count(db, Fund, Fund.owner_user_id.is_(None)),
         latest_nav_date=newest_nav_date(db),
         jobs=[
             JobStatus(

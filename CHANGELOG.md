@@ -2,6 +2,27 @@
 
 All notable changes, one entry per phase tag. Format: [Keep a Changelog](https://keepachangelog.com).
 
+## [1.1.0] – 2026-10-21 – First user feedback
+
+### Added
+
+- Portfolio: **enter the NAV yourself** ("Enter the NAV myself (from my statement)"). Without it, the NAV of that day comes from the database as before. Any historic transaction can now be recorded.
+- Portfolio: **add a fund that is not in the list** ("Can't find it? Add it yourself": name and type). It is private to you; its transactions need their NAV; it is valued at cost. Endpoints `GET/POST /api/portfolio/funds`.
+- Portfolio: **edit a transaction** (`PUT /api/portfolio/transactions/{id}`), atomic and audited. A correction that would leave a later redemption without units changes nothing.
+- Simulation: **type the exact value** next to each what-if slider (monthly SIP, yearly increase, target year, equity share), applied on Enter or when leaving the box.
+- Risk profile result: **"What next?"** buttons: plan a goal, track investments, ask the assistant.
+- Migration `0013` (`funds.owner_user_id`; fund references `NO ACTION`); ADR-017.
+
+### Changed
+
+- **Amounts show Indian digit grouping as you type** (25,00,000) in every ₹ box: goals, profile, retirement, transactions.
+- The **Funds** menu item is now **Explore** ("Explore funds").
+- The example goal name is "Pisai's college" (form placeholder and demo account).
+
+### Fixed
+
+- A portfolio test failed when the date three years ago fell on a weekend.
+
 ## [1.0.1] – 2026-10-21 – Deployment fix
 
 Live at https://goal-based-calculator-seven.vercel.app (API https://goal-based-calculator.onrender.com).

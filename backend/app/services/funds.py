@@ -47,6 +47,7 @@ def _filtered(
     option: str | None,
     active_only: bool,
 ) -> Select:
+    query = query.where(Fund.owner_user_id.is_(None))  # never a fund a user added by hand
     if q:
         text = q.strip()
         conditions = [
@@ -142,7 +143,9 @@ def categories(db: Session, active_only: bool = True) -> list[CategoryCount]:
 
 
 def get_fund(db: Session, fund_id: int) -> Fund | None:
-    return db.get(Fund, fund_id)
+    """A fund in AMFI's list (a fund a user added is private to them, see the portfolio)."""
+    fund = db.get(Fund, fund_id)
+    return fund if fund is not None and fund.owner_user_id is None else None
 
 
 def to_detail(db: Session, fund: Fund) -> FundDetail:

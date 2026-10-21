@@ -16,6 +16,10 @@ class TransactionCreate(BaseModel):
     # from the NAV). A redemption needs the amount or the units.
     amount: Decimal | None = Field(default=None, gt=0, max_digits=14, decimal_places=2)
     units: Decimal | None = Field(default=None, gt=0, max_digits=18, decimal_places=4)
+    # The NAV the user paid or received, e.g. from a statement. Without it, the NAV of that day
+    # (or the week before) comes from the database; a fund the user added has none, so it is
+    # required there.
+    nav: Decimal | None = Field(default=None, gt=0, max_digits=18, decimal_places=4)
     note: str | None = Field(default=None, max_length=200)
 
     @model_validator(mode="after")
@@ -47,10 +51,35 @@ class SipCreate(BaseModel):
         return self
 
 
+ManualAssetClass = Literal["equity", "debt", "hybrid", "other"]
+
+
+class ManualFundCreate(BaseModel):
+    """A fund that is not in AMFI's list, added by the user."""
+
+    name: str = Field(min_length=2, max_length=200)
+    asset_class: ManualAssetClass
+
+    @model_validator(mode="after")
+    def _strip(self) -> "ManualFundCreate":
+        self.name = " ".join(self.name.split())
+        if len(self.name) < 2:
+            raise ValueError("Give the fund a name")
+        return self
+
+
+class ManualFundRead(BaseModel):
+    id: int
+    name: str
+    asset_class: str
+    category: str
+
+
 class TransactionRead(BaseModel):
     id: int
     fund_id: int
     fund_name: str
+    manual_fund: bool  # added by the user: no NAV history, valued at cost
     goal_id: int | None
     goal_name: str | None
     txn_type: str
@@ -72,6 +101,7 @@ class HoldingRead(BaseModel):
     category: str
     plan: str  # direct / regular: names repeat across plans and options
     option: str
+    manual: bool  # a fund the user added: no market NAV, so it is valued at cost
     sleeve: str
     sleeve_label: str
     units: float

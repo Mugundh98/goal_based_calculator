@@ -1,6 +1,6 @@
 # Database
 
-_Living document – updated whenever a migration is added. Last updated: Phase 13._
+_Living document – updated whenever a migration is added. Last updated: v1.1 (migration 0013)._
 
 **Engine:** PostgreSQL 16 · **Extensions:** `vector` (pgvector) · **Migrations:** Alembic (`backend/alembic/versions/`)
 
@@ -390,12 +390,12 @@ Trigger `audit_log_append_only` (BEFORE UPDATE OR DELETE, function `audit_log_ap
 | `id` | integer | PK | |
 | `user_id` | integer | FK `users.id` ON DELETE CASCADE; index `ix_transactions_user_date (user_id, txn_date)` | |
 | `goal_id` | integer | FK `goals.id` ON DELETE SET NULL; index | NULL = not assigned (also after the goal is deleted) |
-| `fund_id` | integer | FK `funds.id` ON DELETE RESTRICT; index | |
+| `fund_id` | integer | FK `funds.id` ON DELETE NO ACTION (1.1; RESTRICT before); index | A fund in use cannot be deleted |
 | `txn_type` | varchar(4) | CHECK (buy, sell) | |
 | `txn_date` | date | NOT NULL | |
 | `amount` | numeric(14,2) | CHECK > 0 | Rupees paid or received |
 | `units` | numeric(18,4) | CHECK > 0 | As on the statement (after 0.005% stamp duty for purchases from July 2020) |
-| `nav` | numeric(18,8) | CHECK > 0 | NAV used (latest on or before the date, at most a week earlier) |
+| `nav` | numeric(18,8) | CHECK > 0 | NAV used: the one the user entered from their statement (1.1), else the latest on or before the date, at most a week earlier |
 | `note` | varchar(200) | | "SIP" for generated instalments |
 | `created_at` | timestamptz | default now() | |
 
@@ -408,7 +408,7 @@ Insert and delete only; a mistake is deleted and entered again.
 | `id` | integer | PK | |
 | `user_id` | integer | FK `users.id` ON DELETE CASCADE; index | |
 | `goal_id` | integer | FK `goals.id` ON DELETE CASCADE | NULL = unassigned |
-| `fund_id` | integer | FK `funds.id` ON DELETE RESTRICT | |
+| `fund_id` | integer | FK `funds.id` ON DELETE NO ACTION (1.1; RESTRICT before) | |
 | | | UNIQUE `uq_holdings_user_goal_fund (user_id, goal_id, fund_id)` NULLS NOT DISTINCT | One position per fund per goal |
 | `units` | numeric(20,6) | CHECK ≥ 0 | In the fund's current units (restated across face-value changes) |
 | `cost` | numeric(14,2) | CHECK ≥ 0 | FIFO cost of the units held |
@@ -510,12 +510,13 @@ Rebuilt for the affected (user, goal, fund) in the same database transaction as 
 | `bands` | jsonb | NOT NULL | Per year: P10–P90 and the deterministic projection (the fan chart) |
 | `elapsed_ms` | integer | NOT NULL | Fit + simulation time |
 
-### `funds` (Phase 4) – one row per AMFI scheme code
+### `funds` (Phase 4) – one row per AMFI scheme code, or a fund a user added (1.1)
 
 | Column | Type | Constraint | Meaning |
 |---|---|---|---|
 | `id` | integer | PK | |
-| `scheme_code` | integer | UNIQUE | AMFI's code; the natural key every daily file is matched on |
+| `scheme_code` | integer | UNIQUE; NULL for a fund a user added | AMFI's code; the natural key every daily file is matched on |
+| `owner_user_id` | integer | FK → users ON DELETE CASCADE; index; CHECK `(owner_user_id IS NULL) = (scheme_code IS NOT NULL)` | Set only for a fund a user added by hand (1.1): private to them, no NAV history, valued at cost; excluded from the explorer, metrics, ML and recommendations |
 | `name` | varchar(200) | NOT NULL | Scheme name as published |
 | `amc` | varchar(120) | index | Fund house (from the AMC line above the rows in NAVAll.txt) |
 | `scheme_type` | varchar(30) | | Open Ended / Close Ended / Interval Fund |
@@ -666,6 +667,7 @@ The composite primary key prevents duplicate NAVs and its B-tree index (fund_id 
 | `0010` | 9 | Create `transactions` and `holdings` |
 | `0011` | 10 | Create `chat_sessions`, `chat_messages`, `tool_calls`, `kb_documents`, `kb_chunks` (vector(768), HNSW index) |
 | `0012` | 11 | Create `audit_log` with its indexes and the append-only trigger |
+| `0013` | 1.1 | `funds.owner_user_id` and nullable `scheme_code` (funds added by hand); `transactions.fund_id` and `holdings.fund_id` ON DELETE NO ACTION instead of RESTRICT (checked at the end of the statement, so deleting a user with their own funds works) |
 
 ## Databases
 

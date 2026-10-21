@@ -95,7 +95,10 @@ def summary(db: Session) -> MarketSummary:
     since = active_since(db)
     inflation = inflation_series(db)
     return MarketSummary(
-        fund_count=db.scalar(select(func.count()).select_from(Fund)) or 0,
+        fund_count=db.scalar(
+            select(func.count()).select_from(Fund).where(Fund.owner_user_id.is_(None))
+        )
+        or 0,
         active_fund_count=(
             db.scalar(select(func.count()).where(Fund.latest_nav_date >= since)) if since else 0
         )

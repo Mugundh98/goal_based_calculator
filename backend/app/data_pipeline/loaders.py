@@ -135,7 +135,8 @@ def _nav_moves_forward(table: Table, new: Any) -> Any:
 
 
 def fund_ids_by_scheme_code(db: Session) -> dict[int, int]:
-    return dict(db.execute(select(Fund.scheme_code, Fund.id)).all())
+    rows = select(Fund.scheme_code, Fund.id).where(Fund.scheme_code.is_not(None))
+    return dict(db.execute(rows).all())
 
 
 def upsert_navs(db: Session, rows: Sequence[dict[str, Any]]) -> int:

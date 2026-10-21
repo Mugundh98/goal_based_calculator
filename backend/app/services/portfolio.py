@@ -40,6 +40,8 @@ from app.schemas.portfolio import (
     GoalStatus,
     HistoryPoint,
     HoldingRead,
+    ManualFundCreate,
+    ManualFundRead,
     PortfolioRead,
     PortfolioTotals,
     RebalanceOut,
@@ -181,11 +183,26 @@ def _owned_goal(db: Session, user: User, goal_id: int | None) -> Goal | None:
     return goal
 
 
-def _fund(db: Session, fund_id: int) -> Fund:
+def _fund(db: Session, user: User, fund_id: int) -> Fund:
+    """An AMFI fund, or one this user added (another user's own fund does not exist for them)."""
     fund = db.get(Fund, fund_id)
-    if fund is None:
+    if fund is None or fund.owner_user_id not in (None, user.id):
         raise NotFound("Fund not found")
     return fund
+
+
+def _price(db: Session, fund: Fund, day: date, nav: Decimal | None) -> Decimal:
+    """The NAV a transaction uses: the one the user gave, else the database's for that day."""
+    if nav is not None:
+        return nav
+    if fund.owner_user_id is not None:
+        raise PortfolioError(
+            f"Enter the NAV for {fund.name}: GoalWise has no prices for funds you add yourself"
+        )
+    price = nav_series(db, fund.id, day - timedelta(days=MAX_NAV_GAP_DAYS)).price_on(day)
+    if price is None:
+        raise _no_nav(fund, day)
+    return price[1]
 
 
 def _no_nav(fund: Fund, day: date) -> PortfolioError:
@@ -195,20 +212,15 @@ def _no_nav(fund: Fund, day: date) -> PortfolioError:
     )
 
 
-def add_transaction(
-    db: Session, user: User, data: TransactionCreate, today: date | None = None
+def _new_transaction(
+    db: Session, user: User, data: TransactionCreate, today: date | None
 ) -> Transaction:
+    """Check a transaction and work out its NAV, units and amount (not yet added)."""
     if data.txn_date > (today or date.today()):
         raise PortfolioError("A transaction cannot be dated in the future")
     _owned_goal(db, user, data.goal_id)
-    fund = _fund(db, data.fund_id)
-    _lock(db, user.id)
-    price = nav_series(db, fund.id, data.txn_date - timedelta(days=MAX_NAV_GAP_DAYS)).price_on(
-        data.txn_date
-    )
-    if price is None:
-        raise _no_nav(fund, data.txn_date)
-    nav = price[1]
+    fund = _fund(db, user, data.fund_id)
+    nav = _price(db, fund, data.txn_date, data.nav)
     amount, units = data.amount, data.units
     if units is None:
         units = units_for(amount, nav, data.txn_type, data.txn_date)
@@ -216,7 +228,7 @@ def add_transaction(
             raise PortfolioError("The amount is too small to buy any units")
     if amount is None:
         amount = (units * nav).quantize(PAISE, rounding=ROUND_HALF_UP)
-    transaction = Transaction(
+    return Transaction(
         user_id=user.id,
         goal_id=data.goal_id,
         fund_id=fund.id,
@@ -227,12 +239,43 @@ def add_transaction(
         nav=nav,
         note=data.note,
     )
+
+
+def add_transaction(
+    db: Session, user: User, data: TransactionCreate, today: date | None = None
+) -> Transaction:
+    _lock(db, user.id)
+    transaction = _new_transaction(db, user, data, today)
     db.add(transaction)
     db.flush()
-    _rebuild_or_fail(db, user.id, data.goal_id, fund.id)
+    _rebuild_or_fail(db, user.id, transaction.goal_id, transaction.fund_id)
     db.commit()
     db.refresh(transaction)
     return transaction
+
+
+def update_transaction(
+    db: Session, user: User, transaction_id: int, data: TransactionCreate, today: date | None = None
+) -> Transaction:
+    """Replace a transaction with corrected details in one database transaction: if the change
+    would leave a later redemption without units, nothing changes."""
+    _lock(db, user.id)
+    old = _owned_transaction(db, user, transaction_id)
+    before = (old.goal_id, old.fund_id)
+    new = _new_transaction(db, user, data, today)
+    for column in ("goal_id", "fund_id", "txn_type", "txn_date", "amount", "units", "nav", "note"):
+        setattr(old, column, getattr(new, column))
+    db.flush()
+    try:
+        for goal_id, fund_id in {before, (old.goal_id, old.fund_id)}:
+            _rebuild(db, user.id, goal_id, fund_id)
+        db.flush()
+    except InsufficientUnits as error:
+        db.rollback()
+        raise PortfolioError(f"{error}. A later redemption needs these units.") from None
+    db.commit()
+    db.refresh(old)
+    return old
 
 
 def monthly_dates(start: date, end: date) -> list[date]:
@@ -252,7 +295,12 @@ def add_sip(db: Session, user: User, data: SipCreate, today: date | None = None)
     today = today or date.today()
     end = min(data.end_date or today, today)
     _owned_goal(db, user, data.goal_id)
-    fund = _fund(db, data.fund_id)
+    fund = _fund(db, user, data.fund_id)
+    if fund.owner_user_id is not None:
+        raise PortfolioError(
+            "GoalWise has no prices for funds you add yourself: record each instalment as a "
+            "purchase with its NAV"
+        )
     _lock(db, user.id)
     series = nav_series(db, fund.id, data.start_date - timedelta(days=MAX_NAV_GAP_DAYS))
     created: list[Transaction] = []
@@ -282,12 +330,17 @@ def add_sip(db: Session, user: User, data: SipCreate, today: date | None = None)
     return [t.id for t in created]
 
 
-def delete_transaction(db: Session, user: User, transaction_id: int) -> None:
+def _owned_transaction(db: Session, user: User, transaction_id: int) -> Transaction:
     transaction = db.scalar(
         select(Transaction).where(Transaction.id == transaction_id, Transaction.user_id == user.id)
     )
     if transaction is None:
         raise NotFound("Transaction not found")
+    return transaction
+
+
+def delete_transaction(db: Session, user: User, transaction_id: int) -> None:
+    transaction = _owned_transaction(db, user, transaction_id)
     _lock(db, user.id)
     goal_id, fund_id = transaction.goal_id, transaction.fund_id
     db.delete(transaction)
@@ -301,6 +354,49 @@ def delete_transaction(db: Session, user: User, transaction_id: int) -> None:
             f"A later redemption needs these units. {error}. Delete the redemption first."
         ) from None
     db.commit()
+
+
+MANUAL_CATEGORY = {
+    "equity": "Equity (added by you)",
+    "debt": "Debt (added by you)",
+    "hybrid": "Hybrid (added by you)",
+    "other": "Other (added by you)",
+}
+
+
+def manual_fund_read(fund: Fund) -> ManualFundRead:
+    return ManualFundRead(
+        id=fund.id, name=fund.name, asset_class=fund.asset_class, category=fund.category
+    )
+
+
+def manual_funds(db: Session, user: User) -> list[ManualFundRead]:
+    funds = db.scalars(select(Fund).where(Fund.owner_user_id == user.id).order_by(Fund.name))
+    return [manual_fund_read(f) for f in funds]
+
+
+def add_manual_fund(db: Session, user: User, data: ManualFundCreate) -> Fund:
+    """A fund that is not in AMFI's list. Adding the same name again returns the existing one."""
+    existing = db.scalar(
+        select(Fund).where(Fund.owner_user_id == user.id, Fund.name.ilike(data.name))
+    )
+    if existing is not None:
+        return existing
+    fund = Fund(
+        owner_user_id=user.id,
+        scheme_code=None,
+        name=data.name,
+        amc="Added by you",
+        scheme_type="Manual",
+        category=MANUAL_CATEGORY[data.asset_class],
+        asset_class=data.asset_class,
+        plan="direct",
+        option="growth",
+    )
+    db.add(fund)
+    db.commit()
+    db.refresh(fund)
+    return fund
 
 
 def rebuild_user(db: Session, user_id: int) -> None:
@@ -336,6 +432,7 @@ def list_transactions(
             id=t.id,
             fund_id=t.fund_id,
             fund_name=t.fund.name,
+            manual_fund=t.fund.owner_user_id is not None,
             goal_id=t.goal_id,
             goal_name=names.get(t.goal_id) if t.goal_id else None,
             txn_type=t.txn_type,
@@ -406,10 +503,18 @@ def _book(db: Session, user: User) -> Book:
 def _terminal(h: Holding) -> list[Flow]:
     """Today's value as if redeemed: the last flow of every XIRR."""
     value = _value(h)
-    return [(h.fund.latest_nav_date, value)] if value > 0 and h.fund.latest_nav_date else []
+    day = date.today() if _manual(h) else h.fund.latest_nav_date
+    return [(day, value)] if value > 0 and day else []
+
+
+def _manual(h: Holding) -> bool:
+    return h.fund.owner_user_id is not None
 
 
 def _value(h: Holding) -> float:
+    """At the latest NAV; a fund the user added has no market NAV, so it is valued at cost."""
+    if _manual(h):
+        return float(h.cost) if h.units > 0 else 0.0
     return float(h.units * h.fund.latest_nav) if h.fund.latest_nav else 0.0
 
 
@@ -427,13 +532,14 @@ def holding_read(h: Holding, flows: list[Flow], goal_name: str | None) -> Holdin
         category=h.fund.category,
         plan=h.fund.plan,
         option=h.fund.option,
+        manual=_manual(h),
         sleeve=sleeve,
         sleeve_label=ROW_LABELS[sleeve],
         units=float(h.units),
         avg_cost=round(cost / float(h.units), 4) if h.units > 0 else None,
         cost=cost,
-        nav=float(h.fund.latest_nav) if h.fund.latest_nav else None,
-        nav_date=h.fund.latest_nav_date,
+        nav=float(h.fund.latest_nav) if h.fund.latest_nav and not _manual(h) else None,
+        nav_date=None if _manual(h) else h.fund.latest_nav_date,
         value=round(value, 2),
         gain=round(value - cost, 2),
         gain_percent=round((value - cost) / cost * PERCENT, 2) if cost > 0 else None,
@@ -671,6 +777,7 @@ def goal_progress(db: Session, user: User, goal: Goal, today: date | None = None
     transactions = list(
         db.scalars(
             select(Transaction)
+            .options(joinedload(Transaction.fund))
             .where(Transaction.user_id == user.id, Transaction.goal_id == goal.id)
             .order_by(Transaction.txn_date, Transaction.id)
         )
@@ -687,16 +794,23 @@ def goal_progress(db: Session, user: User, goal: Goal, today: date | None = None
             fund_id: nav_series(db, fund_id, first - timedelta(days=MAX_NAV_GAP_DAYS))
             for fund_id in {t.fund_id for t in transactions}
         }
+        manual = {t.fund_id for t in transactions if t.fund.owner_user_id is not None}
         for point in _month_ends(first, max(end, first)):
             units: dict[int, Decimal] = defaultdict(Decimal)
             invested = 0.0
+            at_cost = 0.0  # funds the user added have no NAVs: counted at the money put in
             for t in transactions:
                 if t.txn_date > point:
                     break
                 sign = 1 if t.txn_type == "buy" else -1
-                units[t.fund_id] += sign * t.units / series[t.fund_id].multiplier(t.txn_date)
                 invested += sign * float(t.amount)
-            value = sum(float(u) * (series[f].adjusted_on(point) or 0.0) for f, u in units.items())
+                if t.fund_id in manual:
+                    at_cost += sign * float(t.amount)
+                else:
+                    units[t.fund_id] += sign * t.units / series[t.fund_id].multiplier(t.txn_date)
+            value = max(at_cost, 0.0) + sum(
+                float(u) * (series[f].adjusted_on(point) or 0.0) for f, u in units.items()
+            )
             history.append(
                 HistoryPoint(
                     date=point,

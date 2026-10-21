@@ -6,7 +6,8 @@ import { useDeleteTransaction, useTransactions } from '../hooks/usePortfolio'
 import { apiErrorMessage } from '../lib/apiError'
 import { formatDate, formatINR, formatNav, formatReturn, optionLabel, planLabel } from '../lib/format'
 import { FormError } from './form'
-import { Card } from './ui'
+import { TransactionForm } from './TransactionForm'
+import { Card, Modal } from './ui'
 
 export function StatusChip({ status }: { status: GoalStatus['status'] }) {
   const style = {
@@ -38,11 +39,15 @@ export function HoldingsTable({ holdings, showGoal = false }: { holdings: Holdin
           {holdings.map((h) => (
             <tr key={h.id} className="border-b border-slate-100 align-top">
               <td className="py-2 pr-3">
-                <Link to={`/funds/${h.fund_id}`} className="font-medium hover:underline">
-                  {h.fund_name}
-                </Link>
+                {h.manual ? (
+                  <span className="font-medium">{h.fund_name}</span>
+                ) : (
+                  <Link to={`/funds/${h.fund_id}`} className="font-medium hover:underline">
+                    {h.fund_name}
+                  </Link>
+                )}
                 <p className="text-xs text-slate-500">
-                  {planLabel[h.plan]} · {optionLabel[h.option]} · {h.sleeve_label}
+                  {h.manual ? 'Added by you · valued at cost' : `${planLabel[h.plan]} · ${optionLabel[h.option]}`} · {h.sleeve_label}
                   {showGoal && ` · ${h.goal_name ?? 'Not assigned to a goal'}`}
                 </p>
               </td>
@@ -72,6 +77,7 @@ export function HoldingsTable({ holdings, showGoal = false }: { holdings: Holdin
 export function TransactionsCard({ goalId }: { goalId?: number }) {
   const transactions = useTransactions(goalId)
   const remove = useDeleteTransaction()
+  const [editing, setEditing] = useState<Transaction | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showAll, setShowAll] = useState(false)
   const rows = transactions.data ?? []
@@ -116,6 +122,7 @@ export function TransactionsCard({ goalId }: { goalId?: number }) {
                   </td>
                   <td className="py-2 pr-3">
                     {t.fund_name}
+                    {t.manual_fund && <span className="ml-1 text-xs text-slate-500">(added by you)</span>}
                     {goalId === undefined && <p className="text-xs text-slate-500">{t.goal_name ?? 'Not assigned to a goal'}</p>}
                   </td>
                   <td className="py-2 pr-3 text-right tabular-nums">{formatINR(t.amount)}</td>
@@ -123,7 +130,15 @@ export function TransactionsCard({ goalId }: { goalId?: number }) {
                     {t.units.toLocaleString('en-IN', { maximumFractionDigits: 4 })}
                     <p className="text-xs text-slate-500">{formatNav(t.nav)}</p>
                   </td>
-                  <td className="py-2 text-right">
+                  <td className="py-2 text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => setEditing(t)}
+                      className="rounded px-2 py-1 text-xs text-emerald-700 hover:bg-emerald-50"
+                      aria-label={`Edit transaction of ${formatDate(t.txn_date)}`}
+                    >
+                      Edit
+                    </button>
                     <button
                       type="button"
                       onClick={() => onDelete(t)}
@@ -144,6 +159,11 @@ export function TransactionsCard({ goalId }: { goalId?: number }) {
         <button type="button" onClick={() => setShowAll(!showAll)} className="mt-3 text-sm font-medium text-emerald-700 hover:underline">
           {showAll ? 'Show the latest 10' : `Show all ${rows.length}`}
         </button>
+      )}
+      {editing && (
+        <Modal title="Edit the transaction" onClose={() => setEditing(null)}>
+          <TransactionForm holdings={[]} editing={editing} onSaved={() => setEditing(null)} />
+        </Modal>
       )}
     </Card>
   )

@@ -107,6 +107,18 @@ export function RiskResultPage() {
           </ul>
         </Card>
       )}
+
+      {/* The profile is done: point to what it is for, so this page is not a dead end. */}
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 pt-4">
+        <span className="text-sm text-slate-600">What next?</span>
+        <ButtonLink to="/goals">Plan a goal →</ButtonLink>
+        <ButtonLink to="/portfolio" variant="secondary">
+          Track investments →
+        </ButtonLink>
+        <ButtonLink to="/assistant" variant="secondary">
+          Ask the assistant →
+        </ButtonLink>
+      </div>
     </section>
   )
 }

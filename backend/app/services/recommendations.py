@@ -79,7 +79,9 @@ class SleeveHistory:
 
 def sleeve_categories(db: Session) -> dict[str, list[str]]:
     """AMFI category labels of each sleeve, through the Phase 7 peer groups."""
-    categories = db.scalars(select(Fund.category).distinct()).all()
+    categories = db.scalars(
+        select(Fund.category).where(Fund.owner_user_id.is_(None)).distinct()
+    ).all()
     return {
         sleeve: [c for c in categories if peer_group(c) in peers]
         for sleeve, peers in SLEEVE_PEERS.items()

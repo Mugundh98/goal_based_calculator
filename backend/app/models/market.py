@@ -48,7 +48,12 @@ Nav = Numeric(18, 8)
 
 
 class Fund(TimestampMixin, Base):
-    """One mutual fund scheme as listed by AMFI (each plan/option has its own scheme code)."""
+    """One mutual fund scheme as listed by AMFI (each plan/option has its own scheme code).
+
+    A fund a user adds by hand (not in AMFI's list) is a row with an owner and no scheme code: it
+    has no NAV history, so its transactions carry the NAV the user entered and its holdings are
+    valued at cost. It is visible only to its owner, never in the explorer or recommendations.
+    """
 
     __tablename__ = "funds"
     __table_args__ = (
@@ -60,11 +65,18 @@ class Fund(TimestampMixin, Base):
         CheckConstraint("plan IN ('direct', 'regular')", name="ck_funds_plan"),
         CheckConstraint("option IN ('growth', 'idcw', 'bonus', 'other')", name="ck_funds_option"),
         CheckConstraint("latest_nav IS NULL OR latest_nav > 0", name="ck_funds_latest_nav"),
+        # AMFI funds have a scheme code and no owner; a user's own fund has an owner and no code.
+        CheckConstraint(
+            "(owner_user_id IS NULL) = (scheme_code IS NOT NULL)", name="ck_funds_manual"
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     # AMFI's own identifier: the natural key used to match every daily file to this row.
-    scheme_code: Mapped[int] = mapped_column(Integer, unique=True)
+    scheme_code: Mapped[int | None] = mapped_column(Integer, unique=True)
+    owner_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     name: Mapped[str] = mapped_column(String(200))
     amc: Mapped[str] = mapped_column(String(120), index=True)  # fund house
     scheme_type: Mapped[str] = mapped_column(String(30))  # Open Ended / Close Ended / Interval

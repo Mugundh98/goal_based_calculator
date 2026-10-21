@@ -33,7 +33,7 @@ export function FundDetailPage() {
     <section className="space-y-6">
       <div>
         <Link to="/funds" className="text-sm text-emerald-700 hover:underline">
-          ← Fund explorer
+          ← Explore funds
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">{data.name}</h1>
         <p className="text-slate-600">

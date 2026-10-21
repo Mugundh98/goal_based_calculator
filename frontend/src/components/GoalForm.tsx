@@ -65,7 +65,7 @@ export function GoalForm({ goal, onSaved }: { goal: Goal | null; onSaved: () => 
               registration={register('goal_type')}
               error={errors.goal_type?.message}
             />
-            <TextField label="Name" placeholder="e.g. Ananya's college" registration={register('name')} error={errors.name?.message} />
+            <TextField label="Name" placeholder="e.g. Pisai's college" registration={register('name')} error={errors.name?.message} />
             <TextField
               label="Cost in today's money"
               type="number"

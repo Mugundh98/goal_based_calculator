@@ -128,7 +128,7 @@ def create_demo_user(
     goals = {
         "education": goal(
             goal_type="education",
-            name="Ananya's college",
+            name="Pisai's college",
             target_amount=Decimal(2500000),
             target_year=today.year + 10,
             monthly_sip=Decimal(15000),

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { RetirementInput, RetirementPlan } from '../api/retirement'
+import { withoutGrouping } from './money'
 
 // Same rules as RetirementInput in backend/app/schemas/retirement.py. The age checks that need
 // the date of birth (retiring after today) are done by the backend.
@@ -8,8 +9,10 @@ import type { RetirementInput, RetirementPlan } from '../api/retirement'
 const MAX_AMOUNT = 9_999_999_999
 const MAX_RETIREMENT_YEARS = 50
 
-const toNumber = (fallback: number | null | undefined) => (value: unknown) =>
-  value === '' || value == null ? fallback : Number(value)
+const toNumber = (fallback: number | null | undefined) => (raw: unknown) => {
+  const value = withoutGrouping(raw) // "12,34,567" from an amount box
+  return value === '' || value == null ? fallback : Number(value)
+}
 
 const amount = (fallback?: number) =>
   z.preprocess(

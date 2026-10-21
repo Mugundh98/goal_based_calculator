@@ -11,6 +11,8 @@ export interface TransactionInput {
   txn_date: string // ISO date
   amount?: number
   units?: number
+  /** The NAV from the user's statement; without it the day's NAV comes from the database. */
+  nav?: number
   note?: string
 }
 
@@ -26,6 +28,7 @@ export interface Transaction {
   id: number
   fund_id: number
   fund_name: string
+  manual_fund: boolean // added by the user: no NAV history, valued at cost
   goal_id: number | null
   goal_name: string | null
   txn_type: TransactionType
@@ -47,6 +50,7 @@ export interface Holding {
   category: string
   plan: string
   option: string
+  manual: boolean // a fund the user added: valued at cost
   sleeve: string
   sleeve_label: string
   units: number
@@ -157,6 +161,29 @@ export async function addTransaction(input: TransactionInput): Promise<Transacti
 
 export async function addSip(input: SipInput): Promise<Transaction[]> {
   const { data } = await api.post<Transaction[]>('/api/portfolio/transactions/sip', input)
+  return data
+}
+
+export async function updateTransaction(id: number, input: TransactionInput): Promise<Transaction> {
+  const { data } = await api.put<Transaction>(`/api/portfolio/transactions/${id}`, input)
+  return data
+}
+
+/** A fund that is not in AMFI's list, added by the user. */
+export interface ManualFund {
+  id: number
+  name: string
+  asset_class: 'equity' | 'debt' | 'hybrid' | 'other'
+  category: string
+}
+
+export async function getManualFunds(): Promise<ManualFund[]> {
+  const { data } = await api.get<ManualFund[]>('/api/portfolio/funds')
+  return data
+}
+
+export async function addManualFund(input: Pick<ManualFund, 'name' | 'asset_class'>): Promise<ManualFund> {
+  const { data } = await api.post<ManualFund>('/api/portfolio/funds', input)
   return data
 }
 

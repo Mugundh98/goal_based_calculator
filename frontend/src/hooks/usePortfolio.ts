@@ -1,14 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
+  addManualFund,
   addSip,
   addTransaction,
   deleteTransaction,
   getGoalProgress,
+  getManualFunds,
   getPortfolio,
   getTransactions,
+  type ManualFund,
   type SipInput,
   type TransactionInput,
+  updateTransaction,
 } from '../api/portfolio'
 
 const key = ['portfolio']
@@ -44,4 +48,25 @@ export function useAddSip() {
 export function useDeleteTransaction() {
   const invalidate = useInvalidate()
   return useMutation({ mutationFn: deleteTransaction, onSuccess: invalidate })
+}
+
+export function useUpdateTransaction() {
+  const invalidate = useInvalidate()
+  return useMutation({
+    mutationFn: ({ id, input }: { id: number; input: TransactionInput }) => updateTransaction(id, input),
+    onSuccess: invalidate,
+  })
+}
+
+/** Funds this user added by hand. */
+export function useManualFunds() {
+  return useQuery({ queryKey: [...key, 'funds'], queryFn: getManualFunds })
+}
+
+export function useAddManualFund() {
+  const invalidate = useInvalidate()
+  return useMutation({
+    mutationFn: (input: Pick<ManualFund, 'name' | 'asset_class'>) => addManualFund(input),
+    onSuccess: invalidate,
+  })
 }

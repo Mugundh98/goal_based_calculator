@@ -14,6 +14,7 @@ from tests.conftest import login_headers
 TODAY = date.today()
 LATEST = TODAY - timedelta(days=1)
 START = LATEST - timedelta(days=3 * 365)
+START -= timedelta(days=max(START.weekday() - 4, 0))  # a weekday, so it has a NAV
 THIS_YEAR = TODAY.year
 SPLIT_ON = START + timedelta(days=400)  # the unit-change fund's ₹10 -> ₹1,000 re-denomination
 
@@ -408,3 +409,133 @@ def test_goal_progress_history_and_projection(client, auth_headers, funds):
     assert progress["target"]["value"] == status["inflated_target"]
     assert progress["projection"][-1]["value"] == pytest.approx(status["projected_value"], rel=0.01)
     assert progress["holdings"][0]["goal_name"] == "College"
+
+
+# --- Own NAV, funds added by hand, corrections (v1.1) ------------------------------------------
+
+
+def test_a_purchase_can_use_the_nav_the_user_enters(client, db, auth_headers, funds):
+    day = first_weekday_on_or_after(START + timedelta(days=30))
+    body = txn(client, auth_headers, funds["equity"], day=day, amount=10_000, nav=12.5)
+    assert body["nav"] == 12.5  # not the database's NAV for that day
+    assert body["units"] == pytest.approx(int(9999.5 / 12.5 * 1000) / 1000)
+    # Even a day the database has no NAV for: the user's statement is enough.
+    before_history = START - timedelta(days=400)
+    assert txn(client, auth_headers, funds["equity"], day=before_history, amount=5_000,
+               nav=8)["nav"] == 8  # fmt: skip
+
+
+def add_own_fund(client, headers, name="Family Office Fund", asset_class="equity"):
+    response = client.post(
+        "/api/portfolio/funds", json={"name": name, "asset_class": asset_class}, headers=headers
+    )
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def test_a_fund_added_by_hand_needs_its_nav_and_is_valued_at_cost(client, db, auth_headers):
+    fund = add_own_fund(client, auth_headers)
+    assert fund["category"] == "Equity (added by you)"
+    assert add_own_fund(client, auth_headers, name="  family office   FUND ")["id"] == fund["id"]
+    own = SimpleFund(fund["id"])
+
+    refused = txn(client, auth_headers, own, day=START, amount=10_000, expect=422)
+    assert "Enter the NAV" in refused["detail"]
+    txn(client, auth_headers, own, day=START, amount=10_000, nav=20)
+    txn(client, auth_headers, own, day=START + timedelta(days=200), amount=5_000, nav=25)
+    sold = txn(client, auth_headers, own, kind="sell", day=START + timedelta(days=300),
+               units=100, nav=30)  # fmt: skip
+    assert sold["amount"] == 3000 and sold["manual_fund"] is True
+
+    body = client.get("/api/portfolio", headers=auth_headers).json()
+    [holding] = body["holdings"]
+    assert holding["manual"] is True and holding["nav"] is None and holding["nav_date"] is None
+    assert holding["value"] == holding["cost"]  # no market price: valued at cost
+    assert holding["realised_gain"] == pytest.approx(
+        3000 - 100 * 10_000 / holding_units(10_000, 20)
+    )
+    sip = {"fund_id": own.id, "amount": 1000, "start_date": START.isoformat()}
+    response = client.post("/api/portfolio/transactions/sip", json=sip, headers=auth_headers)
+    assert response.status_code == 422 and "one by one" not in response.text
+    assert "record each instalment" in response.json()["detail"]
+
+
+def holding_units(amount: float, nav: float) -> float:
+    return int((amount - amount * 0.00005) / nav * 1000) / 1000
+
+
+class SimpleFund:
+    def __init__(self, fund_id: int):
+        self.id = fund_id
+
+
+def test_funds_added_by_hand_stay_private(client, auth_headers):
+    fund = add_own_fund(client, auth_headers, name="Private Trust Fund")
+    assert [f["name"] for f in client.get("/api/portfolio/funds", headers=auth_headers).json()] == [
+        "Private Trust Fund"
+    ]
+    # Not in the explorer or its fund page, not usable or visible by anyone else.
+    search = {"q": "Private Trust", "active_only": False}
+    listed = client.get("/api/funds", params=search, headers=auth_headers).json()
+    assert listed["total"] == 0
+    assert client.get(f"/api/funds/{fund['id']}", headers=auth_headers).status_code == 404
+    other = login_headers(client, "other@example.com")
+    assert client.get("/api/portfolio/funds", headers=other).json() == []
+    response = client.post(
+        "/api/portfolio/transactions",
+        json={"fund_id": fund["id"], "txn_type": "buy", "txn_date": START.isoformat(),
+              "amount": 100, "nav": 10},
+        headers=other,
+    )  # fmt: skip
+    assert response.status_code == 404
+
+
+def test_a_transaction_can_be_corrected(client, db, auth_headers, funds):
+    goal = make_goal(client, auth_headers)
+    day = first_weekday_on_or_after(START + timedelta(days=30))
+    first = txn(client, auth_headers, funds["equity"], day=day, amount=10_000)
+    body = {"fund_id": funds["debt"].id, "goal_id": goal, "txn_type": "buy",
+            "txn_date": day.isoformat(), "amount": 20_000, "nav": 25}  # fmt: skip
+    response = client.put(
+        f"/api/portfolio/transactions/{first['id']}", json=body, headers=auth_headers
+    )
+    assert response.status_code == 200, response.text
+    fixed = response.json()
+    assert fixed["id"] == first["id"] and fixed["amount"] == 20_000 and fixed["nav"] == 25
+    assert fixed["goal_id"] == goal and fixed["fund_id"] == funds["debt"].id
+    # The old position is gone and the new one holds the corrected units.
+    [(goal_id, fund_id, units, cost, _)] = holdings(db)
+    assert (goal_id, fund_id, cost) == (goal, funds["debt"].id, Decimal("20000.00"))
+    assert float(units) == pytest.approx(holding_units(20_000, 25))
+
+
+def test_a_correction_that_breaks_a_later_redemption_changes_nothing(
+    client, db, auth_headers, funds
+):
+    day = first_weekday_on_or_after(START + timedelta(days=30))
+    bought = txn(client, auth_headers, funds["equity"], day=day, amount=10_000, nav=10)
+    txn(client, auth_headers, funds["equity"], kind="sell",
+        day=first_weekday_on_or_after(day + timedelta(days=60)), units=900)  # fmt: skip
+    smaller = {"fund_id": funds["equity"].id, "txn_type": "buy", "txn_date": day.isoformat(),
+               "amount": 1_000, "nav": 10}  # fmt: skip
+    response = client.put(
+        f"/api/portfolio/transactions/{bought['id']}", json=smaller, headers=auth_headers
+    )
+    assert response.status_code == 409
+    assert "later redemption" in response.json()["detail"]
+    unchanged = db.get(Transaction, bought["id"])
+    db.refresh(unchanged)
+    assert unchanged.amount == Decimal("10000.00")
+    other = login_headers(client, "other@example.com")
+    response = client.put(f"/api/portfolio/transactions/{bought['id']}", json=smaller,
+                          headers=other)  # fmt: skip
+    assert response.status_code == 404
+
+
+def test_deleting_a_user_removes_their_own_funds(client, db, auth_headers):
+    fund = add_own_fund(client, auth_headers, name="Gone With The User")
+    txn(client, auth_headers, SimpleFund(fund["id"]), day=START, amount=1_000, nav=10)
+    user = db.scalar(select(User).where(User.email == "user@example.com"))
+    db.delete(user)  # cascades to transactions, holdings and the fund in one statement
+    db.flush()
+    assert db.get(Fund, fund["id"]) is None
