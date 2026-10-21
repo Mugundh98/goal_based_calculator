@@ -29,6 +29,7 @@ import {
   simulationModelLabel,
   simulationReturnSourceLabel,
 } from '../lib/format'
+import { formatAmountInput, groupIndian, withoutGrouping } from '../lib/money'
 import { verdict } from '../lib/verdict'
 
 const THIS_YEAR = new Date().getFullYear()
@@ -248,7 +249,9 @@ function WhatIf({
     <Card className="h-fit space-y-5 lg:sticky lg:top-4">
       <div>
         <h2 className="font-semibold">What if…</h2>
-        <p className="text-sm text-slate-600">Move a slider: the simulation re-runs with the same random futures.</p>
+        <p className="text-sm text-slate-600">
+          Move a slider or type a value: the simulation re-runs with the same random futures.
+        </p>
       </div>
       <Slider
         label="Monthly SIP"
@@ -257,6 +260,9 @@ function WhatIf({
         min={0}
         max={sipMax}
         step={500}
+        limit={MAX_SIP}
+        unit="₹"
+        money
         onChange={(v) => set('monthly_sip', v)}
       />
       <Slider
@@ -266,6 +272,9 @@ function WhatIf({
         min={0}
         max={25}
         step={1}
+        limit={50}
+        unit="%"
+        decimals={2}
         onChange={(v) => set('step_up_rate', v)}
       />
       <Slider
@@ -275,6 +284,8 @@ function WhatIf({
         min={THIS_YEAR + 1}
         max={yearMax}
         step={1}
+        limit={THIS_YEAR + 60}
+        note={`${year - THIS_YEAR} years from now`}
         onChange={(v) => set('target_year', v)}
       />
       <Slider
@@ -284,6 +295,9 @@ function WhatIf({
         min={0}
         max={100}
         step={5}
+        limit={100}
+        unit="%"
+        decimals={2}
         onChange={(v) => set('equity_percent', v)}
       />
       {result && (
@@ -304,6 +318,9 @@ function WhatIf({
   )
 }
 
+const MAX_SIP = 100_000_000 // ₹10 crore a month: far above any real plan, below the API's limit
+
+/** A slider with a box beside it for typing an exact value (applied on Enter or leaving the box). */
 function Slider(props: {
   label: string
   value: number
@@ -311,26 +328,80 @@ function Slider(props: {
   min: number
   max: number
   step: number
+  /** The largest value that can be typed; the slider stretches to show it. */
+  limit: number
+  unit?: '₹' | '%'
+  /** Decimal places a typed value keeps (0 = whole numbers). */
+  decimals?: number
+  /** Show the typed amount with Indian digit grouping. */
+  money?: boolean
+  note?: string
   onChange: (value: number) => void
 }) {
-  const { label, value, display, min, max, step, onChange } = props
+  const { label, value, display, min, max, step, limit, unit, decimals = 0, money = false, note, onChange } = props
+  const shown = (v: number) => (money ? groupIndian(String(v)) : String(Number(v.toFixed(decimals))))
+  const [text, setText] = useState(shown(value))
+  const [editing, setEditing] = useState(false)
+  const boxValue = editing ? text : shown(value) // follow the slider unless the user is typing
+
+  const commit = () => {
+    setEditing(false)
+    const typed = Number(String(withoutGrouping(text)))
+    if (text.trim() === '' || !Number.isFinite(typed)) return // keep the current value
+    const factor = 10 ** decimals
+    const clamped = Math.min(Math.max(Math.round(typed * factor) / factor, min), limit)
+    if (clamped !== value) onChange(clamped)
+  }
+
+  const inputId = `whatif-${label.toLowerCase().replace(/\W+/g, '-')}`
   return (
-    <label className="block">
-      <span className="flex justify-between text-sm">
-        <span className="text-slate-600">{label}</span>
-        <span className="font-medium tabular-nums">{display}</span>
-      </span>
+    <div>
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <label htmlFor={inputId} className="text-slate-600">
+          {label}
+        </label>
+        <span className="flex items-center gap-1">
+          {unit === '₹' && <span className="text-slate-500">₹</span>}
+          <input
+            id={inputId}
+            type="text"
+            inputMode="decimal"
+            value={boxValue}
+            onFocus={(event) => {
+              setText(shown(value))
+              setEditing(true)
+              event.target.select()
+            }}
+            onChange={(event) => {
+              if (money) formatAmountInput(event.target)
+              setText(event.target.value)
+            }}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur()
+              if (event.key === 'Escape') {
+                setText(shown(value))
+                event.currentTarget.blur()
+              }
+            }}
+            className={`${money ? 'w-28' : 'w-20'} rounded-md border border-slate-300 px-2 py-1 text-right font-medium tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none`}
+          />
+          {unit === '%' && <span className="text-slate-500">%</span>}
+        </span>
+      </div>
       <input
         type="range"
+        aria-label={`${label} slider`}
         min={min}
-        max={max}
+        max={Math.max(max, value)}
         step={step}
         value={value}
         aria-valuetext={display}
         onChange={(event) => onChange(Number(event.target.value))}
         className="mt-1 w-full accent-emerald-600"
       />
-    </label>
+      {note && <p className="text-xs text-slate-500">{note}</p>}
+    </div>
   )
 }
 

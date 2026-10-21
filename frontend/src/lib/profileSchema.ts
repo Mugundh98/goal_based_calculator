@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { withoutGrouping } from './money'
+
 // Same rules as ProfileInput in backend/app/schemas/profile.py.
 
 const MAX_AMOUNT = 9_999_999_999
@@ -7,7 +9,10 @@ const MAX_AMOUNT = 9_999_999_999
 /** Empty box → "required" error; otherwise a non-negative rupee amount. */
 const amount = (required: boolean) =>
   z.preprocess(
-    (value) => (value === '' || value == null ? (required ? undefined : 0) : Number(value)),
+    (raw) => {
+      const value = withoutGrouping(raw) // "12,34,567" from an amount box
+      return value === '' || value == null ? (required ? undefined : 0) : Number(value)
+    },
     z
       .number({ error: 'Enter an amount' })
       .min(0, 'Cannot be negative')

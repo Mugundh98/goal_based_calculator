@@ -37,7 +37,7 @@ export function Layout() {
                   Retirement
                 </NavLink>
                 <NavLink to="/funds" end={false} className={navLink}>
-                  Funds
+                  Explore
                 </NavLink>
                 <NavLink to="/insights" className={navLink}>
                   Insights

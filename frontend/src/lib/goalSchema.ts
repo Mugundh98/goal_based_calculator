@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { Goal, GoalCalculationInput, GoalInput } from '../api/goals'
+import { withoutGrouping } from './money'
 
 // Same rules as GoalInput in backend/app/schemas/goal.py.
 
@@ -9,8 +10,10 @@ const MAX_HORIZON_YEARS = 60
 const thisYear = new Date().getFullYear()
 
 /** Empty box → `fallback` (undefined = "required"); otherwise a number. */
-const toNumber = (fallback: number | null | undefined) => (value: unknown) =>
-  value === '' || value == null ? fallback : Number(value)
+const toNumber = (fallback: number | null | undefined) => (raw: unknown) => {
+  const value = withoutGrouping(raw) // "12,34,567" from an amount box
+  return value === '' || value == null ? fallback : Number(value)
+}
 
 const amount = (fallback?: number) =>
   z.preprocess(

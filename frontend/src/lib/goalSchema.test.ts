@@ -5,7 +5,7 @@ import { goalSchema, toGoalInput } from './goalSchema'
 const thisYear = new Date().getFullYear()
 const valid = {
   goal_type: 'education',
-  name: "  Ananya's college ",
+  name: "  Pisai's college ",
   target_amount: '2500000',
   target_year: String(thisYear + 10),
   priority: '1',
@@ -21,7 +21,7 @@ describe('goal form validation (same rules as the API)', () => {
     const parsed = goalSchema.parse(valid)
     expect(toGoalInput(parsed)).toEqual({
       goal_type: 'education',
-      name: "Ananya's college",
+      name: "Pisai's college",
       target_amount: 2500000,
       target_year: thisYear + 10,
       priority: 1,

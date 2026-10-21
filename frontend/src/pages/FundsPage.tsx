@@ -71,7 +71,7 @@ export function FundsPage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title="Fund explorer" subtitle="Indian mutual funds with their returns and risk, updated every evening." />
+      <PageHeader title="Explore funds" subtitle="Indian mutual funds with their returns and risk, updated every evening." />
       <MarketStrip />
 
       <div className="flex flex-wrap items-end gap-3" role="search">

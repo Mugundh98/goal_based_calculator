@@ -46,7 +46,7 @@ class Transaction(Base):
         ForeignKey("goals.id", ondelete="SET NULL"), index=True
     )
     # RESTRICT: a fund someone holds cannot disappear from the database.
-    fund_id: Mapped[int] = mapped_column(ForeignKey("funds.id", ondelete="RESTRICT"), index=True)
+    fund_id: Mapped[int] = mapped_column(ForeignKey("funds.id", ondelete="NO ACTION"), index=True)
     txn_type: Mapped[str] = mapped_column(String(4))
     txn_date: Mapped[date] = mapped_column(Date)
     amount: Mapped[Decimal] = mapped_column(Money)  # rupees paid or received, positive
@@ -86,7 +86,7 @@ class Holding(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     # CASCADE: derived rows are disposable; the service rebuilds them after a goal is deleted.
     goal_id: Mapped[int | None] = mapped_column(ForeignKey("goals.id", ondelete="CASCADE"))
-    fund_id: Mapped[int] = mapped_column(ForeignKey("funds.id", ondelete="RESTRICT"))
+    fund_id: Mapped[int] = mapped_column(ForeignKey("funds.id", ondelete="NO ACTION"))
     units: Mapped[Decimal] = mapped_column(Numeric(20, 6))  # in the fund's current units
     cost: Mapped[Decimal] = mapped_column(Money)  # FIFO cost of the units held
     realised_gain: Mapped[Decimal] = mapped_column(Money, server_default="0")

@@ -4,6 +4,8 @@ from app.api.deps import Audit, CurrentUser, DbSession
 from app.api.routes.goals import owned_goal
 from app.schemas.portfolio import (
     GoalProgress,
+    ManualFundCreate,
+    ManualFundRead,
     PortfolioRead,
     SipCreate,
     TransactionCreate,
@@ -76,6 +78,44 @@ def create_sip(
                  "amount": float(data.amount)},
     )  # fmt: skip
     return [t for t in service.list_transactions(db, user) if t.id in ids]
+
+
+@router.put("/transactions/{transaction_id}", response_model=TransactionRead)
+def update(
+    transaction_id: int, data: TransactionCreate, user: CurrentUser, db: DbSession, audit: Audit
+) -> TransactionRead:
+    """Correct a transaction; holdings are rebuilt with it, or nothing changes."""
+    try:
+        transaction = service.update_transaction(db, user, transaction_id, data)
+    except service.PortfolioError as error:
+        raise _http(error, conflict=True) from None
+    audit(
+        "portfolio.transaction.update",
+        user,
+        entity_type="transaction",
+        entity_id=transaction.id,
+        details={"type": transaction.txn_type, "fund_id": transaction.fund_id,
+                 "amount": float(transaction.amount), "goal_id": transaction.goal_id},
+    )  # fmt: skip
+    return next(t for t in service.list_transactions(db, user) if t.id == transaction.id)
+
+
+@router.get("/funds", response_model=list[ManualFundRead])
+def my_funds(user: CurrentUser, db: DbSession) -> list[ManualFundRead]:
+    """Funds this user added by hand (not in AMFI's list)."""
+    return service.manual_funds(db, user)
+
+
+@router.post("/funds", response_model=ManualFundRead, status_code=status.HTTP_201_CREATED)
+def add_fund(
+    data: ManualFundCreate, user: CurrentUser, db: DbSession, audit: Audit
+) -> ManualFundRead:
+    """Add a fund that is not in the list; its transactions need their NAV, and it is valued at
+    cost. Adding the same name again returns the existing fund."""
+    fund = service.add_manual_fund(db, user, data)
+    audit("portfolio.fund.create", user, entity_type="fund", entity_id=fund.id,
+          details={"name": fund.name, "asset_class": fund.asset_class})  # fmt: skip
+    return service.manual_fund_read(fund)
 
 
 @router.delete("/transactions/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)

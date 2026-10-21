@@ -214,6 +214,7 @@ The frontend waits for the sleeping API behind `ServerGate`. The API runs one Mo
 | Download my plan button; admin dashboard (overview, users, audit log, data jobs, models) behind `AdminRoute` | 11 | Done |
 | Coverage in CI, Vitest component tests, Playwright end-to-end job; `evaluation/` (ML, return models, chatbot, UAT) | 12 | Done |
 | Dockerfile, `render.yaml`, `vercel.json`, data-refresh workflow; `deploy/` (`copy-data`, `demo-user`); simulation concurrency limit; database URL normalising; `ServerGate` | 13 | Done |
+| User feedback: own NAV and funds added by hand (valued at cost) in the portfolio, editing transactions, amounts with Indian grouping as typed (`lib/money.ts`), typed what-if values, "What next?" after the risk profile, Explore menu (ADR-017) | 1.1 | Done |
 
 ## Authentication flow
 
