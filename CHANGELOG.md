@@ -7,6 +7,7 @@ All notable changes, one entry per phase tag. Format: [Keep a Changelog](https:/
 ### Added
 
 - `report/`: builds the MCA project report (PDF, 174 pages of main text within the 150–180 limit, plus front matter and Appendices A–F), the source-code appendix (527 pages), one combined submission PDF and the 20-slide presentation with speaker notes. Fill in `report/details.json` and see `report/README.md`.
+- `report/build_docx.py`: the same report as an editable Word document, with a real table of contents and lists of figures and tables.
 
 ## [1.2.0] – 2026-10-21 – Account page, forgot password, wake-up countdown
 
