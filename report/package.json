@@ -1,0 +1,11 @@
+{
+  "name": "goalwise-report",
+  "private": true,
+  "description": "Builds the MCA project report (PDF), the presentation (PPTX) and their figures",
+  "type": "commonjs",
+  "dependencies": {
+    "katex": "^0.16.11",
+    "mermaid": "^11.4.1",
+    "pptxgenjs": "^3.12.0"
+  }
+}
