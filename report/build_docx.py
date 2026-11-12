@@ -1,6 +1,6 @@
 """Builds the project report as an editable Word document, from the same chapters as the PDF.
 
-    report/.venv/Scripts/python.exe report/build_docx.py   (after build_report.py)
+    report/.venv/Scripts/python.exe report/build_docx.py [--short]   (after build_report.py)
 
 Output: report/build/GoalWise_Project_Report.docx. It reuses build_report.py's parser, numbering
 and rendered figures, so the content matches the PDF. Headings use Word's Heading 1–3 styles,
@@ -16,6 +16,7 @@ from __future__ import annotations
 import html
 import re
 import shutil
+import sys
 from pathlib import Path
 
 from docx import Document
@@ -438,7 +439,7 @@ class Writer:
                 self.para("Figure Caption", markdown=f"{label}: {b.caption or title}")
 
     def chapter(self, path: Path, number: int | str, appendix: bool) -> None:
-        blocks = br.parse(br.fill(path.read_text(encoding="utf-8")), path.parent)
+        blocks = br.chapter_blocks(path)
         title = br.plain(next(b for b in blocks if b.kind == "heading" and b.level == 1).text)
         self.appendix = appendix
         if path.stem.startswith("R"):
@@ -594,7 +595,8 @@ class Writer:
         p._p.append(simple)
 
 
-def build(cached: dict | None = None, output: Path = OUTPUT) -> Path:
+def build(cached: dict | None = None, output: Path | None = None) -> Path:
+    output = output or OUTPUT
     d = br.details()
     w = Writer(cached)
     w.front_matter(d)
@@ -680,6 +682,10 @@ def update_fields(path: Path) -> dict | None:
 
 
 if __name__ == "__main__":
+    if "--short" in sys.argv:  # the shorter report described by short.json
+        br.use_variant("short")
+        OUTPUT = br.OUTPUT.with_suffix(".docx")
+        CHECK_PDF = br.BUILD / f"{OUTPUT.stem}_docx.pdf"
     out = build()
     lists = update_fields(out)
     if lists:

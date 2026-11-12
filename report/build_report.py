@@ -1,6 +1,6 @@
 """Builds the MCA project report (PDF) from Markdown chapters and the project's own documents.
 
-    report/.venv/Scripts/python.exe report/build_report.py
+    report/.venv/Scripts/python.exe report/build_report.py [--short]
 
 Inputs
   report/details.json      the learner's and guide's details (blank = a line to fill by hand)
@@ -14,6 +14,7 @@ lists (nested by indentation); | tables | (a "Table: caption" line just before);
 "Figure: caption" just after a diagram or image; **bold**, *italic*, `code`, [text](url).
 
 Output: report/build/GoalWise_Project_Report.pdf, and a page count per chapter on the console.
+With --short, the shorter report that short.json describes: GoalWise_Project_Report_Short.pdf.
 Layout: A4, Times New Roman 12 pt, double-spaced body, margins 1.5 in left (binding) and 1 in
 elsewhere; front matter numbered i, ii, ...; chapters numbered from 1.
 """
@@ -199,6 +200,7 @@ class Block:
     lang: str = ""
     caption: str = ""
     base: Path | None = None  # folder of the source file (images)
+    included: bool = False  # came from an <!-- include --> rather than the chapter file
 
 
 FIGURES = ("mermaid", "image", "imagegrid")
@@ -260,20 +262,31 @@ def _include(directive: re.Match) -> str:
     return "\n\n".join(picked)
 
 
+INCLUDE_START, INCLUDE_END = "\x02include-start\x02", "\x02include-end\x02"
+
+
 def parse(markdown: str, base: Path) -> list[Block]:
-    markdown = INCLUDE.sub(_include, markdown)
+    markdown = INCLUDE.sub(
+        lambda m: f"\n\n{INCLUDE_START}\n\n{_include(m)}\n\n{INCLUDE_END}\n\n", markdown)
     markdown = re.sub(r"<!--.*?-->", "", markdown, flags=re.S)
     lines = markdown.replace("\r\n", "\n").split("\n")
     blocks: list[Block] = []
     i = 0
     pending_caption = ""
     pending_figure = ""
+    include_from = None
     while i < len(lines):
         if pending_figure and blocks and blocks[-1].kind in FIGURES and not blocks[-1].caption:
             blocks[-1].caption, pending_figure = pending_figure, ""
         line = lines[i]
         stripped = line.strip()
-        if not stripped or stripped in ("---", "***"):
+        if stripped == INCLUDE_START:
+            include_from = len(blocks)
+        elif stripped == INCLUDE_END and include_from is not None:
+            for b in blocks[include_from:]:
+                b.included = True
+            include_from = None
+        if not stripped or stripped in ("---", "***", INCLUDE_START, INCLUDE_END):
             i += 1
             continue
         if stripped == "\\newpage":
@@ -381,6 +394,52 @@ def parse(markdown: str, base: Path) -> list[Block]:
 
 
 # --- Rendered assets (diagrams, formulas) ----------------------------------------------------
+
+
+# --- Variants (the short report) -------------------------------------------------------------
+
+# Set by --short: the contents of short.json. "appendices" lists the appendix files kept;
+# "drop" maps a chapter file to the headings left out (each with its contents, matched by the
+# start of the title); "replace" maps a chapter file to [old, new] text pairs, so sentences
+# that point at dropped material can be reworded.
+VARIANT: dict = {}
+
+
+def use_variant(name: str) -> None:
+    global OUTPUT
+    VARIANT.clear()
+    VARIANT.update(json.loads((HERE / f"{name}.json").read_text(encoding="utf-8")))
+    OUTPUT = BUILD / f"GoalWise_Project_Report_{VARIANT['name']}.pdf"
+
+
+def drop_sections(blocks: list[Block], titles: list[str]) -> list[Block]:
+    """Leave out each heading named in titles, with what follows it up to the next heading of
+    its level; a heading from an included document also ends where that document ends, so
+    the chapter's own figures after the include stay."""
+    starts = tuple(t.lower() for t in titles)
+    out, cut_level, cut_included = [], None, False
+    for b in blocks:
+        if cut_level is not None and cut_included and not b.included:
+            cut_level = None
+        if b.kind == "heading":
+            if cut_level is not None and b.level <= cut_level:
+                cut_level = None
+            if cut_level is None and starts and plain(b.text).lower().startswith(starts):
+                cut_level, cut_included = b.level, b.included
+        if cut_level is None:
+            out.append(b)
+    return out
+
+
+def chapter_blocks(path: Path) -> list[Block]:
+    """A chapter's blocks, less what the variant leaves out."""
+    text = fill(path.read_text(encoding="utf-8"))
+    for old, new in VARIANT.get("replace", {}).get(path.name, []):
+        if old not in text:
+            raise ValueError(f"{path.name}: text to replace not found: {old[:60]!r}")
+        text = text.replace(old, new)
+    blocks = parse(text, path.parent)
+    return drop_sections(blocks, VARIANT.get("drop", {}).get(path.name, []))
 
 
 def asset_id(kind: str, source: str) -> str:
@@ -776,8 +835,7 @@ def fill(text: str) -> str:
 
 
 def build_chapter(path: Path, number: int | str, appendix: bool) -> list:
-    text = fill(path.read_text(encoding="utf-8"))
-    blocks = parse(text, path.parent)
+    blocks = chapter_blocks(path)
     title_block = next(b for b in blocks if b.kind == "heading" and b.level == 1)
     title = plain(title_block.text)
     counters = Counters(prefix=str(number))
@@ -933,6 +991,8 @@ def chapter_files() -> tuple[list[Path], list[Path]]:
     files = sorted(p for p in (HERE / "chapters").glob("*.md") if not p.name.startswith("00-"))
     main = [p for p in files if not p.name.startswith("A")]
     appendices = [p for p in files if p.name.startswith("A")]
+    if "appendices" in VARIANT:
+        appendices = [p for p in appendices if p.name in VARIANT["appendices"]]
     return main, appendices
 
 
@@ -963,6 +1023,8 @@ def build(entries: list[Entry] | None, d: dict) -> ReportDoc:
 
 
 def main() -> None:
+    if "--short" in sys.argv:
+        use_variant("short")
     BUILD.mkdir(exist_ok=True)
     d = details()
     # Pass 1 renders the figures and finds every entry; later passes fill in the contents

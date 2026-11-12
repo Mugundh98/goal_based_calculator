@@ -1,0 +1,124 @@
+{
+  "name": "Short",
+  "appendices": [
+    "A-1-proforma.md",
+    "A-2-synopsis.md"
+  ],
+  "drop": {
+    "01-introduction.md": [
+      "Organisation of the report"
+    ],
+    "02-literature.md": [
+      "Time-series forecasting of inflation",
+      "Web architecture and security",
+      "Summary",
+      "Robo-advisory systems"
+    ],
+    "03-analysis.md": [
+      "Legal and ethical feasibility",
+      "Project schedule",
+      "Advantages of the proposed system"
+    ],
+    "04-data-sampling.md": [
+      "Data volumes",
+      "Test set for the assistant",
+      "User acceptance test sample"
+    ],
+    "05-methodology.md": [
+      "Version control and the definition of done",
+      "Layered design for testability",
+      "Worked example",
+      "Expected return when left empty",
+      "The expected return is the median",
+      "Where the volatility comes from",
+      "Allocation and return",
+      "Lifetime Monte Carlo in closed form",
+      "Does the 4% rule work in India",
+      "Walk-forward validation",
+      "Explanations: tree SHAP",
+      "Behaviour clusters",
+      "Corner solutions",
+      "Rebalancing",
+      "Newton-Raphson",
+      "Continuous integration",
+      "Why simulate",
+      "Withdrawal rate and the 4% rule",
+      "Results on the reported years",
+      "Inflation forecast",
+      "Four sleeves and their data",
+      "Guardrails",
+      "Saving for it, and how long the money lasts",
+      "Fund selection",
+      "Fund performance metrics"
+    ],
+    "06-design.md": [
+      "Request flow and module interactions",
+      "Design decisions",
+      "Migration history",
+      "Software layers",
+      "Security measures summary",
+      "User interface design",
+      "Protection of the assistant"
+    ],
+    "07-implementation.md": [
+      "Integration and orchestration",
+      "Problems faced and solutions",
+      "Enhancements after user feedback",
+      "Account management",
+      "Project setup and foundations",
+      "Reports, administration and the audit log"
+    ],
+    "08-testing.md": [
+      "Coverage",
+      "Frontend component tests",
+      "End-to-end flows",
+      "Return-model comparison",
+      "Defects found by testing",
+      "ML evaluation",
+      "Representative test cases",
+      "User acceptance testing"
+    ],
+    "09-deployment.md": [
+      "Copying reference data",
+      "Verification",
+      "Problems faced during deployment",
+      "Deployment procedure",
+      "Waking-up logic"
+    ],
+    "10-results.md": [
+      "Discussion"
+    ]
+  },
+  "replace": {
+    "05-methodology.md": [
+      [
+        "Each technique is presented with its formula, the reason it was chosen, and a worked example that the automated tests reproduce.",
+        "Each technique is presented with its formula and the reason it was chosen."
+      ],
+      [
+        "the process, the version-control workflow and the quality gates",
+        "the phase-wise process"
+      ]
+    ],
+    "06-design.md": [
+      [
+        "the attributes of every table are listed in the data dictionary in Appendix D.",
+        "the attributes of every table are listed in the project's data dictionary (`docs/database.md`)."
+      ],
+      [
+        "The complete data dictionary — every column of every table with its type, constraints and meaning — is given in Appendix D.",
+        "The complete data dictionary — every column of every table with its type, constraints and meaning — is kept in `docs/database.md`."
+      ],
+      [
+        "<!-- include: docs/api.md sections=\"preamble|Status codes used\" level=3 heading=\"none\" -->",
+        ""
+      ]
+    ],
+    "07-implementation.md": [
+      [
+        "lists the backend and frontend components that were added and how a request flows through them, records the problems met during implementation and how they were solved, and shows the resulting screens. The algorithms behind the modules are explained in Chapter 5 and the database tables in Chapter 6 and Appendix D, so they are not repeated here.",
+        "and shows the resulting screens. The algorithms behind the modules are explained in Chapter 5 and the database tables in Chapter 6, so they are not repeated here."
+      ]
+    ]
+  }
+}

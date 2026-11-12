@@ -7,6 +7,7 @@ Builds the MCA project report, the source-code appendix and the presentation fro
 |---|---|
 | `build/GoalWise_Project_Report.pdf` | The report: front matter, Chapters 1–11, references, Appendices A–F |
 | `build/GoalWise_Project_Report.docx` | The same report as an editable Word document |
+| `build/GoalWise_Project_Report_Short.pdf` / `.docx` | A 100-page version of the report (see below) |
 | `build/GoalWise_Source_Code.pdf` | Appendix F: every source file with line numbers |
 | `build/GoalWise_Complete_Submission.pdf` | The two above in one file |
 | `build/GoalWise_Presentation.pptx` | The viva presentation (20 slides, speaker notes) |
@@ -51,6 +52,22 @@ editing, select all (Ctrl+A) and press F9 to refresh their page numbers. If WPS 
 installed, the script fills the lists in once and writes `build/GoalWise_Project_Report_docx.pdf`
 to check the layout. Edits made in the Word file are not copied back into `chapters/`, so a later
 `build_docx.py` run overwrites the file: save your edited copy under another name.
+
+## The 100-page version
+
+`--short` builds a shorter report from the same chapters: about 100 pages in all (14 of front
+matter, 80 of main text, the proforma and the synopsis), against 221 for the full report.
+
+```bash
+report/.venv/Scripts/python.exe report/build_report.py --short
+report/.venv/Scripts/python.exe report/build_docx.py --short
+```
+
+`short.json` says what it leaves out: the appendices not listed under `appendices`, and under
+`drop` the sections of each chapter (by the start of their heading, with everything under
+them) — mostly worked examples, the per-module integration and problem notes, the request-flow
+and API details and the secondary evaluations. `replace` rewords the few sentences that point at
+material the short version does not have. Change the lists and rebuild to adjust the length.
 
 ## Not produced here
 
